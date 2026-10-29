@@ -20,14 +20,15 @@ contract FanovaProvenanceEdgeCasesTest {
     bytes32 private constant SOURCE_V2 = keccak256("edge-source-v2");
     bytes32 private constant PERMISSIONS_V1 = keccak256("edge-permissions-v1");
     bytes32 private constant PERMISSIONS_V2 = keccak256("edge-permissions-v2");
-    bytes32 private constant STORY_ID = keccak256(abi.encode(CREATOR, SALT));
+    bytes32 private storyId;
     bytes32 private constant CONTRIBUTION_ID = keccak256("edge-contribution-id");
     bytes32 private constant CONTRIBUTION_HASH = keccak256("edge-contribution");
 
     function setUp() public {
         provenance = new FanovaProvenance();
+        storyId = provenance.computeStoryId(CREATOR, SALT);
         vm.prank(CREATOR);
-        provenance.registerStoryVersion(STORY_ID, SALT, 1, SOURCE_V1, 2, PERMISSIONS_V1);
+        provenance.registerStoryVersion(storyId, SALT, 1, SOURCE_V1, 2, PERMISSIONS_V1);
     }
 
     function testPermissionVersionCannotDecreaseEvenWhenHashIsUnchanged() public {
@@ -35,7 +36,7 @@ contract FanovaProvenanceEdgeCasesTest {
         (bool success,) = address(provenance).call(
             abi.encodeWithSelector(
                 provenance.registerStoryVersion.selector,
-                STORY_ID,
+                storyId,
                 SALT,
                 uint64(2),
                 SOURCE_V2,
@@ -45,7 +46,7 @@ contract FanovaProvenanceEdgeCasesTest {
         );
 
         require(!success, "permission version decreased");
-        require(provenance.getStory(STORY_ID).latestVersion == 1, "failed update changed latest version");
+        require(provenance.getStory(storyId).latestVersion == 1, "failed update changed latest version");
     }
 
     function testDifferentCreatorSaltCannotRegisterNextVersion() public {
@@ -53,7 +54,7 @@ contract FanovaProvenanceEdgeCasesTest {
         (bool success,) = address(provenance).call(
             abi.encodeWithSelector(
                 provenance.registerStoryVersion.selector,
-                STORY_ID,
+                storyId,
                 keccak256("wrong-salt"),
                 uint64(2),
                 SOURCE_V2,
@@ -63,7 +64,7 @@ contract FanovaProvenanceEdgeCasesTest {
         );
 
         require(!success, "changed creator salt accepted");
-        require(provenance.getStory(STORY_ID).latestVersion == 1, "failed update changed latest version");
+        require(provenance.getStory(storyId).latestVersion == 1, "failed update changed latest version");
     }
 
     function testContributionCannotReferenceUnknownStory() public {
@@ -92,7 +93,7 @@ contract FanovaProvenanceEdgeCasesTest {
             abi.encodeWithSelector(
                 provenance.registerContribution.selector,
                 bytes32(0),
-                STORY_ID,
+                storyId,
                 uint64(1),
                 uint64(2),
                 PERMISSIONS_V1,
@@ -111,7 +112,7 @@ contract FanovaProvenanceEdgeCasesTest {
             abi.encodeWithSelector(
                 provenance.registerContribution.selector,
                 CONTRIBUTION_ID,
-                STORY_ID,
+                storyId,
                 uint64(1),
                 uint64(2),
                 PERMISSIONS_V1,
@@ -134,7 +135,7 @@ contract FanovaProvenanceEdgeCasesTest {
         vm.prank(FAN);
         provenance.registerContribution(
             CONTRIBUTION_ID,
-            STORY_ID,
+            storyId,
             1,
             2,
             PERMISSIONS_V1,
@@ -161,7 +162,7 @@ contract FanovaProvenanceEdgeCasesTest {
         (bool success,) = address(provenance).call(
             abi.encodeWithSelector(
                 provenance.registerStoryVersion.selector,
-                STORY_ID,
+                storyId,
                 SALT,
                 uint64(0),
                 SOURCE_V2,
@@ -171,6 +172,6 @@ contract FanovaProvenanceEdgeCasesTest {
         );
 
         require(!success, "zero source version accepted");
-        require(provenance.getStory(STORY_ID).latestVersion == 1, "failed update changed latest version");
+        require(provenance.getStory(storyId).latestVersion == 1, "failed update changed latest version");
     }
 }
