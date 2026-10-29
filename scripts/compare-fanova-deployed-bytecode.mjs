@@ -123,6 +123,20 @@ async function fetchJson(url) {
           : null,
         sourceCodeMatchesCurrentFileIgnoringFinalNewline: typeof json.source_code === "string"
           ? json.source_code.replace(/\\n$/, "") === localSource.replace(/\\n$/, "")
+          : null,
+        sourceCodeFirstDifference: typeof json.source_code === "string"
+          ? (() => {
+              let index = 0;
+              while (index < json.source_code.length && index < localSource.length &&
+                     json.source_code[index] === localSource[index]) index += 1;
+              return {
+                index,
+                explorerLength: json.source_code.length,
+                localLength: localSource.length,
+                explorerContext: json.source_code.slice(Math.max(0, index - 100), index + 160),
+                localContext: localSource.slice(Math.max(0, index - 100), index + 160)
+              };
+            })()
           : null
       };
     } catch {
