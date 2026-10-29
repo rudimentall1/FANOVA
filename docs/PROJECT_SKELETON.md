@@ -1,103 +1,75 @@
 # FANOVA — Canonical Project Skeleton
 
-**Status:** LOCKED BASELINE v1.0  
+**Status:** LOCKED BASELINE v1.1  
 **Product line:** Fans don't just follow stories. They help shape them.  
 **Target:** Sony Onchain Entertainment Incubation Program  
-**Delivery constraint:** approximately one month to produce a credible application and a working MVP.
+**Delivery constraint:** approximately one month for a credible application and working MVP.
 
-This document is the project contract. Every request, coding session, and new chat must read it before implementation. No silent scope changes.
+This is the project contract. Every request and coding session must read this file and `AGENTS.md` before implementation. No silent scope changes.
 
-## 1. Product in one sentence
+## 1. Product
 FANOVA lets a creator publish an original story with explicit permitted-use rules, receive fan-created derivative submissions, approve or reject them, and preserve verifiable provenance between the source story and approved contributions.
 
-## 2. User problem
-Creators may want fans to participate in their fictional worlds but need a manageable way to set permissions, review contributions, preserve attribution, and—where a real commercial transaction exists—honor agreed compensation terms. Fans need a clear, understandable way to contribute without guessing what is allowed or whether their work has been accepted.
+The market-demand hypothesis is not yet validated. The MVP targets one creator and one original story, not a general-purpose platform.
 
-This is a product hypothesis, not yet validated market demand.
+## 2. Users
+- **Creator/IP owner or authorized licensee:** publishes a source story, defines permissions, reviews contributions, approves/rejects.
+- **Fan contributor:** submits work under stated rules and sees the review result and attribution.
+- **Public evaluator:** can inspect the workflow and verify onchain records.
 
-## 3. Primary users
-- **Creator/IP owner or authorized licensee:** publishes a source story, defines permissions, reviews fan work, and approves or rejects it.
-- **Fan contributor:** reads the source, submits a derivative contribution under the stated rules, and sees the review result and attribution.
-- **Public evaluator:** can inspect the workflow and verify onchain records without trusting screenshots alone.
+## 3. Locked MVP workflow
+1. Creator publishes an original story and versioned permission statement.
+2. Fan submits a contribution linked to that exact source version and acknowledges permissions.
+3. Creator reviews and approves or rejects the contribution.
+4. UI displays decision, attribution, source relationship, and evidence status.
+5. A minimal provenance anchor may be recorded on **Soneium Mainnet** after the local workflow, contract tests, security checks, and deployment plan are ready.
+6. Demonstrate a meaningful failure, such as missing permission acknowledgement or an unauthorized approval attempt.
+7. Payment splits are out of scope unless a concrete, approved requirement emerges. Do not describe them as live unless a real transaction proves it.
 
-The MVP targets one creator and one original story first. It is not a general-purpose platform.
+## 4. Evidence and acceptance criteria
+- Public repository with reproducible setup and tests.
+- Working local end-to-end workflow.
+- Only the authorized creator can approve/reject; unauthorized attempts fail.
+- Source-version linkage, attribution, permissions, and decision state are understandable.
+- If a contract is included in the demo, its deployment and relevant mainnet event/transaction must be independently inspectable. Deployment requires explicit user approval.
+- Demo clearly distinguishes local, mocked, and mainnet behavior.
+- Use original pilot material or documented permission; a wallet address/hash does not prove legal IP ownership.
+- At least one real creator/authorized IP participant in the pilot, or an honest statement that validation is pending.
+- No secrets in the repository and no claims of Sony endorsement, partnership, or selection without evidence.
 
-## 4. Locked MVP workflow
-1. Creator publishes one original story and a versioned permission statement.
-2. Fan reads the story and submits a contribution referencing that source version.
-3. Creator reviews the contribution and approves or rejects it.
-4. The UI displays the decision, attribution, source relationship, and current evidence status.
-5. The system records a minimal verifiable onchain anchor for the source/submission/decision on Soneium Minato, once the local workflow is stable.
-6. Demonstrate one meaningful failure case (for example, a submission missing required permission acknowledgement or a non-creator attempting to approve).
-7. If a real payment split is implemented within scope, prove it with a real testnet transaction and explicit terms. Otherwise document revenue splitting as planned, not live.
+## 5. Non-goals
+No public marketplace, open token trading, DAO, multi-chain support, general AI generation suite, mobile app, automated legal rights verification, automatic royalties across external platforms, large social graph, or custody of meaningful funds. A custom token is not a default MVP feature.
 
-## 5. Core proof required
-- A public repository with reproducible setup and tests.
-- A working local end-to-end workflow.
-- A deployed minimal contract on Soneium Minato with verified address/source and test evidence, if the contract is included in the demo.
-- An independently inspectable transaction or event for the demonstrated onchain action.
-- A demo that clearly distinguishes local/mock/testnet/mainnet behavior.
-- At least one real creator or authorized IP participant involved in the pilot, or an honest statement that this validation is still pending.
-- No claim that Sony endorses, partners with, or has selected FANOVA.
+## 6. Token policy
+Soneium can host standard EVM tokens, but technical deployability is not product utility. Native gas is ETH; a FANOVA token would be a separate asset with distinct security, legal, distribution, liquidity, and utility implications.
 
-## 6. Explicit non-goals for the one-month MVP
-- Public marketplace or open token trading.
-- DAO/governance system.
-- Multi-chain support.
-- General AI story/video/image generation platform.
-- Mobile app.
-- Automated legal rights verification.
-- Automatic royalty collection across external platforms.
-- Mainnet launch or custody of meaningful funds.
-- Large-scale social graph, chat, likes/followers, or recommendation engine.
-- Custom token deployment unless the application requirements and product economics establish a specific need and the user explicitly approves deployment.
+Maintain a token concept only if the actual application requirement and creator/fan economics justify it. Define utility, distribution, supply, admin rights, abuse resistance, legal questions, and why a token is better than ordinary payments or non-transferable records. No deployment or promotion of a tradable token without explicit user approval.
 
-## 7. Token policy
-Soneium is an EVM-compatible network and can host standard token contracts. That does not mean FANOVA should deploy a token immediately. Native gas is ETH; a FANOVA token would be a separate asset with separate design, security, legal, liquidity, and user-utility implications.
+## 7. Soneium strategy
+- **Target network: Soneium Mainnet.**
+- Chain ID: `1868`; RPC: `https://rpc.soneium.org/`; explorer: `https://soneium.blockscout.com/`.
+- Native gas asset: ETH.
+- Minato (chain ID `1946`) is optional for risk-reducing pre-deployment checks only. It is not the target network or a required milestone.
+- Recheck official network configuration before deployment.
+- Mainnet-first does not mean deploy before local tests and security review. Any mainnet deployment or transaction spending real funds requires explicit user approval.
 
-Maintain a **token concept and utility/economic rationale** as an application workstream if the official application asks for it. Do not deploy or promote a tradable token during the MVP by default. First prove the creator/fan workflow. Any token decision must define utility, distribution, supply, control/admin rights, abuse resistance, regulatory questions, and why a token is better than ordinary payments or non-transferable access records. Deployment requires explicit user approval.
+## 8. Architecture boundaries
+- Web experience for creator and fan flows.
+- Domain rules for permissions, source/contribution relationships, authorization, and state transitions.
+- Content and metadata offchain by default; do not put full story text or personal data onchain.
+- Minimal contract for hashes/identifiers, authorization, and durable decision/provenance events only where they establish a specific verifiable claim.
+- Explicit Mainnet chain-ID checks and honest evidence labels.
+- Keep the contract design subordinate to the user workflow and proof requirement.
 
-## 8. Soneium strategy
-- Development/demo network: **Soneium Minato testnet**, chain ID 1946.
-- RPC: `https://rpc.minato.soneium.org/`
-- Explorer: `https://soneium-minato.blockscout.com/`
-- Mainnet chain ID 1868, RPC `https://rpc.soneium.org/`, explorer `https://soneium.blockscout.com/`.
-- Use testnet first. Mainnet is out of scope for the one-month MVP unless separately justified and explicitly approved.
-- Re-check official Soneium docs before deployment; never rely solely on copied configuration.
+## 9. Priority order
+- **P0:** map application questions to evidence, lock scope, review competitors and token-plan requirement.
+- **P1:** implement and test local story → submission → approval workflow.
+- **P2:** implement and verify minimal Soneium Mainnet provenance after local gates and explicit deployment approval.
+- **P3:** run a permissioned creator/fan pilot and record honest findings.
+- **P4:** prepare reproducible demo and evidence-backed Sony application.
+- **P5:** consider a token only if requirements, utility, and economics justify it.
 
-## 9. Architecture boundaries
-- Web experience: creator and fan flows.
-- Domain layer: permission rules, source/contribution relationships, approval state, validation.
-- Storage/indexing: offchain content and metadata; do not put full story content or personal data onchain by default.
-- Contracts: minimal event/attestation or registry surface for durable provenance and authorized decisions. Contract design must follow a specific proof requirement, not lead product design.
-- Chain adapter: explicit Soneium Minato configuration and chain-id checks.
-- Evidence: deployment manifest, test output, transaction links, demo script, limitations.
+## 10. Change control
+Change this baseline only when a concrete requirement/blocker is identified, the trade-off is recorded in `docs/DECISIONS.md`, related architecture/roadmap text is updated, and the user explicitly approves.
 
-## 10. Locked acceptance criteria
-MVP is not complete until:
-- [ ] Creator can publish a story with explicit permissions.
-- [ ] Fan can submit a contribution linked to the exact source version.
-- [ ] Only the authorized creator can approve/reject.
-- [ ] A denied/invalid action is visibly rejected and tested.
-- [ ] Attribution and decision state are understandable in the UI.
-- [ ] If onchain anchoring is claimed, the event/transaction is independently inspectable on Minato.
-- [ ] No secret is committed and no real third-party IP is used without permission.
-- [ ] Setup and tests are reproducible by someone other than the author.
-- [ ] Demo and application state precisely what is live, local, mocked, or planned.
-
-## 11. Change control
-The skeleton changes only when:
-1. A concrete blocker or new requirement is identified.
-2. The proposed change and trade-off are written into `docs/DECISIONS.md`.
-3. The relevant scope/architecture/roadmap text is updated in the same change.
-4. The user explicitly approves the change.
-
-## 12. Priority order
-P0 — lock scope and answer application questions with evidence requirements.  
-P1 — build and test local story → submission → approval workflow.  
-P2 — add minimal Soneium Minato provenance proof.  
-P3 — validate with a real creator/fan pilot and capture honest metrics.  
-P4 — prepare reproducible demo and Sony application.  
-P5 — consider token only if requirements, utility, and economics justify it.
-
-**Rule:** if a task does not advance P0–P4, it is not MVP work unless explicitly approved as a plan change.
+**Rule:** if a task does not advance P0–P4, it is not MVP work unless a plan change is explicitly approved.
