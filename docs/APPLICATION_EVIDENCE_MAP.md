@@ -7,7 +7,7 @@
 | Problem and target user | Specific creator/fan problem and pilot interviews | PLANNED | Validate with creator |
 | Entertainment experience originality | Product comparison and live workflow | PLANNED | Competitor review |
 | Use of IP | Original IP permission and licensing model | PLANNED | Obtain written pilot permission |
-| Soneium integration | Chain configuration, contract tests, verified Minato transaction | PLANNED | P2 roadmap |
+| Soneium integration | Chain configuration, contract tests, verified Soneium Mainnet transaction/event | PLANNED | P2 roadmap |
 | Community building | Real pilot participants and observed repeat engagement | PLANNED | Run pilot |
 | Business scalability | Buyer, pricing hypothesis, costs, market evidence | PLANNED | Validate creator willingness to pay |
 | Token concept/plan | Actual questionnaire wording, utility, economics, risks | OPEN | Read official PDF and map exact question |
