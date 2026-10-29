@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-29  
 **Scope:** `contracts/src/FanovaProvenance.sol` and Foundry tests.  
-**Status:** Local engineering review only. This is not an independent audit and does not authorize deployment.
+**Status:** Engineering review only. The contract is deployed on Soneium Mainnet, but this document is not an independent audit. Deployment does not imply a security audit or full source-metadata equivalence.
 
 ## Contract boundary
 
@@ -38,8 +38,8 @@ The contract source currently imports no third-party Solidity library. Foundry a
 1. Obtain and review the completed Slither output; triage every finding rather than hiding it with blanket suppressions.
 2. The first read-only estimate is recorded in [run 40900185493](https://github.com/rudimentall1/FANOVA/actions/runs/40900185493): `eth_estimateGas` returned 998,201 gas at 13,000,000 wei per gas, implying 0.000012976613 ETH in execution fee at 2026-10-29 15:18 UTC. This is not a total-fee guarantee; the estimate explicitly excludes a separately measured OP Stack L1 data fee. Re-run before deployment and complete the L1 fee estimate.
 3. Add a deployment manifest containing chain ID, compiler version, optimizer settings, constructor arguments, artifact hashes, expected runtime bytecode, and independent verification commands.
-4. Complete the browser adapter and its chain mismatch, disconnected wallet, rejected prompt, RPC failure, and failed transaction handling before a public end-to-end claim.
-5. Obtain explicit user approval before any Mainnet deployment or real-value transaction.
+4. Complete the wallet/browser adapter and handle chain mismatch, disconnected wallet, rejected prompt, RPC failure, failed transaction, and transaction/event verification before a public end-to-end claim.
+5. Mainnet deployment has already occurred. Do not redeploy or initiate a transaction from the assistant; any real-value transaction must be initiated by the user through their wallet with clear intent and cost visibility.
 
 ## Gas evidence
 
@@ -51,5 +51,6 @@ The same run's local Foundry gas report recorded test-context ranges: `registerS
 
 - Contract and 20 tests: **LOCAL**, CI-passing.
 - Slither 0.11.4: **PASS**, 100 detectors, zero results in [run 40899723269](https://github.com/rudimentall1/FANOVA/actions/runs/40899723269).
-- Mainnet deployment: **PLANNED**, not authorized.
+- Mainnet deployment: **MAINNET**, deployed at `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`; full metadata equivalence is not established.
+- Browser wallet integration and end-to-end Mainnet transaction proof: **PLANNED**.
 - Independent security audit: **NOT PERFORMED**.
