@@ -11,6 +11,7 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 **Exit gate:** clear MVP, target user, target network, and evidence requirements.
 
 ## P1 — Local vertical slice (Days 4–12)
+**Status: IN PROGRESS.** A local browser prototype and domain tests are committed. Do not mark P1 complete until repository tests and the full browser flow are verified.
 - [x] Establish a dependency-free browser app and domain rules in `apps/web/`.
 - [ ] Creator publishes story plus explicit permissions.
 - [ ] Fan submits contribution linked to exact source version.
