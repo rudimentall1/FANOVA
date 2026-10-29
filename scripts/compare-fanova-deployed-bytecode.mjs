@@ -16,16 +16,24 @@ function normalize(value) {
 
 // Solidity appends CBOR metadata and its two-byte length to runtime bytecode.
 // Strip it only for the secondary executable-bytecode comparison.
-function withoutSolidityMetadata(hex) {
-  if (hex.length < 4) return hex;
-  const metadataLength = Number.parseInt(hex.slice(-4), 16);
-  const totalSuffixLength = (metadataLength + 2) * 2;
-  if (metadataLength <= 0 || totalSuffixLength >= hex.length) return hex;
+function splitSolidityMetadata(hex) {
+  if (hex.length < 4) return { executable: hex, metadataHex: null, metadataBytes: null };
+  const metadataBytes = Number.parseInt(hex.slice(-4), 16);
+  const totalSuffixLength = (metadataBytes + 2) * 2;
+  if (metadataBytes <= 0 || totalSuffixLength >= hex.length) {
+    return { executable: hex, metadataHex: null, metadataBytes: null };
+  }
   const metadataStart = hex.length - totalSuffixLength;
   const first = Number.parseInt(hex.slice(metadataStart, metadataStart + 2), 16);
   // Solidity metadata is CBOR; common initial map markers are 0xa1..0xbf.
-  if (first < 0xa1 || first > 0xbf) return hex;
-  return hex.slice(0, metadataStart);
+  if (first < 0xa1 || first > 0xbf) {
+    return { executable: hex, metadataHex: null, metadataBytes: null };
+  }
+  return {
+    executable: hex.slice(0, metadataStart),
+    metadataHex: hex.slice(metadataStart, hex.length - 4),
+    metadataBytes,
+  };
 }
 
 const artifact = JSON.parse(readFileSync(ARTIFACT_PATH, "utf8"));
@@ -48,9 +56,15 @@ const deployed = normalize(payload.result);
 if (deployed === "0") throw new Error("No deployed runtime bytecode at target address");
 
 const exact = deployed === local;
-const strippedLocal = withoutSolidityMetadata(local);
-const strippedDeployed = withoutSolidityMetadata(deployed);
-const executableMatch = strippedDeployed === strippedLocal;
+const localParts = splitSolidityMetadata(local);
+const deployedParts = splitSolidityMetadata(deployed);
+const executableMatch = deployedParts.executable === localParts.executable;
+let localMetadata = null;
+try {
+  localMetadata = typeof artifact.metadata === "string"
+    ? JSON.parse(artifact.metadata)
+    : artifact.metadata || null;
+} catch {}
 
 const report = {
   checkedAt: new Date().toISOString(),
@@ -66,6 +80,18 @@ const report = {
   deployedRuntimeBytes: deployed.length / 2,
   exactRuntimeMatch: exact,
   executableBytecodeMatchIgnoringSolidityMetadata: executableMatch,
+  metadata: {
+    localCborBytes: localParts.metadataBytes,
+    deployedCborBytes: deployedParts.metadataBytes,
+    localCborHex: localParts.metadataHex,
+    deployedCborHex: deployedParts.metadataHex,
+    metadataExactMatch: localParts.metadataHex === deployedParts.metadataHex,
+    localCompilerVersion: localMetadata?.compiler?.version ?? null,
+    localEvmVersion: localMetadata?.settings?.evmVersion ?? null,
+    localOptimizer: localMetadata?.settings?.optimizer ?? null,
+    localCompilationTarget: localMetadata?.settings?.compilationTarget ?? null,
+    localSourcePaths: localMetadata?.sources ? Object.keys(localMetadata.sources) : null
+  },
   result: exact
     ? "EXACT_RUNTIME_MATCH"
     : executableMatch
