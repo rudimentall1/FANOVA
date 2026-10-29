@@ -4,10 +4,13 @@
 
 ## Strategic finding
 
+**Deployment discovery update (2026-10-29):** the official [Soneium contract directory](https://docs.soneium.org/docs/builders/contracts) currently lists standard network/system contracts and several common assets, but does not publish an IP Registry or ERC-8432 registry address in its listed contracts. This is a documentation check, not proof that no deployment exists. Before selecting an integration, search the official ecosystem/repository sources and verify any candidate address on Soneium Mainnet (chain ID 1868), including verified source/ABI, ERC-165 interface support where applicable, deployer/admin trust model, and recent state-changing activity. Until those checks pass, registry integration remains **unverified**.
+
 Soneium's October 2026 direction describes an IP Registry, IP Graph, IP Execution Layer, and its intention to support ERC-8432 as a machine-readable IP/licensing interface. The ERC itself is still a draft; its forum post says the reference implementation is not audited and is not intended for production use. We have not verified a deployed production-ready ERC-8432 implementation on Soneium. Its stated use cases include narrative content, fan-created derivatives, attribution, and optional monetization. FANOVA must not position generic “onchain provenance for derivatives” as a unique invention. Its product-level differentiation has to be a better creator-facing workflow and real creator/community adoption, built to interoperate with shared Soneium infrastructure rather than duplicate it.
 
 Sources:
 - Soneium, “Unveiling the Onchain Entertainment Economy” (2026-10-26): https://soneium.org/en/blog/onchain-entertainment-economy
+- Soneium official contract directory (reviewed 2026-10-29; IP Registry/ERC-8432 address not listed in the directory): https://docs.soneium.org/docs/builders/contracts
 - Soneium Vision Paper — ecosystem and use cases: https://docs.soneium.org/docs/vision-paper/ecosystem-and-use-cases
 - Soneium initiatives / ERC-8432: https://docs.soneium.org/docs/vision-paper/key-initiatives
 - ERC-8432 draft discussion and implementation caveat: https://ethereum-magicians.org/t/erc-8432-onchain-ip-asset-and-license-registry/29792
