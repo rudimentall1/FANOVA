@@ -59,6 +59,10 @@ No full text, personal data, payment, token, NFT, royalty, or legal-rights claim
 
 EAS is a credible alternative for attestations, but it is not equivalent to the strict authorization/state invariants in PROVENANCE_REQUIREMENTS.md. If those invariants remain part of the product promise, a minimal workflow contract is the stronger fit unless a deployed, verified resolver or registry already enforces them. Do not add both EAS and a custom contract by default.
 
+## Read-only verification tooling
+
+`scripts/verify-soneium-readonly.mjs` queries the configured RPC for `eth_chainId` and `eth_getCode` for both documented addresses, records runtime bytecode length and a SHA-256 fingerprint, and separately attempts to read Blockscout source metadata. It performs no transactions and has no private-key requirement. The SHA-256 value is a reproducible fingerprint, not the EVM keccak code hash. Explorer metadata failure is reported as unavailable rather than treated as proof that source is unverified. The workflow is `.github/workflows/soneium-readonly.yml`; its first run must pass and its output must be inspected before marking runtime evidence verified. Even a passing run does not verify contract method behavior or EAS schema/resolver semantics.
+
 ## Gates before implementation
 
 1. Read-only verify chain ID 1868, non-empty runtime bytecode at both EAS addresses, and explorer/source metadata; compare code/ABI with the EAS catalog release.
