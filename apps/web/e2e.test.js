@@ -28,9 +28,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     await page.goto(baseURL);
-    await page.getByRole("button", { name: "Reset local demo data" }).click();
     page.once("dialog", dialog => dialog.accept());
-    // The reset button opens a confirmation dialog; trigger it after the handler is installed.
     await page.getByRole("button", { name: "Reset local demo data" }).click();
     await page.getByLabel("Story title").fill("The Glass City");
     await page.getByLabel("Story text").fill("A courier discovers a city that changes every midnight.");
