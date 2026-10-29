@@ -52,7 +52,7 @@ Domain rules + validation
 - Deployment credentials and private keys must never enter the repository.
 
 ## Provenance proof requirements
-See [`docs/PROVENANCE_REQUIREMENTS.md`](PROVENANCE_REQUIREMENTS.md) for the exact external claim, minimum evidence, authorization invariants, and deployment gates. The requirements are defined; the implementation choice remains blocked on verification of any deployed Soneium IP registry interface.
+See [`docs/PROVENANCE_REQUIREMENTS.md`](PROVENANCE_REQUIREMENTS.md) for the exact external claim, minimum evidence, authorization invariants, and deployment gates. [`docs/ONCHAIN_PROOF_DESIGN.md`](ONCHAIN_PROOF_DESIGN.md) compares EAS attestations with a minimal workflow contract. Soneium officially documents EAS/SchemaRegistry addresses, but live runtime bytecode/source behavior is not yet independently verified. EAS alone records attestations; it does not enforce FANOVA's creator authorization or one-final-decision invariants. Do not write contract code until the read-only verification and architecture decision are complete.
 
 ## Contract design gate
 Do not write/deploy a contract until the local workflow and exact external proof requirement are defined. Keep the contract minimal and avoid storing full content, personal information, or broad mutable permissions. Enforce creator authorization onchain if the UI claims approvals are onchain-authorized.
