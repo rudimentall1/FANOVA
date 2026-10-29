@@ -43,7 +43,7 @@ contract FanovaProvenance {
         address reviewer;
         uint64 sourceVersion;
         uint64 permissionVersion;
-        uint64 decidedAt;
+        uint256 decidedAt;
         bool exists;
         bool decided;
         bool approved;
@@ -80,7 +80,7 @@ contract FanovaProvenance {
         address reviewer,
         bool approved,
         bytes32 reasonCode,
-        uint64 decidedAt
+        uint256 decidedAt
     );
 
     /// @notice Derive a stable story ID bound to the creator address and their chosen salt.
@@ -222,7 +222,7 @@ contract FanovaProvenance {
         }
 
         contribution.reviewer = msg.sender;
-        contribution.decidedAt = uint64(block.timestamp);
+        contribution.decidedAt = block.timestamp;
         contribution.decided = true;
         contribution.approved = approved;
 
