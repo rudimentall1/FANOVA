@@ -12,6 +12,16 @@ npm start
 
 Open `http://127.0.0.1:4173`.
 
+For the real-browser end-to-end test, install Playwright and Chromium, then run:
+
+```sh
+npm install --no-save playwright
+npx playwright install chromium
+npm run test:e2e
+```
+
+GitHub Actions runs this browser test on a clean checkout.
+
 ## Included flow
 1. Creator publishes an original story with explicit permitted-use rules.
 2. Fan submits a contribution and acknowledges those rules.
@@ -22,7 +32,7 @@ Open `http://127.0.0.1:4173`.
 ## Limitations
 - State is stored in this browser's localStorage; there is no server or shared database.
 - Demo identities are fixed. Role switching is for demonstration and is not authentication.
-- Eleven domain tests and JavaScript syntax checks pass in GitHub Actions on a clean checkout. The interactive browser flow has not yet been manually verified.
+- Eleven domain tests, JavaScript syntax checks, and the Playwright Chromium browser flow pass in GitHub Actions on a clean checkout. The browser test covers publication, contribution submission, unauthorized-review rejection, creator approval, and creator rejection.
 - No wallet connection, contract, or Soneium transaction is implemented. Mainnet integration remains PLANNED.
 - Local hashes/IDs do not establish legal ownership or licensing rights.
 - Use original pilot content or material with documented permission.
