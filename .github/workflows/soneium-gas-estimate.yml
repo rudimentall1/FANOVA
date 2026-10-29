@@ -1,0 +1,36 @@
+name: FANOVA Soneium read-only deployment estimate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - 'foundry.toml'
+      - 'scripts/estimate-soneium-deployment.mjs'
+      - '.github/workflows/soneium-gas-estimate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  estimate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: Build and report local gas usage
+        run: |
+          forge build --sizes
+          forge test --gas-report
+      - name: Estimate Mainnet deployment through read-only RPC
+        run: node scripts/estimate-soneium-deployment.mjs
+      - name: Upload read-only estimate
+        uses: actions/upload-artifact@v4
+        with:
+          name: fanova-soneium-deployment-estimate
+          path: artifacts/soneium-deployment-estimate.json
+          if-no-files-found: error
