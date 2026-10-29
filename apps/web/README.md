@@ -22,7 +22,7 @@ Open `http://127.0.0.1:4173`.
 ## Limitations
 - State is stored in this browser's localStorage; there is no server or shared database.
 - Demo identities are fixed. Role switching is for demonstration and is not authentication.
-- Six domain tests and JavaScript syntax checks pass in GitHub Actions on a clean checkout. The interactive browser flow has not yet been manually verified.
+- Ten domain tests and JavaScript syntax checks pass in GitHub Actions on a clean checkout. The interactive browser flow has not yet been manually verified.
 - No wallet connection, contract, or Soneium transaction is implemented. Mainnet integration remains PLANNED.
 - Local hashes/IDs do not establish legal ownership or licensing rights.
 - Use original pilot content or material with documented permission.
