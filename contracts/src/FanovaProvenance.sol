@@ -103,25 +103,21 @@ contract FanovaProvenance {
         if (sourceVersion == 0 || permissionVersion == 0) revert InvalidVersion();
 
         Story storage story = _stories[storyId];
-        if (!story.exists) {
+        if (story.exists) {
+            _validateExistingStoryVersion(
+                story,
+                storyId,
+                creatorSalt,
+                sourceVersion,
+                permissionVersion,
+                permissionHash
+            );
+        } else {
             if (storyId != computeStoryId(msg.sender, creatorSalt)) revert InvalidId();
             if (sourceVersion != 1) revert InvalidSourceVersion();
             story.creator = msg.sender;
             story.creatorSalt = creatorSalt;
             story.exists = true;
-        } else {
-            if (story.creator != msg.sender) revert UnauthorizedCreator();
-            if (story.creatorSalt != creatorSalt) revert InvalidId();
-            if (story.latestVersion == type(uint64).max) revert InvalidVersion();
-            if (sourceVersion != story.latestVersion + 1) revert InvalidSourceVersion();
-
-            StoryVersion storage previous = _storyVersions[storyId][story.latestVersion];
-            if (permissionVersion < previous.permissionVersion) {
-                revert PermissionVersionMustNotDecrease();
-            }
-            if (permissionHash != previous.permissionHash && permissionVersion <= previous.permissionVersion) {
-                revert PermissionVersionMustIncrease();
-            }
         }
 
         if (_storyVersions[storyId][sourceVersion].exists) revert InvalidSourceVersion();
@@ -142,6 +138,28 @@ contract FanovaProvenance {
             permissionVersion,
             permissionHash
         );
+    }
+
+    function _validateExistingStoryVersion(
+        Story storage story,
+        bytes32 storyId,
+        bytes32 creatorSalt,
+        uint64 sourceVersion,
+        uint64 permissionVersion,
+        bytes32 permissionHash
+    ) internal view {
+        if (story.creator != msg.sender) revert UnauthorizedCreator();
+        if (story.creatorSalt != creatorSalt) revert InvalidId();
+        if (story.latestVersion == type(uint64).max) revert InvalidVersion();
+        if (sourceVersion != story.latestVersion + 1) revert InvalidSourceVersion();
+
+        StoryVersion storage previous = _storyVersions[storyId][story.latestVersion];
+        if (permissionVersion < previous.permissionVersion) {
+            revert PermissionVersionMustNotDecrease();
+        }
+        if (permissionHash != previous.permissionHash && permissionVersion <= previous.permissionVersion) {
+            revert PermissionVersionMustIncrease();
+        }
     }
 
     /// @notice Register a contribution against the exact current story and permission version.
