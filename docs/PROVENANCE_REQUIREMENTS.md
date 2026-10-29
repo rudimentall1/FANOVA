@@ -1,6 +1,6 @@
 # FANOVA Provenance Proof Requirements
 
-**Status:** requirements locked; initial contract implementation and 13 Foundry tests are LOCAL and passing in CI. No contract has been deployed.
+**Status:** requirements locked; initial contract implementation and 20 Foundry tests are LOCAL and passing in CI. No contract has been deployed.
 **Date:** 2026-10-29
 
 ## User-visible claim to prove
@@ -66,7 +66,7 @@ If no suitable deployed interface can be verified, the accepted alternative is t
 
 ## Acceptance evidence before deployment can be requested
 
-- Unit and adversarial contract tests for authorization, stale versions, duplicate decisions, and invalid outcomes.
+- Unit and adversarial contract tests for authorization, stale versions, duplicate decisions, invalid outcomes, and edge cases (20 tests currently pass in CI).
 - Static analysis and dependency review with unresolved findings disclosed.
 - Reproducible deployment manifest and gas estimate.
 - Verified source and a documented independent verification procedure.
