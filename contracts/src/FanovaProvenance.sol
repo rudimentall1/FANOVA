@@ -24,6 +24,7 @@ contract FanovaProvenance {
     struct Story {
         address creator;
         uint64 latestVersion;
+        bytes32 creatorSalt;
         bool exists;
     }
 
@@ -82,10 +83,16 @@ contract FanovaProvenance {
         uint64 decidedAt
     );
 
+    /// @notice Derive a stable story ID bound to the creator address and their chosen salt.
+    function computeStoryId(address creator, bytes32 creatorSalt) public pure returns (bytes32) {
+        return keccak256(abi.encode(creator, creatorSalt));
+    }
+
     /// @notice Register a new immutable version of a story and its permission statement.
     /// @dev The first version must be 1; later versions must be sequential and creator-controlled.
     function registerStoryVersion(
         bytes32 storyId,
+        bytes32 creatorSalt,
         uint64 sourceVersion,
         bytes32 sourceHash,
         uint64 permissionVersion,
@@ -97,11 +104,14 @@ contract FanovaProvenance {
 
         Story storage story = _stories[storyId];
         if (!story.exists) {
+            if (storyId != computeStoryId(msg.sender, creatorSalt)) revert InvalidId();
             if (sourceVersion != 1) revert InvalidSourceVersion();
             story.creator = msg.sender;
+            story.creatorSalt = creatorSalt;
             story.exists = true;
         } else {
             if (story.creator != msg.sender) revert UnauthorizedCreator();
+            if (story.creatorSalt != creatorSalt) revert InvalidId();
             if (story.latestVersion == type(uint64).max) revert InvalidVersion();
             if (sourceVersion != story.latestVersion + 1) revert InvalidSourceVersion();
 
