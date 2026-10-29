@@ -27,7 +27,8 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [x] Define the minimum externally verifiable provenance claim and evidence requirements in `docs/PROVENANCE_REQUIREMENTS.md`.
 - [x] Check the official Soneium contract directory and EAS deployment catalog; EAS/SchemaRegistry addresses are documented, but live bytecode/source/runtime behavior is not yet independently verified.
 - [x] Compare EAS-only attestations with a minimal workflow contract in docs/ONCHAIN_PROOF_DESIGN.md; EAS alone does not enforce creator authorization or one final decision.
-- [ ] Read-only verify EAS/SchemaRegistry runtime bytecode, source/ABI and behavior on chain ID 1868.
+- [ ] Read-only verify EAS/SchemaRegistry runtime bytecode and explorer source metadata on chain ID 1868 using `scripts/verify-soneium-readonly.mjs`; workflow added, successful run and output inspection still pending.
+- [ ] Compare verified runtime bytecode/source metadata with the EAS release artifacts; the read-only script does not prove ABI correspondence or method behavior.
 - [ ] Check for any suitable deployed Soneium IP Registry/ERC-8432 interface; official contract directory reviewed so far does not list one.
 - [ ] Record an accepted architecture decision after read-only verification, before writing contract code.
 - [ ] Write and run contract tests locally, including unauthorized-call rejection.
