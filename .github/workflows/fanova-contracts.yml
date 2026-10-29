@@ -26,5 +26,7 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
+      - name: Check build and deployed bytecode sizes
+        run: forge build --sizes
       - name: Run adversarial contract tests
         run: forge test -vvv
