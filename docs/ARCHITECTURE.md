@@ -7,56 +7,66 @@
 Creator / Fan Browser
         |
         v
-Web UI (creator story setup, contribution submission, review)
+Web UI: story setup, contribution submission, review
         |
         v
 Domain rules + validation
   - permission acknowledgement
-  - source version linkage
+  - exact source-version linkage
   - creator authorization
   - approval state transitions
         |
-        +------> Offchain content/metadata storage
+        +----> Offchain content / metadata storage
         |
-        +------> Soneium Minato chain adapter
+        +----> Soneium Mainnet adapter (chain ID 1868)
                     |
                     v
              Minimal provenance contract
                     |
                     v
-             Minato explorer / transaction evidence
+             Mainnet explorer / transaction evidence
 ```
 
 ## Proposed implementation
-- TypeScript web app, with a small component surface and accessible responsive UI.
-- Shared domain types and validation separated from UI code.
-- Solidity contracts tested with Foundry, using established libraries where appropriate.
-- A chain adapter that rejects unexpected chain IDs and clearly distinguishes disconnected/local/testnet state.
-- Keep content bodies offchain; onchain data should be limited to hashes/identifiers, creator authorization, decision events, and references that do not expose private data.
-- No AI generation in the first vertical slice. AI may be added later only if a specific user-tested task requires it.
+- TypeScript web app with a small, accessible component surface.
+- Shared domain types and validation separated from UI.
+- Solidity contracts tested locally with Foundry and established libraries where appropriate.
+- Mainnet adapter checks chain ID and distinguishes disconnected/local/mainnet states.
+- Minato is optional for isolated pre-deployment checks, not the default target or required milestone.
+- Story bodies stay offchain. Onchain data is limited to hashes/identifiers, authorization and decision events, and non-sensitive references.
+- No AI generation in the first vertical slice.
 
 ## Domain entities
-- `Story`: stable ID, creator address/identity, source version, content reference/hash, permission text/version, status.
+- `Story`: stable ID, creator identity/address, source version, content reference/hash, permission text/version, status.
 - `Contribution`: stable ID, source story/version, contributor identity, content reference/hash, permission acknowledgement, status.
-- `ReviewDecision`: contribution ID, authorized reviewer, approve/reject outcome, timestamp, reason code.
+- `ReviewDecision`: contribution ID, authorized reviewer, outcome, timestamp, reason code.
 - `ProvenanceRecord`: source hash, contribution hash, relationship, authorized decision, transaction reference.
-- `PaymentSplit`: future-only model; not part of the baseline unless the real payment flow is explicitly added.
+- `PaymentSplit`: future-only; not in the baseline unless explicitly approved.
 
 ## Trust boundaries
 - Client-supplied creator identity is untrusted until authenticated.
-- A wallet address does not prove legal ownership of an IP.
-- A hash proves integrity of the referenced bytes only if the bytes are available for comparison; it does not prove authorship or legal rights.
-- Offchain content storage availability is a product risk.
-- Contract events are not a substitute for a legal license or signed agreement.
-- Admin keys and deployment credentials must never enter the repository.
+- A wallet address does not prove legal ownership of IP.
+- A hash proves integrity only when the referenced bytes can be compared; it does not prove authorship or legal rights.
+- Offchain storage availability is a product risk.
+- Contract events do not replace a license or signed agreement.
+- Deployment credentials and private keys must never enter the repository.
 
 ## Contract design gate
-Do not write/deploy a contract until the product workflow and the exact external proof requirement are defined. The initial contract should be minimal, testable, and avoid storing full content, personal information, or broad mutable permissions. Enforce creator authorization onchain if the UI claims that approvals are onchain-authorized.
+Do not write/deploy a contract until the local workflow and exact external proof requirement are defined. Keep the contract minimal and avoid storing full content, personal information, or broad mutable permissions. Enforce creator authorization onchain if the UI claims approvals are onchain-authorized.
+
+## Mainnet deployment gate
+Mainnet is the target, but deployment is not automatic. Before requesting approval:
+1. Complete and test the local end-to-end workflow.
+2. Define the exact claim the contract proves and the minimum data/events needed.
+3. Run contract tests, static checks, and dependency review; document gaps.
+4. Confirm deployment account, network, estimated gas, verification, and upgrade limitations.
+5. Prepare a deployment manifest and commands without exposing credentials.
+6. Obtain explicit user approval before any real transaction.
 
 ## Security checks
 - Validate input length, content type, permission version, and source ID.
 - Reject approval by a non-authorized creator.
 - Reject contributions without required permission acknowledgement.
-- Avoid trusting UI-only checks for security-sensitive actions.
+- Do not rely on UI-only checks for security-sensitive actions.
 - Test replay/duplicate IDs and stale source versions.
-- Handle chain mismatch, wallet disconnect, rejected wallet prompt, RPC error, and failed transaction explicitly.
+- Handle chain mismatch, wallet disconnect, rejected wallet prompt, RPC errors, and failed transactions explicitly.
