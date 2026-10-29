@@ -9,7 +9,8 @@ Soneium's October 2026 direction describes an IP Registry, IP Graph, IP Executio
 Sources:
 - Soneium, “Unveiling the Onchain Entertainment Economy” (2026-10-26): https://soneium.org/en/blog/onchain-entertainment-economy
 - Soneium Vision Paper — ecosystem and use cases: https://docs.soneium.org/docs/vision-paper/ecosystem-and-use-cases
-- Soneium initiatives / ERC-8432: https://docs.soneium.org/docs/vision-paper/key-initiatives\n- ERC-8432 draft discussion and implementation caveat: https://ethereum-magicians.org/t/erc-8432-onchain-ip-asset-and-license-registry/29792
+- Soneium initiatives / ERC-8432: https://docs.soneium.org/docs/vision-paper/key-initiatives
+- ERC-8432 draft discussion and implementation caveat: https://ethereum-magicians.org/t/erc-8432-onchain-ip-asset-and-license-registry/29792
 - Soneium Portal: https://portal.soneium.org/en
 
 ## Adjacent products and infrastructure
