@@ -68,6 +68,7 @@ Mainnet is the target, but deployment is not automatic. Before requesting approv
 
 ## Security checks
 - Validate input length, content type, permission version, and source ID.
+- Bind a story ID to the first registering creator address, so another address cannot front-run and claim that same ID.
 - Reject approval by a non-authorized creator.
 - Reject contributions without required permission acknowledgement.
 - Do not rely on UI-only checks for security-sensitive actions.
