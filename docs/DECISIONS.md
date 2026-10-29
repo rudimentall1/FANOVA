@@ -54,8 +54,8 @@ This file is the append-only record of material project decisions. New decisions
 ## ADR-006 — Evaluate shared Soneium IP infrastructure before custom provenance contract
 - **Date:** 2026-10-29
 - **Status:** Accepted for investigation; no production integration claimed
-- **Context:** Soneium's published October 2026 direction describes an IP Registry, IP Graph, IP Execution Layer, and support for ERC-8432. A custom FANOVA registry could duplicate ecosystem infrastructure and weaken interoperability.
-- **Decision:** Before implementing a custom provenance contract, inspect official docs and deployed contract/interface availability; determine whether FANOVA can reference existing IP/license records and add only the creator-review workflow/proof that is missing. Build a custom minimal contract only if a specific gap is documented.
+- **Context:** Soneium's published October 2026 direction describes an IP Registry, IP Graph, IP Execution Layer, and its intention to support ERC-8432. The ERC is still draft-stage; the linked reference implementation is unaudited and explicitly not intended for production. A custom FANOVA registry could duplicate ecosystem infrastructure and weaken interoperability.
+- **Decision:** Before implementing a custom provenance contract, inspect official docs and deployed contract/interface availability; do not treat the draft reference implementation as production-ready; determine whether FANOVA can reference existing IP/license records and add only the creator-review workflow/proof that is missing. Build a custom minimal contract only if a specific gap is documented.
 - **Alternatives:** Build a bespoke registry immediately; assume ERC-8432 is fully deployed without verification; abandon onchain provenance entirely.
 - **Consequences:** Potentially stronger ecosystem fit and less duplicated infrastructure. Integration availability and compatibility remain unverified and must be established before code or claims.
 - **Explicit user approval:** Not required for research and architecture assessment; no deployment or spending authorized.
