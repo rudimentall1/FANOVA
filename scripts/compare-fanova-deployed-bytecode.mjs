@@ -109,6 +109,12 @@ async function fetchJson(url) {
         sourceCount: json.sources ? Object.keys(json.sources).length : null,
         responseKeys: Object.keys(json),
         contractName: json.name ?? json.contractName ?? null,
+        filePath: json.file_path ?? null,
+        compilerVersionFromExplorer: json.compiler_version ?? json.compilerVersion ?? null,
+        evmVersionFromExplorer: json.evm_version ?? json.evmVersion ?? json.compiler_settings?.evmVersion ?? null,
+        optimizationRuns: json.optimization_runs ?? json.compiler_settings?.optimizer?.runs ?? null,
+        optimizationEnabled: json.optimization_enabled ?? json.compiler_settings?.optimizer?.enabled ?? null,
+        constructorArgumentsPresent: Boolean(json.constructor_args ?? json.constructorArguments),
         language: json.language ?? null,
         compilerSettings: json.compiler_settings ?? json.compilerSettings ?? null,
         verificationStatus: json.verification_status ?? json.verificationStatus ?? null,
@@ -120,6 +126,9 @@ async function fetchJson(url) {
           : null,
         sourceCodeMatchesCurrentFile: typeof json.source_code === "string"
           ? json.source_code === localSource
+          : null,
+        sourceCodeMatchesCurrentFileWithoutFinalNewline: typeof json.source_code === "string"
+          ? json.source_code.replace(/\n$/, "") === localSource.replace(/\n$/, "")
           : null,
         sourceCodeMatchesCurrentFileIgnoringFinalNewline: typeof json.source_code === "string"
           ? json.source_code.replace(/\\n$/, "") === localSource.replace(/\\n$/, "")
