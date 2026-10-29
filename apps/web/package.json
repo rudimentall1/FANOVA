@@ -1,0 +1,10 @@
+{
+  "name": "fanova-local-mvp",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node serve.mjs",
+    "test": "node --test domain.test.js"
+  }
+}
