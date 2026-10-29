@@ -119,3 +119,13 @@ This file is the append-only record of material project decisions. New decisions
 - **Alternatives:** EAS-only attestations (cannot enforce required invariants); EAS plus custom resolver (additional integration and state complexity without a demonstrated benefit); broad custom IP registry (duplicates ecosystem infrastructure); deploy before local tests (rejected).
 - **Consequences:** A smaller, directly testable state machine can enforce the MVP's core security claims. New contract code creates audit and upgrade/deployment risk; it must pass local adversarial tests, static/dependency review, and cost estimation before a deployment can even be proposed.
 - **Explicit user approval:** Not required for local code/tests within the locked P2 milestone. Explicit approval remains required before any Mainnet transaction, deployment, or spending.
+
+
+## ADR-013 — Bind initial story IDs to the registering creator
+- **Date:** 2026-10-29
+- **Status:** Accepted for local implementation
+- **Context:** A naive first-writer-wins story ID could be front-run by an observer copying the story ID from a pending registration transaction and registering it under another address.
+- **Decision:** Derive the stable story ID as `keccak256(abi.encode(creatorAddress, creatorChosenSalt))` and require the first registration to match the caller-derived ID. Require the same creator and salt for later versions. Add an adversarial test proving another address cannot claim a creator-derived ID.
+- **Consequences:** Reduces ID-squatting/front-running risk without adding a signature dependency. It still does not prove legal IP ownership; the caller only controls the address-bound record.
+- **Evidence:** [Foundry CI run 40895792292](https://github.com/rudimentall1/FANOVA/actions/runs/40895792292): 13 passed, 0 failed.
+- **Explicit user approval:** Not required for local implementation/testing; Mainnet deployment still requires explicit approval.
