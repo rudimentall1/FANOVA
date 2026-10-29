@@ -67,7 +67,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     assert.equal(await page.locator(".chip.approved").count(), 1);
     assert.equal(await page.locator(".chip.rejected").count(), 1, "creator rejection should be visible");
     assert.match(await page.locator(".status").innerText(), /LOCAL MVP · OPTIONAL CHAIN WRITES/);
-    assert.match(await page.locator(".network-note").innerText(), /read-only check.*Soneium Mainnet/);
+    assert.match(await page.locator(".network-note").innerText(), /optional wallet-approved.*Soneium Mainnet/);
     assert.match(await page.locator(".onchain-proof").innerText(), /Contract deployment check/);
     assert.ok(await page.locator("#chain-proof-status").count(), "deployment status label should render");
     assert.match(await page.locator("#onchain-actions-title").innerText(), /Anchor this workflow onchain/);
