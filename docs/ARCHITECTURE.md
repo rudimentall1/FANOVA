@@ -1,6 +1,6 @@
 # FANOVA Architecture
 
-**Status:** proposed baseline; implementation must be verified separately.
+**Status:** proposed baseline; local web flow and initial provenance contract are implemented, but the contract is not deployed and still requires security/static review.
 
 ## System shape
 ```text
@@ -52,7 +52,7 @@ Domain rules + validation
 - Deployment credentials and private keys must never enter the repository.
 
 ## Provenance proof requirements
-See [`docs/PROVENANCE_REQUIREMENTS.md`](PROVENANCE_REQUIREMENTS.md) for the exact external claim, minimum evidence, authorization invariants, and deployment gates. [`docs/ONCHAIN_PROOF_DESIGN.md`](ONCHAIN_PROOF_DESIGN.md) compares EAS attestations with a minimal workflow contract. Soneium officially documents EAS/SchemaRegistry addresses, but live runtime bytecode/source behavior is not yet independently verified. EAS alone records attestations; it does not enforce FANOVA's creator authorization or one-final-decision invariants. Do not write contract code until the read-only verification and architecture decision are complete.
+See [`docs/PROVENANCE_REQUIREMENTS.md`](PROVENANCE_REQUIREMENTS.md) for the exact external claim, minimum evidence, authorization invariants, and deployment gates. [`docs/ONCHAIN_PROOF_DESIGN.md`](ONCHAIN_PROOF_DESIGN.md) compares EAS attestations with a minimal workflow contract. Soneium officially documents EAS/SchemaRegistry addresses, but live runtime bytecode/source behavior is not yet independently verified. EAS alone records attestations; it does not enforce FANOVA's creator authorization or one-final-decision invariants. ADR-012 resolves the architecture choice: a minimal FANOVA workflow contract, not EAS-only attestations. The initial contract source now exists under `contracts/src/` and its local adversarial tests pass in CI. This is LOCAL only; no deployment or transaction has been performed.
 
 ## Contract design gate
 Do not write/deploy a contract until the local workflow and exact external proof requirement are defined. Keep the contract minimal and avoid storing full content, personal information, or broad mutable permissions. Enforce creator authorization onchain if the UI claims approvals are onchain-authorized.
