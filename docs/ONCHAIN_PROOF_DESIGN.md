@@ -32,7 +32,7 @@ Sources:
 
 Proxy runtime SHA-256 fingerprint for both: `30ccc4ce49c00fae11d7118fc244f29a13788fb32cd4022ee69acc2f15c0e2f5`. SchemaRegistry implementation fingerprint: `ee7f41153155ac31718d816854c8f3c2893e32ae6462322f8cb8506f5582f966`. EAS implementation fingerprint: `42f7133847dbd6a7be9f27eb8f3ff8c4465d7a47557281dc15f7d95a18114e4c`. These are SHA-256 fingerprints of fetched runtime bytes, not EVM keccak code hashes. Explorer source verification does not alone prove that the deployed bytecode matches a particular upstream release or that behavior satisfies FANOVA's requirements.
 
-The script currently verifies chain ID, runtime presence, the standard EIP-1967 implementation slot, and explorer source metadata. It does not yet compare compiler artifacts, inspect proxy admin/upgrade authority, or call EAS/SchemaRegistry methods.
+The verifier has been extended to read the standard EIP-1967 implementation, admin, and beacon slots and to make read-only `eth_call` requests for EAS `version()`, EAS `getSchemaRegistry()`, and SchemaRegistry `version()`. The new checks are committed in `2425040553fa595d16d459044778eddb914dce86`; their live CI output has not yet been confirmed, so no result is claimed here. These storage slots do not cover every possible upgrade pattern. The official Soneium deployment JSON files in the EAS repository contain address and ABI, but no deployed bytecode or compiler metadata, so those files alone cannot establish bytecode equivalence to the upstream release.
 
 ## Option A: EAS attestations only
 
