@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="FANOVA local MVP: creator permissions, fan contributions, review, and provenance.">
+  <title>FANOVA — Shape the Story</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./">FANOVA<span>STORY PROTOCOL</span></a>
+    <div class="status"><i></i> LOCAL MVP · NO CHAIN WRITES</div>
+  </header>
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">CREATOR × COMMUNITY</p>
+      <h1>Stories grow<br><em>with their fans.</em></h1>
+      <p class="intro">A creator sets the rules. Fans contribute within them. Every decision stays linked to the source story.</p>
+      <div class="network-note"><strong>Current proof level</strong><span>Local browser workflow · Soneium Mainnet integration not yet implemented</span></div>
+    </section>
+    <section class="workspace">
+      <div class="section-heading">
+        <div><p class="eyebrow">WORKSPACE</p><h2>Story room</h2></div>
+        <div class="role-switch" role="group" aria-label="Demo role">
+          <button type="button" data-role="creator" class="active">Creator</button>
+          <button type="button" data-role="fan">Fan</button>
+        </div>
+      </div>
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+      <div id="app"></div>
+      <div class="footnote">Demo identities are fixed and simulated. This prototype does not authenticate users, persist data on a server, verify legal rights, or write to Soneium. Browser data is stored locally on this device.</div>
+      <button id="reset" class="text-button" type="button">Reset local demo data</button>
+    </section>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
