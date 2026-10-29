@@ -52,16 +52,18 @@ async function getWallet() {
   if (!window.ethereum) throw new Error("No injected wallet found. Install or enable MetaMask, then retry.");
   if (!ethersModule) ethersModule = await import(ETHERS_URL);
   const { BrowserProvider, Contract } = ethersModule;
-  const provider = new BrowserProvider(window.ethereum);
-  const network = await provider.getNetwork();
-  if (network.chainId !== CHAIN_ID) {
+  let chainId = await window.ethereum.request({ method: "eth_chainId" });
+  if (chainId.toLowerCase() !== CHAIN_HEX) {
     try {
       await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CHAIN_HEX }] });
+      chainId = await window.ethereum.request({ method: "eth_chainId" });
     } catch (error) {
       if (error?.code === 4001) throw new Error("Network switch was rejected. Select Soneium Mainnet (chain ID 1868) and retry.");
       throw new Error("Wallet is not on Soneium Mainnet (chain ID 1868). Switch networks in your wallet and retry.");
     }
   }
+  if (chainId.toLowerCase() !== CHAIN_HEX) throw new Error("Wallet is not on Soneium Mainnet (chain ID 1868).");
+  const provider = new BrowserProvider(window.ethereum);
   await provider.send("eth_requestAccounts", []);
   const signer = await provider.getSigner();
   const address = await signer.getAddress();
