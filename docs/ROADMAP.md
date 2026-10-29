@@ -12,15 +12,15 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 **Exit gate:** clear MVP, target user, target network, and evidence requirements.
 
 ## P1 — Local vertical slice (Days 4–12)
-**Status: IN PROGRESS.** Eleven domain tests and JavaScript syntax checks pass in GitHub Actions on a clean checkout. The full interactive browser flow is not yet manually verified.
+**Status: COMPLETE for the local vertical slice.** Eleven domain tests, JavaScript syntax checks, and a Playwright Chromium end-to-end workflow pass in GitHub Actions on a clean checkout.
 - [x] Establish a dependency-free browser app and domain rules in `apps/web/`.
 - [x] Add permission-version linkage to contributions and reject stale permission versions in domain rules.
 - [x] Implement creator story publication with explicit permissions.
 - [x] Implement fan submission linked to source and permission versions.
 - [x] Implement creator approve/reject rules and unauthorized-review rejection in the domain layer.
 - [x] Add and pass eleven domain tests, including authorization, stale permission version, and duplicate review.
-- [ ] Manually verify the full browser flow and visible failure path.
-- [x] Label the prototype as local and explicitly state that no chain writes occur; verify the full UI flow manually.
+- [x] Verify the full browser flow and visible failure path with a Playwright Chromium end-to-end test in CI.
+- [x] Label the prototype as local and explicitly state that no chain writes occur; verify the full UI flow automatically in a real browser.
 **Exit gate:** fresh checkout runs app/tests and a full local demo works.
 
 ## P2 — Mainnet provenance path (Days 13–19)
