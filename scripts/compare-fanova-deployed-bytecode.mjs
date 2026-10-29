@@ -103,7 +103,15 @@ async function fetchJson(url) {
         optimizer: json.settings?.optimizer ?? null,
         compilationTarget: json.settings?.compilationTarget ?? null,
         sourcePaths: json.sources ? Object.keys(json.sources) : null,
-        sourceCount: json.sources ? Object.keys(json.sources).length : null
+        sourceCount: json.sources ? Object.keys(json.sources).length : null,
+        responseKeys: Object.keys(json),
+        contractName: json.name ?? json.contractName ?? null,
+        language: json.language ?? null,
+        compilerSettings: json.compiler_settings ?? json.compilerSettings ?? null,
+        verificationStatus: json.verification_status ?? json.verificationStatus ?? null,
+        fileNames: Array.isArray(json.source_code) ? json.source_code.map(x => x.file_path ?? x.name).filter(Boolean) : null,
+        sourceCodeType: typeof json.source_code,
+        sourceCodeLength: typeof json.source_code === "string" ? json.source_code.length : null
       };
     } catch {
       return { url, status: response.status, nonJson: true };
@@ -125,7 +133,9 @@ const metadataLookups = await Promise.all([
   fetchJson("https://repo.sourcify.dev/contracts/partial_match/1868/" + ADDRESS + "/metadata.json")
     .then(result => ({ kind: "sourcify-partial", ...result })),
   fetchJson("https://repo.sourcify.dev/contracts/full_match/1868/" + ADDRESS + "/metadata.json")
-    .then(result => ({ kind: "sourcify-full", ...result }))
+    .then(result => ({ kind: "sourcify-full", ...result })),
+  fetchJson("https://soneium.blockscout.com/api/v2/smart-contracts/" + ADDRESS)
+    .then(result => ({ kind: "blockscout-contract-api", ...result }))
 ]);
 
 const report = {
