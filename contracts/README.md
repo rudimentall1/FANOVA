@@ -1,15 +1,22 @@
 # Contracts
 
-**Status: PLANNED. No contract deployment is claimed.**
+**Status: LOCAL implementation and tests; not deployed.**
 
-Contracts are added only after the local workflow is defined and tested. The initial contract should provide the minimum verifiable provenance/decision proof required by the MVP.
+`FanovaProvenance.sol` implements the narrow story-version, permission-hash, contribution, and creator-decision state machine selected in ADR-012. It is not a general IP registry and does not prove legal IP ownership or licensing.
 
-Requirements:
-- Solidity + Foundry tests.
-- Explicit creator authorization for onchain approval decisions if the product claims such enforcement.
-- Reject unauthorized calls and invalid/replayed identifiers.
-- No full story text or personal data onchain.
-- Test locally first; target Soneium Mainnet after security checks and explicit user approval. Minato is optional.
-- Never deploy to Mainnet or use a tradable FANOVA token without explicit approval.
+## Invariants
 
-Deployment manifests and evidence belong under `docs/evidence/` only after a real deployment.
+- A story creator is bound at the first version; only that address can register later versions.
+- Source versions are sequential. A changed permission hash requires a higher permission version.
+- A contribution must reference the exact current source version and permission hash, and explicitly acknowledge the permissions.
+- A version bump makes older pending contributions stale for review.
+- Only the story creator can approve/reject a contribution, and only one final decision is allowed.
+- Content and personal data stay offchain; the contract stores hashes and identifiers only.
+
+## Verification
+
+- Foundry tests: `forge test -vvv`
+- Formatting: `forge fmt --check`
+- GitHub Actions workflow: [FANOVA contract tests](../.github/workflows/fanova-contracts.yml)
+
+Mainnet deployment is not authorized. Any deployment requires passing local tests, security/static checks, dependency review, a deployment manifest, a gas estimate, and explicit user approval. Minato remains optional.
