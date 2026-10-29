@@ -1,0 +1,33 @@
+name: FANOVA static security analysis
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - 'foundry.toml'
+      - '.github/workflows/fanova-security.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - 'foundry.toml'
+      - '.github/workflows/fanova-security.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  slither:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - uses: crytic/slither-action@v0.4.1
+        with:
+          target: contracts/src/FanovaProvenance.sol
+          slither-args: --filter-paths "lib"
+          fail-on: high
