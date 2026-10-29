@@ -28,6 +28,7 @@ export function submitContribution({ story, contributorId, contributorName, titl
     storyId: story.id,
     sourceVersion: story.version,
     permissionVersion: story.permissionVersion,
+    permissionSnapshot: story.permissions,
     contributorId,
     contributorName: contributorName.trim(),
     title: title.trim(),
@@ -44,8 +45,8 @@ export function reviewContribution({ story, contribution, actorId, outcome, reas
   if (contribution.storyId !== story.id || contribution.sourceVersion !== story.version) {
     throw new Error("Contribution does not reference the current source version.");
   }
-  if (contribution.permissionVersion !== story.permissionVersion) {
-    throw new Error("Contribution does not reference the acknowledged permission version.");
+  if (contribution.permissionVersion !== story.permissionVersion || contribution.permissionSnapshot !== story.permissions) {
+    throw new Error("Contribution does not reference the acknowledged permission version and text.");
   }
   if (actorId !== story.creatorId) throw new Error("Rejected: only the story's authorized creator may review contributions.");
   if (!contribution.permissionAcknowledged) throw new Error("Rejected: permission acknowledgement is missing.");
