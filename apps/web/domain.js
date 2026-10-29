@@ -10,6 +10,7 @@ export function publishStory({ creatorId, creatorName, title, body, permissions 
     title: title.trim(),
     body: body.trim(),
     permissions: permissions.trim(),
+    permissionVersion: 1,
     version: 1,
     status: "published",
     createdAt: new Date().toISOString()
@@ -26,6 +27,7 @@ export function submitContribution({ story, contributorId, contributorName, titl
     id: globalThis.crypto.randomUUID(),
     storyId: story.id,
     sourceVersion: story.version,
+    permissionVersion: story.permissionVersion,
     contributorId,
     contributorName: contributorName.trim(),
     title: title.trim(),
@@ -41,6 +43,9 @@ export function reviewContribution({ story, contribution, actorId, outcome, reas
   if (!story || !contribution) throw new Error("Story and contribution are required.");
   if (contribution.storyId !== story.id || contribution.sourceVersion !== story.version) {
     throw new Error("Contribution does not reference the current source version.");
+  }
+  if (contribution.permissionVersion !== story.permissionVersion) {
+    throw new Error("Contribution does not reference the acknowledged permission version.");
   }
   if (actorId !== story.creatorId) throw new Error("Rejected: only the story's authorized creator may review contributions.");
   if (!contribution.permissionAcknowledged) throw new Error("Rejected: permission acknowledgement is missing.");
