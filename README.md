@@ -6,7 +6,7 @@ FANOVA is an onchain entertainment product concept for creators and fan communit
 
 ## Project status
 
-**Stage:** local application prototype plus one deployed Soneium Mainnet provenance contract. The contract deployment is visible on [Blockscout](https://soneium.blockscout.com/address/0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880). The explorer currently reports **source code verified (partial match)**. This is not a full-match verification, independent security audit, or proof that the deployed bytecode matches the current repository revision. That comparison remains an open verification task.
+**Stage:** local application prototype plus one deployed Soneium Mainnet provenance contract. The deployment is visible on [Blockscout](https://soneium.blockscout.com/address/0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880). Blockscout reports **source code verified (partial match)**. A GitHub Actions comparison using Solidity 0.8.27, Cancun EVM target, optimizer enabled, and 200 runs found that the deployed runtime bytecode and the current repository build have the **same executable bytecode after removing Solidity metadata**. The full runtime bytecode differs in metadata, so Blockscout's partial-match status remains accurate. This is not an independent security audit.
 
 Contract address: `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`
 
