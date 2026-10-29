@@ -92,5 +92,5 @@ The implementation must derive each story ID from the creator address and salt t
 - EIP-1967 proxy admin slots and the ProxyAdmin `owner()` address: **INDEPENDENTLY VERIFIED** by read-only CI. Owner mapping to the L1 SuperchainProxyAdminOwner multisig: **SUPPORTED BY OFFICIAL REGISTRY AND L2BEAT**. Current Safe owner set/threshold on L1 was not independently queried in this audit. L2BEAT reports 2-of-2 and no upgrade delay.
 - Upstream source/build equivalence and EAS schema/resolver semantics: **NOT YET VERIFIED**.
 - Architecture choice: **DECIDED** in ADR-012: minimal FANOVA workflow contract; no EAS integration in MVP.
-- Minimal FANOVA workflow contract and 13 Foundry tests: **LOCAL / CI PASSED** in [run 40895893460](https://github.com/rudimentall1/FANOVA/actions/runs/40895893460).
+- Minimal FANOVA workflow contract and 13 Foundry tests: **LOCAL / CI PASSED** in [run 40896262129](https://github.com/rudimentall1/FANOVA/actions/runs/40896262129). `forge build --sizes` reports 4,306 runtime bytes and 4,334 initcode bytes; no compiler/lint warning was emitted.
 - Contract deployment and mainnet transaction: **NOT DEPLOYED / NOT PERFORMED**.
