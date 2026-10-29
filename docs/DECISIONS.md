@@ -59,3 +59,13 @@ This file is the append-only record of material project decisions. New decisions
 - **Alternatives:** Build a bespoke registry immediately; assume ERC-8432 is fully deployed without verification; abandon onchain provenance entirely.
 - **Consequences:** Potentially stronger ecosystem fit and less duplicated infrastructure. Integration availability and compatibility remain unverified and must be established before code or claims.
 - **Explicit user approval:** Not required for research and architecture assessment; no deployment or spending authorized.
+
+
+## ADR-007 — Compare EAS attestations with a minimal workflow contract
+- **Date:** 2026-10-29
+- **Status:** Proposed; not accepted
+- **Context:** Soneium's official contract directory lists EAS and SchemaRegistry predeploy addresses, and the EAS catalog lists a Soneium deployment labelled version 1.4.1-beta.1. However, EAS attestations alone do not enforce FANOVA's creator authorization, exact version binding, or single-final-decision invariants. Live runtime bytecode/source correspondence has not yet been independently verified.
+- **Proposed decision:** Complete read-only runtime/source verification, then choose between EAS-only attestations (weaker claim: an address attested to a decision) and a minimal FANOVA workflow contract (stronger onchain authorization and finality invariants). Do not deploy both by default. Do not write or deploy a contract until this comparison is resolved and the relevant gates pass.
+- **Alternatives:** Treat EAS as if it enforced application rules; deploy an EAS schema or contract immediately; build a broad IP registry; add both EAS and a custom contract without a demonstrated need.
+- **Consequences:** Avoids overstating shared infrastructure and makes the security/claim trade-off explicit. P2 remains open.
+- **Explicit user approval:** Not required for this research/design comparison; required before any Mainnet transaction or spending.
