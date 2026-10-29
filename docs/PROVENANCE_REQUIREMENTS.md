@@ -35,6 +35,14 @@ Any onchain implementation or adapter must demonstrate:
 6. Rejected/unauthorized calls leave state unchanged and produce a reproducible failure.
 7. The evaluator can inspect source/ABI and verify the transaction/event on Soneium Mainnet, chain ID 1868.
 
+## Existing attestation infrastructure candidate: EAS
+
+Soneium's official contract directory lists the standard EAS and SchemaRegistry addresses (`0x4200000000000000000000000000000000000021` and `0x4200000000000000000000000000000000000020`). The EAS deployment catalog also lists these addresses for Soneium. This is a credible candidate for storing signed, inspectable story/contribution/review attestations without immediately deploying a custom registry, but the project has not independently checked live bytecode, source verification, or read/write behavior on Mainnet.
+
+EAS by itself does not enforce FANOVA's business invariants. A schema describes attestation data; the application must verify that the source attestation and review attestation use the same creator attester and bind the exact source/permission versions. Strong onchain enforcement would require a resolver or separate contract, which increases scope. Assess whether an EAS-only signed-attestation model satisfies the MVP claim before building custom enforcement.
+
+References: [Soneium contract directory](https://docs.soneium.org/docs/builders/contracts), [EAS deployment catalog](https://github.com/ethereum-attestation-service/eas-contracts), [EAS schema workflow](https://docs.attest.org/docs/core--concepts/how-eas-works).
+
 ## Infrastructure decision gate
 
 ADR-006 remains controlling. Before choosing a custom contract:
