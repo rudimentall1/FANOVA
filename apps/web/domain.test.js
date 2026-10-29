@@ -113,3 +113,11 @@ test("rejects unsupported review outcomes", () => {
     story, contribution, actorId: "creator-1", outcome: "published"
   }), /Decision must be approved or rejected/);
 });
+
+test("rejects changed permission text when the version number was not bumped", () => {
+  const { story, contribution } = setup();
+  story.permissions = "Different terms that were never acknowledged.";
+  assert.throws(() => reviewContribution({
+    story, contribution, actorId: "creator-1", outcome: "approved"
+  }), /acknowledged permission version and text/);
+});
