@@ -59,6 +59,7 @@ jobs:
           node scripts/compare-fanova-deployed-bytecode.mjs
           restore_source
           trap - EXIT
+      - name: Prepare local deployment manifest
         run: node scripts/prepare-deployment-manifest.mjs
       - name: Upload manifest artifact
         uses: actions/upload-artifact@v4
