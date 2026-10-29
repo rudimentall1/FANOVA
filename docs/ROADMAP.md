@@ -11,7 +11,7 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 **Exit gate:** clear MVP, target user, target network, and evidence requirements.
 
 ## P1 — Local vertical slice (Days 4–12)
-- [ ] Establish web app and domain types.
+- [x] Establish a dependency-free browser app and domain rules in `apps/web/`.
 - [ ] Creator publishes story plus explicit permissions.
 - [ ] Fan submits contribution linked to exact source version.
 - [ ] Creator approves/rejects; unauthorized approval fails.
