@@ -72,7 +72,7 @@ No full text, personal data, payment, token, NFT, royalty, or legal-rights claim
 
 ADR-012 is accepted: implement a minimal FANOVA workflow contract and do not integrate EAS in the MVP. EAS is useful for attestations, but it does not enforce the required creator authorization, exact version/permission binding, stale-version rejection, and one-final-decision invariants. The checked-in upstream `solcInputs` does not match the live implementation's compiler/version metadata, so it is not accepted as the matching build artifact. No production-ready deployed Soneium IP Registry/ERC-8432 interface has been verified. The custom contract is a narrow workflow state machine, not a general IP registry; content remains offchain and no legal-rights claim is made.
 
-The implementation must bind the creator at story creation, require monotonically increasing source versions, bind contributions to the exact current source and permission hash, require explicit acknowledgement, reject stale pending decisions after a version change, and derive each story ID from the creator address and salt to prevent ID front-running, and allow only one final creator decision. No EAS + custom-contract combination is planned.
+The implementation must derive each story ID from the creator address and salt to prevent ID front-running, require monotonically increasing source versions, bind contributions to the exact current source and permission hash, record an explicit contributor acknowledgement assertion, reject stale pending decisions after a version change, and allow only one final creator decision. The acknowledgement flag is not proof of comprehension, legal consent, or IP ownership. No EAS + custom-contract combination is planned.
 
 ## Read-only verification tooling
 
