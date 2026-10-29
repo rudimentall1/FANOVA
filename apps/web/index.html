@@ -28,6 +28,23 @@
         </div>
       </div>
       <section class="onchain-proof" aria-labelledby="onchain-proof-title"><div><p class="eyebrow">SONEIUM MAINNET · READ ONLY</p><h3 id="onchain-proof-title">Contract deployment check</h3><p id="chain-proof-detail" class="muted" role="status" aria-live="polite">Checking chain ID and contract bytecode through the public RPC…</p></div><span id="chain-proof-status" class="proof-status">CHECKING</span><a href="https://soneium.blockscout.com/address/0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880" target="_blank" rel="noopener noreferrer">Open contract on Blockscout ↗</a><p class="proof-limit">This confirms only that the configured RPC reports contract code at this address. It does not verify source equivalence or write this browser’s story data onchain.</p></section>
+      <section class="onchain-actions" aria-labelledby="onchain-actions-title">
+        <p class="eyebrow">USER-APPROVED TRANSACTIONS · SONEIUM MAINNET</p>
+        <h3 id="onchain-actions-title">Anchor this workflow onchain</h3>
+        <p class="muted">Wallet actions are separate from the local demo. Each write requires wallet confirmation and gas. The contract stores hashes and addresses, not story text.</p>
+        <div class="wallet-line"><span>Wallet</span><code id="wallet-address">Not connected</code></div>
+        <div class="onchain-buttons">
+          <button class="secondary" type="button" data-onchain-action="connect">Connect wallet</button>
+          <button class="secondary" type="button" data-onchain-action="story">1. Register source story</button>
+          <button class="secondary" type="button" data-onchain-action="contribution">2. Register latest contribution</button>
+          <label class="reason-field">Decision note (optional)<input id="onchain-reason" maxlength="300" placeholder="Reason recorded as a hash"></label>
+          <button class="secondary" type="button" data-onchain-action="decision">3. Record creator decision</button>
+          <button class="secondary" type="button" data-onchain-action="export">Export evidence JSON</button>
+        </div>
+        <p id="onchain-action-detail" class="muted" role="status" aria-live="polite">Connect a wallet to begin. Use the creator wallet to register the story, switch to a different fan wallet for contribution registration, then switch back to the creator wallet for the final decision.</p>
+        <span id="onchain-action-status" class="proof-status">NOT CONNECTED</span>
+        <p class="proof-limit">Only submit a story or contribution once. This UI checks the expected event in the transaction receipt. Export the evidence JSON and retain the original text for independent hash recomputation. Mainnet transactions cost ETH gas.</p>
+      </section>
       <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
       <div id="app"></div>
       <div class="footnote">Demo identities are fixed and simulated. This prototype does not authenticate users, persist data on a server, verify legal rights, or write to Soneium. Browser data is stored locally on this device.</div>
@@ -36,5 +53,6 @@
   </main>
   <script type="module" src="./app.js"></script>
   <script type="module" src="./onchain-proof.js"></script>
+  <script type="module" src="./onchain-workflow.js"></script>
 </body>
 </html>
