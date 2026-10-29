@@ -70,6 +70,9 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     assert.match(await page.locator(".network-note").innerText(), /read-only check.*Soneium Mainnet/);
     assert.match(await page.locator(".onchain-proof").innerText(), /Contract deployment check/);
     assert.ok(await page.locator("#chain-proof-status").count(), "deployment status label should render");
+    assert.match(await page.locator("#onchain-actions-title").innerText(), /Anchor this workflow onchain/);
+    assert.equal(await page.locator("[data-onchain-action]").count(), 5, "wallet workflow controls should render");
+    assert.match(await page.locator(".onchain-actions").innerText(), /Mainnet transactions cost ETH gas/);
   } finally {
     if (browser) await browser.close();
     server.kill("SIGTERM");
