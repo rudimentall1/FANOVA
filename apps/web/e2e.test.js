@@ -72,7 +72,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     assert.ok(await page.locator("#chain-proof-status").count(), "deployment status label should render");
     assert.match(await page.locator("#onchain-actions-title").innerText(), /Anchor this workflow onchain/);
     assert.equal(await page.locator("[data-onchain-action]").count(), 5, "wallet workflow controls should render");
-    assert.match(await page.locator(".onchain-actions").innerText(), /Mainnet transactions cost ETH gas/);
+    assert.match(await page.locator(".onchain-actions:not(.evidence-verifier)").innerText(), /Mainnet transactions cost ETH gas/);
     assert.match(await page.locator("#evidence-verifier-title").innerText(), /Verify an evidence bundle/);
     assert.equal(await page.locator("#verify-evidence").count(), 1, "read-only evidence verifier should render");
   } finally {
