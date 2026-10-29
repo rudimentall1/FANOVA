@@ -34,8 +34,11 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [ ] Check for any suitable deployed Soneium IP Registry/ERC-8432 interface; official contract directory reviewed so far does not list one.
 - [x] Record accepted architecture decision ADR-012 after read-only verification and before writing contract code: minimal FANOVA workflow contract; EAS-only rejected because it cannot enforce required state invariants.
 - [x] Implement a minimal workflow contract and 13 Foundry tests for creator-bound story IDs, authorization, permission acknowledgement/hash binding, stale versions, duplicate IDs, and one-final-decision behavior. All 13 passed in [GitHub Actions run 40896262129](https://github.com/rudimentall1/FANOVA/actions/runs/40896262129); `forge build --sizes` reports 4,306 runtime bytes and 4,334 initcode bytes with no compiler/lint warning.
-- [ ] Complete static checks, dependency review, deployment-cost estimate, and security checklist.
-- [ ] Prepare deployment manifest and independent verification steps.
+- [x] Add Slither 0.11.4 CI and run 100 detectors; latest successful run [40899723269](https://github.com/rudimentall1/FANOVA/actions/runs/40899723269) reported zero results. This is static-analysis evidence, not an independent audit.
+- [x] Review contract dependency surface: no third-party Solidity imports, external calls, value transfers, owner, or upgrade path. Record manual threat model and limitations in `docs/CONTRACT_SECURITY_REVIEW.md`.
+- [x] Add a reproducible local deployment-manifest generator and upload the manifest as a CI artifact. Latest contract run [40899723650](https://github.com/rudimentall1/FANOVA/actions/runs/40899723650) reports 4,329 runtime bytes and 4,357 initcode bytes.
+- [ ] Estimate deployment and representative transaction gas on Soneium Mainnet and document assumptions.
+- [ ] Complete independent post-deployment verification instructions and final security checklist before requesting deployment approval.
 - [ ] Obtain explicit user approval before mainnet deployment or any real-value transaction.
 - [ ] If approved and gates pass, deploy to Soneium Mainnet and verify source/address/chain ID.
 - [ ] Connect app or provide a clearly labelled explorer-backed proof panel.
