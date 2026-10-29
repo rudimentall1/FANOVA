@@ -6,7 +6,7 @@ FANOVA is an onchain entertainment product concept for creators and fan communit
 
 ## Project status
 
-**Stage:** local prototype plus un-deployed contract implementation. Eleven domain tests, JavaScript syntax checks, and the full Playwright Chromium browser E2E flow pass in GitHub Actions on a clean checkout. A minimal Solidity provenance contract and 13 adversarial Foundry tests are committed; all 12 passed in [GitHub Actions](https://github.com/rudimentall1/FANOVA/actions/runs/40895893460). No deployed contracts, production integrations, verified users, revenue, or token are claimed.
+**Stage:** local prototype plus un-deployed contract implementation. Eleven domain tests, JavaScript syntax checks, and the full Playwright Chromium browser E2E flow pass in GitHub Actions on a clean checkout. A minimal Solidity provenance contract and 13 adversarial Foundry tests are committed; all 12 passed in [GitHub Actions](https://github.com/rudimentall1/FANOVA/actions/runs/40896262129). No deployed contracts, production integrations, verified users, revenue, or token are claimed.
 
 **Target:** Sony Onchain Entertainment Incubation Program.
 
