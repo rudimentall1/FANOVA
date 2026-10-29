@@ -1,6 +1,6 @@
 # Contracts
 
-**Status: LOCAL implementation and tests; not deployed.** Thirteen Foundry tests passed in GitHub Actions run [40895445567](https://github.com/rudimentall1/FANOVA/actions/runs/40895445567).
+**Status: LOCAL implementation and tests; not deployed.** Thirteen Foundry tests passed in GitHub Actions run [40895893460](https://github.com/rudimentall1/FANOVA/actions/runs/40895893460).
 
 `FanovaProvenance.sol` implements the narrow story-version, permission-hash, contribution, and creator-decision state machine selected in ADR-012. It is not a general IP registry and does not prove legal IP ownership or licensing.
 
