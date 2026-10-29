@@ -19,7 +19,7 @@ export function publishStory({ creatorId, creatorName, title, body, permissions 
 
 export function submitContribution({ story, contributorId, contributorName, title, body, permissionAcknowledged }) {
   if (!story || story.status !== "published") throw new Error("A published source story is required.");
-  if (!permissionAcknowledged) throw new Error("You must acknowledge the creator's permitted-use rules.");
+  if (permissionAcknowledged !== true) throw new Error("You must acknowledge the creator's permitted-use rules.");
   if (!contributorId || !contributorName?.trim()) throw new Error("Contributor identity is required.");
   if (!title?.trim() || !body?.trim()) throw new Error("Contribution title and text are required.");
 
