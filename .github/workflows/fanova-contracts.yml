@@ -34,7 +34,31 @@ jobs:
         run: forge test -vvv
       - name: Compare deployed runtime bytecode with current build
         run: node scripts/compare-fanova-deployed-bytecode.mjs
-      - name: Prepare local deployment manifest
+      - name: Diagnose metadata with explorer-exact source bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_file="contracts/src/FanovaProvenance.sol"
+          backup_file="$(mktemp)"
+          cp "$source_file" "$backup_file"
+          restore_source() {
+            cp "$backup_file" "$source_file"
+            rm -f "$backup_file"
+            forge build --force
+          }
+          trap restore_source EXIT
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("contracts/src/FanovaProvenance.sol")
+          data = p.read_bytes()
+          if data.endswith(b"\\n"):
+              p.write_bytes(data[:-1])
+          PY
+          echo "=== Diagnostic build: exact Blockscout source bytes, configured Cancun target ==="
+          forge build --force --sizes
+          node scripts/compare-fanova-deployed-bytecode.mjs
+          restore_source
+          trap - EXIT
         run: node scripts/prepare-deployment-manifest.mjs
       - name: Upload manifest artifact
         uses: actions/upload-artifact@v4
