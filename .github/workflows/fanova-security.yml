@@ -23,11 +23,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: stable
       - uses: crytic/slither-action@v0.4.1
         with:
           target: contracts/src/FanovaProvenance.sol
-          slither-args: --filter-paths "lib"
+          slither-args: --compile-force-framework solc
           fail-on: high
