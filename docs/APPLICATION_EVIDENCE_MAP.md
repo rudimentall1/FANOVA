@@ -55,3 +55,11 @@ The Soneium-hosted announcement for Sony's program says applications are accepte
 ## Remaining founder inputs
 
 Before final submission, confirm Q6 and Q8–15, Q21–23. Those answers cannot be determined safely from the public repository. Everything else should be refreshed against implementation evidence immediately before submitting.
+
+## Eligibility discrepancy requiring confirmation (2026-10-29)
+
+Sony's Japanese-language official press release appears to list having a token issuance concept/plan among the program's eligibility conditions: https://www.sony.com/ja/SonyInfo/News/Press/202610/26-024/ . The English-language Sony announcement and the questionnaire reviewed for this map do not make that requirement equally explicit. Treat this as an unresolved discrepancy, not as permission to invent a token plan.
+
+- Before submitting, confirm the latest eligibility wording with the official program instructions or a program contact.
+- The current MVP decision remains: no token issued and no IEO planned.
+- Do not deploy, promote, or claim a FANOVA token. If a token concept is confirmed to be mandatory, request explicit founder approval to revise ADR-003 and define a narrowly scoped, utility-led concept separately from any issuance decision.
