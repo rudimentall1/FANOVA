@@ -51,7 +51,7 @@ jobs:
           from pathlib import Path
           p = Path("contracts/src/FanovaProvenance.sol")
           data = p.read_bytes()
-          if data.endswith(b"\\n"):
+          if data.endswith(bytes([10]):
               p.write_bytes(data[:-1])
           PY
           echo "=== Diagnostic build: exact Blockscout source bytes, configured Cancun target ==="
