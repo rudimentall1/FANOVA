@@ -33,6 +33,7 @@ jobs:
         run: |
           node --check app.js
           node --check onchain-proof.js
+          node --check onchain-workflow.js
           node --check domain.js
           node --check serve.mjs
           node --check e2e.test.js
