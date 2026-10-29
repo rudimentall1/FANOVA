@@ -24,7 +24,8 @@ function setup() {
 test("publishes a story with explicit permissions", () => {
   const { story } = setup();
   assert.equal(story.status, "published");
-  assert.equal(story.version, 1);\n  assert.equal(story.permissionVersion, 1);
+  assert.equal(story.version, 1);
+  assert.equal(story.permissionVersion, 1);
   assert.match(story.permissions, /written permission/);
 });
 
@@ -56,10 +57,19 @@ test("authorized creator can approve a linked contribution", () => {
   assert.equal(reviewed.status, "approved");
   assert.equal(reviewed.decision.reviewerId, story.creatorId);
   assert.equal(reviewed.storyId, story.id);
-  assert.equal(reviewed.sourceVersion, story.version);\n  assert.equal(reviewed.permissionVersion, story.permissionVersion);
+  assert.equal(reviewed.sourceVersion, story.version);
+  assert.equal(reviewed.permissionVersion, story.permissionVersion);
 });
 
-test("rejects a contribution tied to a stale permission version", () => {\n  const { story, contribution } = setup();\n  story.permissionVersion += 1;\n  assert.throws(() => reviewContribution({\n    story, contribution, actorId: "creator-1", outcome: "approved"\n  }), /acknowledged permission version/);\n});\n\ntest("rejects duplicate review", () => {
+test("rejects a contribution tied to a stale permission version", () => {
+  const { story, contribution } = setup();
+  story.permissionVersion += 1;
+  assert.throws(() => reviewContribution({
+    story, contribution, actorId: "creator-1", outcome: "approved"
+  }), /acknowledged permission version/);
+});
+
+test("rejects duplicate review", () => {
   const { story, contribution } = setup();
   const reviewed = reviewContribution({
     story, contribution, actorId: "creator-1", outcome: "rejected"
