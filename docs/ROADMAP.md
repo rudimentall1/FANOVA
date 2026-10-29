@@ -41,8 +41,8 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [x] Deploy the workflow contract to Soneium Mainnet and record its address/transaction in the repository README. Deployment exists, but source metadata is not an exact full-runtime match.
 - [x] Add a read-only browser panel that checks Soneium chain ID and whether bytecode exists at the deployed address; it links to Blockscout and reports RPC failures.
 - [ ] Complete independent verification instructions and final security checklist, including a fresh gas and L1 data-fee estimate before further mainnet transactions.
-- [ ] Implement wallet-driven story registration, contribution registration, and creator decision writes with chain mismatch, rejected prompt, RPC/transaction failure handling, and event verification. User must initiate and approve each wallet transaction.
-- [ ] Demonstrate one complete real Mainnet story → contribution → decision flow with independently inspectable transactions/events and accessible offchain bytes for hash recomputation.
+- [x] Implement browser wallet controls for story registration, contribution registration, and creator decision writes. The UI checks Soneium chain ID, handles rejected network/wallet requests, waits for receipts, and checks expected events. User must initiate and approve each wallet transaction. This is code-level implementation, not evidence that the full live flow has succeeded.
+- [ ] Demonstrate one complete real Mainnet story → contribution → decision flow with independently inspectable transactions/events and accessible offchain bytes for hash recomputation. The UI can export an evidence JSON bundle, but a real flow and independent verification are still outstanding.
 **Exit gate:** an outsider can verify a real story registration, contribution, and final decision from Mainnet transactions/events and can retrieve the exact referenced offchain bytes to recompute hashes. Contract deployment alone and a code-presence check do not satisfy this gate.
 
 ## P3 — Pilot and differentiation (Days 20–24)
