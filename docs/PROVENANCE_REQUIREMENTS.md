@@ -1,6 +1,6 @@
 # FANOVA Provenance Proof Requirements
 
-**Status:** requirements proposal for P2; no contract has been implemented or deployed.
+**Status:** requirements locked for P2 local implementation; no contract has been implemented or deployed.
 **Date:** 2026-10-29
 
 ## User-visible claim to prove
@@ -37,7 +37,7 @@ Any onchain implementation or adapter must demonstrate:
 
 ## Existing attestation infrastructure candidate: EAS
 
-Soneium's official contract directory lists EAS at `0x4200000000000000000000000000000000000021` and SchemaRegistry at `0x4200000000000000000000000000000000000020`. The EAS deployment catalog lists Soneium deployments as version `1.4.1-beta.1`. Read-only CI independently queried chain ID 1868, found runtime bytecode at both addresses, resolved their EIP-1967 implementation slots, and observed Blockscout source metadata marking both proxies and implementations as verified. SchemaRegistry implementation: `0x70DE55BC0bfBC52C5D0CCA1DA5816c2428886A34` (2,046 runtime bytes). EAS implementation: `0xbEc660b456B84A081E90aF29BE43385BDa5bF7b6` (17,790 runtime bytes). The proxy runtime is 2,059 bytes at each address. See the run and detailed fingerprints in [`docs/ONCHAIN_PROOF_DESIGN.md`](ONCHAIN_PROOF_DESIGN.md). Upstream artifact equivalence, proxy admin/upgrade controls, and contract method behavior remain unverified; no transaction was made.
+Soneium's official contract directory lists EAS at `0x4200000000000000000000000000000000000021` and SchemaRegistry at `0x4200000000000000000000000000000000000020`. The EAS deployment catalog lists Soneium deployments as version `1.4.1-beta.1`. Read-only CI independently queried chain ID 1868, found runtime bytecode at both addresses, resolved their EIP-1967 implementation slots, and observed Blockscout source metadata marking both proxies and implementations as verified. SchemaRegistry implementation: `0x70DE55BC0bfBC52C5D0CCA1DA5816c2428886A34` (2,046 runtime bytes). EAS implementation: `0xbEc660b456B84A081E90aF29BE43385BDa5bF7b6` (17,790 runtime bytes). The proxy runtime is 2,059 bytes at each address. See the run and detailed fingerprints in [`docs/ONCHAIN_PROOF_DESIGN.md`](ONCHAIN_PROOF_DESIGN.md). Read-only CI later confirmed EAS `version()`, `getSchemaRegistry()`, SchemaRegistry `version()`, EIP-1967 admin slots, and the ProxyAdmin owner path; see [`docs/ONCHAIN_PROOF_DESIGN.md`](ONCHAIN_PROOF_DESIGN.md). The checked-in upstream `solcInputs` does not match live compiler/version metadata, and no EAS write/schema/resolver behavior was tested. No transaction was made.
 
 EAS can make signed story/contribution/review attestations inspectable, but does not by itself enforce FANOVA's creator authorization, stale-version rejection, or one-final-decision invariants. A verifier can detect duplicate or inconsistent attestations; that is not the same as preventing them. See [`docs/ONCHAIN_PROOF_DESIGN.md`](ONCHAIN_PROOF_DESIGN.md) for the option comparison and verification gates.
 
@@ -45,7 +45,7 @@ References: [Soneium contract directory](https://docs.soneium.org/docs/builders/
 
 ## Infrastructure decision gate
 
-ADR-006 remains controlling. Before choosing a custom contract:
+ADR-006 remains controlling. ADR-012 resolves the P2 implementation choice: use the minimal FANOVA workflow contract because EAS alone cannot enforce the required authorization/state invariants. This does not authorize deployment. Before choosing a custom contract:
 
 - identify any Soneium Mainnet IP Registry / ERC-8432 candidate from official sources or a verifiable deployment record;
 - verify the address on chain, source/ABI, relevant interface support, administrative controls, and actual read/write behavior;
@@ -54,7 +54,7 @@ ADR-006 remains controlling. Before choosing a custom contract:
 
 The official Soneium contract directory reviewed on 2026-10-29 does not list an IP Registry/ERC-8432 deployment address. This is a discovery gap, not evidence that no deployment exists. Do not guess an address or integrate the unaudited draft reference implementation as if it were production-ready.
 
-If no suitable deployed interface can be verified, propose a minimal custom registry only after recording the gap and reviewing the implementation/security trade-offs. The custom contract must not claim legal-rights verification.
+If no suitable deployed interface can be verified, the accepted alternative is the narrow workflow contract in ADR-012, not a general-purpose IP registry. The custom contract must not claim legal-rights verification.
 
 ## Explicitly out of scope
 
