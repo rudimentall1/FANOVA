@@ -45,6 +45,15 @@
         <span id="onchain-action-status" class="proof-status">NOT CONNECTED</span>
         <p class="proof-limit">Only submit a story or contribution once. This UI checks the expected event in the transaction receipt. Export the evidence JSON and retain the original text for independent hash recomputation. Mainnet transactions cost ETH gas.</p>
       </section>
+      <section class="onchain-actions evidence-verifier" aria-labelledby="evidence-verifier-title">
+        <p class="eyebrow">INDEPENDENT CHECK · READ ONLY</p>
+        <h3 id="evidence-verifier-title">Verify an evidence bundle</h3>
+        <p class="muted">Select a JSON bundle exported by FANOVA. The verifier recomputes content hashes and checks recorded transaction receipts and expected contract events against Soneium Mainnet. It never requests wallet access or sends transactions.</p>
+        <label class="reason-field">Evidence JSON file<input id="evidence-file" type="file" accept="application/json,.json"></label>
+        <button class="secondary" id="verify-evidence" type="button">Verify bundle</button>
+        <p id="evidence-verify-detail" class="muted" role="status" aria-live="polite">No bundle selected.</p>
+        <span id="evidence-verify-status" class="proof-status">NOT CHECKED</span>
+      </section>
       <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
       <div id="app"></div>
       <div class="footnote">Demo identities are simulated and role switching is not authentication. Story content remains in this browser; optional wallet actions write only hashes, addresses, and decision events to Soneium. No legal rights are verified.</div>
@@ -54,5 +63,6 @@
   <script type="module" src="./app.js"></script>
   <script type="module" src="./onchain-proof.js"></script>
   <script type="module" src="./onchain-workflow.js"></script>
+  <script type="module" src="./verify-evidence.js"></script>
 </body>
 </html>
