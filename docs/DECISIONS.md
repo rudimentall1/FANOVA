@@ -10,13 +10,13 @@ This file is the append-only record of material project decisions. New decisions
 - **Alternatives rejected:** NFT marketplace, general creator platform, DAO, generic AI content generator, broad fan social network.
 - **Consequences:** Narrow scope, faster evidence, less feature breadth. Creator participation and rights permissions are key risks.
 
-## ADR-002 — Soneium Mainnet target
+## ADR-002 — Soneium Minato first
 - **Date:** 2026-10-29
-- **Status:** Accepted
-- **Context:** Soneium Mainnet is live. A real mainnet integration is the intended product target; a testnet-only MVP would not satisfy that target by itself.
-- **Decision:** Target Soneium Mainnet (chain ID `1868`). Minato (chain ID `1946`) is optional for risk-reducing checks and is not a mandatory stage or the target network. Mainnet deployment happens only after local workflow, contract tests, security checks, cost estimation, and explicit user approval.
-- **Alternatives rejected:** Treat Minato as mandatory; deploy to mainnet before implementation and security gates pass; multi-chain deployment.
-- **Consequences:** The product plan is mainnet-oriented, but no real-value transaction is made without approval. Local tests remain mandatory; testnet is optional.
+- **Status:** Superseded by ADR-005
+- **Context:** The initial plan prioritized low-cost public proof while the local workflow was being built.
+- **Original decision:** Develop and demonstrate on Soneium Minato testnet first; mainnet was outside the initial baseline.
+- **Original consequences:** Testnet behavior could be inspected without risking real value, but did not establish mainnet readiness.
+
 
 ## ADR-003 — No immediate token deployment
 - **Date:** 2026-10-29
@@ -41,3 +41,12 @@ This file is the append-only record of material project decisions. New decisions
 - **Alternatives:**
 - **Consequences:**
 - **Explicit user approval:** Yes / No / Not required
+
+## ADR-005 — Soneium Mainnet target
+- **Date:** 2026-10-29
+- **Status:** Accepted; supersedes ADR-002
+- **Context:** The user clarified that Soneium Mainnet is already live and should be the actual project target, not a later optional upgrade after a mandatory testnet phase.
+- **Decision:** Target Soneium Mainnet (chain ID `1868`). Minato (chain ID `1946`) is optional for isolated risk-reducing checks and is not a required milestone. Mainnet deployment happens only after the local workflow, contract tests, security checks, cost estimation, and explicit user approval.
+- **Alternatives rejected:** Treat Minato as mandatory; deploy to mainnet before implementation and security gates pass; multi-chain deployment.
+- **Consequences:** Product architecture and public configuration are Mainnet-oriented. Local tests remain mandatory; testnet is optional. No real-value transaction is made without explicit approval.
+- **Explicit user approval:** Yes, in project conversation on 2026-10-29.
