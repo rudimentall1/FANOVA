@@ -37,8 +37,8 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [x] Add Slither 0.11.4 CI and run 100 detectors; latest successful run [40899723269](https://github.com/rudimentall1/FANOVA/actions/runs/40899723269) reported zero results. This is static-analysis evidence, not an independent audit.
 - [x] Review contract dependency surface: no third-party Solidity imports, external calls, value transfers, owner, or upgrade path. Record manual threat model and limitations in `docs/CONTRACT_SECURITY_REVIEW.md`.
 - [x] Add a reproducible local deployment-manifest generator and upload the manifest as a CI artifact. Latest contract run [40899723650](https://github.com/rudimentall1/FANOVA/actions/runs/40899723650) reports 4,329 runtime bytes and 4,357 initcode bytes.
-- [ ] Estimate deployment and representative transaction gas on Soneium Mainnet and document assumptions.
-- [ ] Complete independent post-deployment verification instructions and final security checklist before requesting deployment approval.
+- [x] Add a read-only Soneium Mainnet deployment estimate and local Foundry gas report. Run [40900185493](https://github.com/rudimentall1/FANOVA/actions/runs/40900185493) estimated 998,201 deployment gas at 13,000,000 wei/gas, or 0.000012976613 ETH for execution fee at the recorded time. The estimate explicitly excludes a separately measured OP Stack L1 data fee and must be refreshed before deployment.
+- [ ] Complete independent post-deployment verification instructions and final security checklist, including L1 data fee estimation, before requesting deployment approval.
 - [ ] Obtain explicit user approval before mainnet deployment or any real-value transaction.
 - [ ] If approved and gates pass, deploy to Soneium Mainnet and verify source/address/chain ID.
 - [ ] Connect app or provide a clearly labelled explorer-backed proof panel.
