@@ -15,13 +15,24 @@ This does not prove legal ownership, authorship, copyright clearance, or enforce
 - Soneium's official contract directory lists SchemaRegistry at 0x4200000000000000000000000000000000000020 and EAS at 0x4200000000000000000000000000000000000021.
 - The EAS deployment catalog lists Soneium deployments as version 1.4.1-beta.1, including EAS, SchemaRegistry, EIP712Proxy and Indexer.
 - The official Blockscout explorer is available at https://soneium.blockscout.com/.
-- This is documented deployment evidence, not yet independent runtime-bytecode verification. Direct explorer address/API reads were not retrievable during this review. No contract call or transaction was made.
+- Read-only GitHub Actions run 4 queried Soneium Mainnet RPC and Blockscout at 2026-10-29 14:13:12 UTC. Chain ID returned 1868. Both documented addresses returned runtime bytecode; Blockscout marks both proxy source and implementation source as verified. The proxy bytecode is 2,059 bytes and identical at both addresses. The EIP-1967 implementation slot resolved to distinct implementations below. No transaction was made. See [successful run](https://github.com/rudimentall1/FANOVA/actions/runs/40889396396).
 
 Sources:
 - https://docs.soneium.org/docs/builders/contracts
 - https://github.com/ethereum-attestation-service/eas-contracts
 - https://soneium.blockscout.com/address/0x4200000000000000000000000000000000000021
 - https://soneium.blockscout.com/address/0x4200000000000000000000000000000000000020
+
+## Read-only runtime findings (2026-10-29)
+
+| Contract | Proxy address | Runtime bytes | EIP-1967 implementation | Implementation bytes | Explorer source metadata |
+|---|---|---:|---|---:|---|
+| SchemaRegistry | `0x4200000000000000000000000000000000000020` | 2,059 | `0x70DE55BC0bfBC52C5D0CCA1DA5816c2428886A34` | 2,046 | Proxy and implementation marked verified |
+| EAS | `0x4200000000000000000000000000000000000021` | 2,059 | `0xbEc660b456B84A081E90aF29BE43385BDa5bF7b6` | 17,790 | Proxy and implementation marked verified |
+
+Proxy runtime SHA-256 fingerprint for both: `30ccc4ce49c00fae11d7118fc244f29a13788fb32cd4022ee69acc2f15c0e2f5`. SchemaRegistry implementation fingerprint: `ee7f41153155ac31718d816854c8f3c2893e32ae6462322f8cb8506f5582f966`. EAS implementation fingerprint: `42f7133847dbd6a7be9f27eb8f3ff8c4465d7a47557281dc15f7d95a18114e4c`. These are SHA-256 fingerprints of fetched runtime bytes, not EVM keccak code hashes. Explorer source verification does not alone prove that the deployed bytecode matches a particular upstream release or that behavior satisfies FANOVA's requirements.
+
+The script currently verifies chain ID, runtime presence, the standard EIP-1967 implementation slot, and explorer source metadata. It does not yet compare compiler artifacts, inspect proxy admin/upgrade authority, or call EAS/SchemaRegistry methods.
 
 ## Option A: EAS attestations only
 
@@ -73,6 +84,7 @@ EAS is a credible alternative for attestations, but it is not equivalent to the 
 ## Current status
 
 - Soneium official address listing: **DOCUMENTED**.
-- Live bytecode/source/runtime behavior: **NOT INDEPENDENTLY VERIFIED**.
+- Mainnet chain ID, runtime bytecode, EIP-1967 implementation addresses, and explorer source-verification flags: **INDEPENDENTLY VERIFIED** by read-only CI.
+- Upstream artifact equivalence, proxy admin/upgrade controls, and EAS method/schema behavior: **NOT YET VERIFIED**.
 - EAS-only or custom-contract choice: **NOT FINAL**.
 - Contract implementation/deployment: **NOT IMPLEMENTED / NOT DEPLOYED**.
