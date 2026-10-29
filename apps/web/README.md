@@ -8,4 +8,4 @@ The first UI must support only:
 3. Creator approves or rejects.
 4. UI displays attribution, decision, and honest chain/evidence status.
 
-Keep mocked/local/testnet states visibly distinct. Do not add marketplace, DAO, broad social features, or AI generation to the MVP.
+Keep mocked/local/mainnet states visibly distinct. Do not add marketplace, DAO, broad social features, or AI generation to the MVP.
