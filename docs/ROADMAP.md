@@ -24,7 +24,9 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 **Exit gate:** fresh checkout runs app/tests and a full local demo works.
 
 ## P2 — Mainnet provenance path (Days 13–19)
-- [ ] Define the minimum contract surface from the exact evidence requirement.
+- [x] Define the minimum externally verifiable provenance claim and evidence requirements in `docs/PROVENANCE_REQUIREMENTS.md`.
+- [ ] Verify whether a suitable Soneium Mainnet IP Registry/ERC-8432 deployment and interface exists; decide whether FANOVA needs a custom contract only after this check.
+- [ ] Finalize the contract/adapter surface after the infrastructure decision.
 - [ ] Write and run contract tests locally, including unauthorized-call rejection.
 - [ ] Complete static checks, dependency review, deployment-cost estimate, and security checklist.
 - [ ] Prepare deployment manifest and independent verification steps.
