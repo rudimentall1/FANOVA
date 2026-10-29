@@ -78,3 +78,38 @@ test("rejects duplicate review", () => {
     story, contribution: reviewed, actorId: "creator-1", outcome: "approved"
   }), /already been reviewed/);
 });
+
+test("rejects truthy non-boolean permission acknowledgement", () => {
+  const { story } = setup();
+  assert.throws(() => submitContribution({
+    story,
+    contributorId: "fan-1",
+    contributorName: "Demo Fan",
+    title: "Invalid acknowledgement",
+    body: "Contribution text",
+    permissionAcknowledged: "yes"
+  }), /acknowledge/);
+});
+
+test("rejects a contribution linked to a stale source version", () => {
+  const { story, contribution } = setup();
+  story.version += 1;
+  assert.throws(() => reviewContribution({
+    story, contribution, actorId: "creator-1", outcome: "approved"
+  }), /current source version/);
+});
+
+test("rejects review when the stored acknowledgement is missing", () => {
+  const { story, contribution } = setup();
+  contribution.permissionAcknowledged = false;
+  assert.throws(() => reviewContribution({
+    story, contribution, actorId: "creator-1", outcome: "approved"
+  }), /acknowledgement is missing/);
+});
+
+test("rejects unsupported review outcomes", () => {
+  const { story, contribution } = setup();
+  assert.throws(() => reviewContribution({
+    story, contribution, actorId: "creator-1", outcome: "published"
+  }), /Decision must be approved or rejected/);
+});
