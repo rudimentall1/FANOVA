@@ -37,11 +37,11 @@ Any onchain implementation or adapter must demonstrate:
 
 ## Existing attestation infrastructure candidate: EAS
 
-Soneium's official contract directory lists the standard EAS and SchemaRegistry addresses (`0x4200000000000000000000000000000000000021` and `0x4200000000000000000000000000000000000020`). The EAS deployment catalog also lists these addresses for Soneium. This is a credible candidate for storing signed, inspectable story/contribution/review attestations without immediately deploying a custom registry, but the project has not independently checked live bytecode, source verification, or read/write behavior on Mainnet.
+Soneium's official contract directory lists EAS at `0x4200000000000000000000000000000000000021` and SchemaRegistry at `0x4200000000000000000000000000000000000020`. The EAS deployment catalog lists Soneium deployments as version `1.4.1-beta.1`. These are documented addresses, but live runtime bytecode, source/ABI correspondence, and read/write behavior have not yet been independently verified in this project. Direct explorer address/API reads were not retrievable during the latest review; no transaction was made.
 
-EAS by itself does not enforce FANOVA's business invariants. A schema describes attestation data; the application must verify that the source attestation and review attestation use the same creator attester and bind the exact source/permission versions. Strong onchain enforcement would require a resolver or separate contract, which increases scope. Assess whether an EAS-only signed-attestation model satisfies the MVP claim before building custom enforcement.
+EAS can make signed story/contribution/review attestations inspectable, but does not by itself enforce FANOVA's creator authorization, stale-version rejection, or one-final-decision invariants. A verifier can detect duplicate or inconsistent attestations; that is not the same as preventing them. See [`docs/ONCHAIN_PROOF_DESIGN.md`](ONCHAIN_PROOF_DESIGN.md) for the option comparison and verification gates.
 
-References: [Soneium contract directory](https://docs.soneium.org/docs/builders/contracts), [EAS deployment catalog](https://github.com/ethereum-attestation-service/eas-contracts), [EAS schema workflow](https://docs.attest.org/docs/core--concepts/how-eas-works).
+References: [Soneium contract directory](https://docs.soneium.org/docs/builders/contracts), [EAS deployment catalog](https://github.com/ethereum-attestation-service/eas-contracts), [EAS schema workflow](https://docs.attest.org/docs/core--concepts/how-eas-works), [Soneium Blockscout](https://soneium.blockscout.com/).
 
 ## Infrastructure decision gate
 
