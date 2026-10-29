@@ -1,6 +1,6 @@
 # FANOVA Provenance Proof Requirements
 
-**Status:** requirements locked; initial contract implementation and 12 Foundry tests are LOCAL and passing in CI. No contract has been deployed.
+**Status:** requirements locked; initial contract implementation and 13 Foundry tests are LOCAL and passing in CI. No contract has been deployed.
 **Date:** 2026-10-29
 
 ## User-visible claim to prove
@@ -27,7 +27,7 @@ Full story/contribution text, personal data, and private review notes remain off
 
 Any onchain implementation or adapter must demonstrate:
 
-1. A story's creator authority is bound to an address by an explicit registration or an interoperable existing registry, not a UI role toggle.
+1. A story's creator authority is bound to an address by an explicit registration or an interoperable existing registry, not a UI role toggle. The initial story ID must be bound to the registering address to prevent an observer from front-running and claiming the same ID.
 2. A contribution references an exact source version and permission hash.
 3. A review is accepted only from the authorized creator/reviewer for that story.
 4. A stale source version or changed permission hash cannot be silently reviewed as if it referred to the current rules.
