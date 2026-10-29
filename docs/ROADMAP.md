@@ -13,7 +13,8 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 
 ## P1 — Local vertical slice (Days 4–12)
 **Status: IN PROGRESS.** A local browser prototype and domain tests are committed. Do not mark P1 complete until repository tests and the full browser flow are verified.
-- [x] Establish a dependency-free browser app and domain rules in `apps/web/`.\n- [x] Add permission-version linkage to contributions and reject stale permission versions in domain rules.
+- [x] Establish a dependency-free browser app and domain rules in `apps/web/`.
+- [x] Add permission-version linkage to contributions and reject stale permission versions in domain rules.
 - [ ] Creator publishes story plus explicit permissions.
 - [ ] Fan submits contribution linked to exact source version.
 - [ ] Creator approves/rejects; unauthorized approval fails.
