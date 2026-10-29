@@ -33,6 +33,7 @@ GitHub Actions runs this browser test on a clean checkout.
 - State is stored in this browser's localStorage; there is no server or shared database.
 - Demo identities are fixed. Role switching is for demonstration and is not authentication.
 - Eleven domain tests, JavaScript syntax checks, and the Playwright Chromium browser flow pass in GitHub Actions on a clean checkout. The browser test covers publication, contribution submission, unauthorized-review rejection, creator approval, and creator rejection.
-- No wallet connection, contract, or Soneium transaction is implemented. Mainnet integration remains PLANNED.
+- A read-only browser check calls the public Soneium RPC for chain ID and deployed bytecode at the known FANOVA contract address. It links to Blockscout and reports RPC errors honestly. It does not submit transactions, prove source equivalence, or anchor the local story workflow.
+- Wallet connection and onchain story/contribution writes are not implemented. Those remain PLANNED.
 - Local hashes/IDs do not establish legal ownership or licensing rights.
 - Use original pilot content or material with documented permission.
