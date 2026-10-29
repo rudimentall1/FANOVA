@@ -1,6 +1,6 @@
 # FANOVA Architecture
 
-**Status:** proposed baseline; local web flow and initial provenance contract are implemented, but the contract is not deployed and still requires security/static review.
+**Status:** local web flow and provenance contract are implemented. The contract is deployed on Soneium Mainnet at `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`. CI confirms executable runtime bytecode matches the current build after removing Solidity metadata; full runtime metadata differs. The browser has a read-only chain/code presence check, but story actions are still local and full source equivalence is not established.
 
 ## System shape
 ```text
@@ -52,10 +52,10 @@ Domain rules + validation
 - Deployment credentials and private keys must never enter the repository.
 
 ## Provenance proof requirements
-See [`docs/PROVENANCE_REQUIREMENTS.md`](PROVENANCE_REQUIREMENTS.md) for the exact external claim, minimum evidence, authorization invariants, and deployment gates. [`docs/ONCHAIN_PROOF_DESIGN.md`](ONCHAIN_PROOF_DESIGN.md) compares EAS attestations with a minimal workflow contract. Read-only checks confirmed Soneium EAS/SchemaRegistry bytecode, proxy relationships, reported versions, and explorer source-verification flags; upstream source/build equivalence remains unresolved. EAS alone records attestations and does not enforce FANOVA's creator authorization or one-final-decision invariants. ADR-012 selects a minimal FANOVA workflow contract, not EAS-only attestations. The contract and 20 adversarial/unit tests pass in CI, and Slither reports zero results. This is LOCAL only; no deployment or transaction has been performed.
+See [`docs/PROVENANCE_REQUIREMENTS.md`](PROVENANCE_REQUIREMENTS.md) for the exact external claim, minimum evidence, authorization invariants, and deployment gates. [`docs/ONCHAIN_PROOF_DESIGN.md`](ONCHAIN_PROOF_DESIGN.md) compares EAS attestations with a minimal workflow contract. Read-only checks confirmed Soneium EAS/SchemaRegistry bytecode, proxy relationships, reported versions, and explorer source-verification flags; upstream source/build equivalence remains unresolved. EAS alone records attestations and does not enforce FANOVA's creator authorization or one-final-decision invariants. ADR-012 selects a minimal FANOVA workflow contract, not EAS-only attestations. The contract and adversarial/unit tests pass in CI, and Slither reported zero findings in the recorded scan. The contract is MAINNET; the browser story workflow is LOCAL. The read-only RPC panel verifies only chain ID and code presence, not source equivalence, story records, or legal rights.
 
 ## Contract design gate
-The local workflow and external proof requirement are defined, and ADR-012 authorizes the current local implementation. Further contract changes must address a documented test or review finding. Keep the contract minimal and avoid storing full content, personal information, or broad mutable permissions. Enforce creator authorization onchain if the UI claims approvals are onchain-authorized. No deployment is authorized.
+The local workflow and external proof requirement are defined, and ADR-012 authorizes the current implementation. The contract is already deployed at the address above; do not redeploy or spend funds without explicit approval. Further contract changes must address a documented test or review finding. Keep the contract minimal and avoid storing full content, personal information, or broad mutable permissions. The UI must not describe local approvals as onchain-authorized.
 
 ## Mainnet deployment gate
 Mainnet is the target, but deployment is not automatic. Before requesting approval:
