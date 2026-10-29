@@ -10,13 +10,13 @@ This file is the append-only record of material project decisions. New decisions
 - **Alternatives rejected:** NFT marketplace, general creator platform, DAO, generic AI content generator, broad fan social network.
 - **Consequences:** Narrow scope, faster evidence, less feature breadth. Creator participation and rights permissions are key risks.
 
-## ADR-002 — Soneium Minato first
+## ADR-002 — Soneium Mainnet target
 - **Date:** 2026-10-29
 - **Status:** Accepted
-- **Context:** The application is focused on Soneium and a verifiable chain integration is useful evidence.
-- **Decision:** Develop and demonstrate on Soneium Minato testnet first. Mainnet is not in the one-month baseline.
-- **Alternatives rejected:** Mainnet-first, multi-chain deployment.
-- **Consequences:** Testnet transaction evidence can be publicly inspected without putting real value at risk. Testnet behavior does not prove mainnet readiness.
+- **Context:** Soneium Mainnet is live. A real mainnet integration is the intended product target; a testnet-only MVP would not satisfy that target by itself.
+- **Decision:** Target Soneium Mainnet (chain ID `1868`). Minato (chain ID `1946`) is optional for risk-reducing checks and is not a mandatory stage or the target network. Mainnet deployment happens only after local workflow, contract tests, security checks, cost estimation, and explicit user approval.
+- **Alternatives rejected:** Treat Minato as mandatory; deploy to mainnet before implementation and security gates pass; multi-chain deployment.
+- **Consequences:** The product plan is mainnet-oriented, but no real-value transaction is made without approval. Local tests remain mandatory; testnet is optional.
 
 ## ADR-003 — No immediate token deployment
 - **Date:** 2026-10-29
@@ -29,7 +29,7 @@ This file is the append-only record of material project decisions. New decisions
 ## ADR-004 — Evidence before claims
 - **Date:** 2026-10-29
 - **Status:** Accepted
-- **Decision:** Every capability is labelled `PLANNED`, `LOCAL`, `TESTNET`, `MAINNET`, or `INDEPENDENTLY VERIFIED`. No fake transaction IDs, user metrics, partnerships, or IP rights claims.
+- **Decision:** Every capability is labelled `PLANNED`, `LOCAL`, `MAINNET`, or `INDEPENDENTLY VERIFIED`. `TESTNET` is used only when describing optional testing, never as the default target. No fake transaction IDs, user metrics, partnerships, or IP rights claims.
 - **Consequences:** Demo and application may contain fewer claims, but each claim is defensible.
 
 ## Template for new decisions
