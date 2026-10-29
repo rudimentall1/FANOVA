@@ -1,6 +1,6 @@
 # FANOVA Provenance Proof Requirements
 
-**Status:** requirements locked for P2 local implementation; no contract has been implemented or deployed.
+**Status:** requirements locked; initial contract implementation and 12 Foundry tests are LOCAL and passing in CI. No contract has been deployed.
 **Date:** 2026-10-29
 
 ## User-visible claim to prove
