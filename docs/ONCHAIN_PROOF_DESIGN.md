@@ -72,7 +72,7 @@ No full text, personal data, payment, token, NFT, royalty, or legal-rights claim
 
 ADR-012 is accepted: implement a minimal FANOVA workflow contract and do not integrate EAS in the MVP. EAS is useful for attestations, but it does not enforce the required creator authorization, exact version/permission binding, stale-version rejection, and one-final-decision invariants. The checked-in upstream `solcInputs` does not match the live implementation's compiler/version metadata, so it is not accepted as the matching build artifact. No production-ready deployed Soneium IP Registry/ERC-8432 interface has been verified. The custom contract is a narrow workflow state machine, not a general IP registry; content remains offchain and no legal-rights claim is made.
 
-The implementation must bind the creator at story creation, require monotonically increasing source versions, bind contributions to the exact current source and permission hash, require explicit acknowledgement, reject stale pending decisions after a version change, and allow only one final creator decision. No EAS + custom-contract combination is planned.
+The implementation must bind the creator at story creation, require monotonically increasing source versions, bind contributions to the exact current source and permission hash, require explicit acknowledgement, reject stale pending decisions after a version change, and derive each story ID from the creator address and salt to prevent ID front-running, and allow only one final creator decision. No EAS + custom-contract combination is planned.
 
 ## Read-only verification tooling
 
@@ -92,5 +92,5 @@ The implementation must bind the creator at story creation, require monotonicall
 - EIP-1967 proxy admin slots and the ProxyAdmin `owner()` address: **INDEPENDENTLY VERIFIED** by read-only CI. Owner mapping to the L1 SuperchainProxyAdminOwner multisig: **SUPPORTED BY OFFICIAL REGISTRY AND L2BEAT**. Current Safe owner set/threshold on L1 was not independently queried in this audit. L2BEAT reports 2-of-2 and no upgrade delay.
 - Upstream source/build equivalence and EAS schema/resolver semantics: **NOT YET VERIFIED**.
 - Architecture choice: **DECIDED** in ADR-012: minimal FANOVA workflow contract; no EAS integration in MVP.
-- Minimal FANOVA workflow contract and 12 Foundry tests: **LOCAL / CI PASSED** in [run 40895445567](https://github.com/rudimentall1/FANOVA/actions/runs/40895445567).
+- Minimal FANOVA workflow contract and 13 Foundry tests: **LOCAL / CI PASSED** in [run 40895445567](https://github.com/rudimentall1/FANOVA/actions/runs/40895445567).
 - Contract deployment and mainnet transaction: **NOT DEPLOYED / NOT PERFORMED**.
