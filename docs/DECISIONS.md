@@ -89,3 +89,13 @@ This file is the append-only record of material project decisions. New decisions
 - **Decision:** Do not integrate EAS or rely on its current upstream input as a matching build artifact yet. Continue read-only investigation of the ProxyAdmin implementation/owner control and locate a source/build artifact that matches the deployed implementation metadata and onchain versions. Keep EAS vs minimal FANOVA contract decision open.
 - **Consequences:** Existing runtime/address checks are useful but insufficient for a final architecture decision. No transactions, schema registration, or attestations have been submitted.
 - **Explicit user approval:** Not required for read-only research; required before any Mainnet write or spending.
+
+
+## ADR-010 — ProxyAdmin ownership path is observable but owner governance is unknown
+- **Date:** 2026-10-29
+- **Status:** Accepted as an evidence finding; not a decision to integrate EAS
+- **Context:** Read-only CI run [40894755106](https://github.com/rudimentall1/FANOVA/actions/runs/40894755106) inspected the EAS/SchemaRegistry EIP-1967 admin slots and the Soneium ProxyAdmin predeploy.
+- **Finding:** Both contracts name `0x4200000000000000000000000000000000000018` as admin. That address is an EIP-1967 proxy whose implementation slot resolves to `0x893c2CEEb71D38514daF67728d3Ff1b213FC4B5F`, with runtime bytecode present and Blockscout source marked verified. Its read-only `owner()` result is `0x6b1bae59d09fccbddb6c6cceb07b7279367c4e3b`; that address has no runtime bytecode at the checked block.
+- **Decision:** Record the observed upgrade-control path but do not infer the owner identity, key custody, or governance process from the address alone. Upstream source/build equivalence and schema/resolver behavior remain unresolved, so ADR-007 remains open.
+- **Consequences:** The admin path is more transparent than an unknown slot, but it is not enough to assert that upgrades are protected by a multisig or timelock.
+- **Explicit user approval:** Not required for read-only research; required before any Mainnet write or spending.
