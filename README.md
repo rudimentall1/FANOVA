@@ -10,7 +10,7 @@ FANOVA is an onchain entertainment product concept for creators and fan communit
 
 **Target:** Sony Onchain Entertainment Incubation Program.
 
-**Chain strategy:** Soneium Minato testnet for development and demonstrable proof; consider Soneium mainnet only after testnet verification, security review, and a justified user need.
+**Chain strategy:** Soneium Mainnet is the target network. Minato is optional for isolated pre-deployment checks, not a required stage. Mainnet deployment requires local tests, security review, and explicit user approval.
 
 ## Non-negotiable scope
 
@@ -20,7 +20,7 @@ The MVP is one complete, inspectable vertical slice:
 2. Fan submits a derivative work referencing the source story.
 3. Creator approves or rejects the submission.
 4. The app records provenance and the approval outcome; onchain writes are used only where they add durable, externally verifiable value.
-5. If payment is implemented, a real testnet transaction demonstrates the declared split. No simulated transaction may be presented as live.
+5. If payment is implemented, a real transaction demonstrates the declared split. No simulated transaction may be presented as live.
 
 No marketplace sprawl, speculative DAO, invented Sony partnership, unlicensed third-party IP, or premature token launch.
 
@@ -40,20 +40,20 @@ The repository may not yet contain all planned directories. Their presence in th
 
 ## Soneium
 
-- Minato testnet: chain ID `1946`, RPC `https://rpc.minato.soneium.org/`, explorer `https://soneium-minato.blockscout.com/`.
-- Mainnet: chain ID `1868`, RPC `https://rpc.soneium.org/`, explorer `https://soneium.blockscout.com/`.
+- **Target: Soneium Mainnet**, chain ID `1868`, RPC `https://rpc.soneium.org/`, explorer `https://soneium.blockscout.com/`.
+- Minato testnet (chain ID `1946`) is optional for pre-deployment checks only.
 - Native gas token is ETH. FANOVA does not need its own token to pay gas.
 
 Network details: [official Soneium docs](https://docs.soneium.org/docs/users/wallets).
 
 ## Truth labels
 
-Use these labels in docs, demo, and application materials: `PLANNED`, `LOCAL`, `TESTNET`, `MAINNET`, `INDEPENDENTLY VERIFIED`. Never call a feature live unless its transaction or behavior can be independently checked.
+Use these labels in docs, demo, and application materials: `PLANNED`, `LOCAL`, `MAINNET`, `INDEPENDENTLY VERIFIED` (use `TESTNET` only when describing optional testing). Never call a feature live unless its transaction or behavior can be independently checked.
 
 ## Current priorities
 
 1. Freeze product scope and architecture.
 2. Build the smallest end-to-end story → submission → creator approval flow.
-3. Add a minimal Soneium testnet proof only after the domain flow works locally.
+3. Add a minimal Soneium Mainnet provenance proof after the domain flow works locally, security checks pass, and deployment is explicitly approved.
 4. Validate the experience with a real creator and fan users.
 5. Prepare the Sony application using evidence, not claims.
