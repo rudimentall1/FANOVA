@@ -51,6 +51,9 @@ Domain rules + validation
 - Contract events do not replace a license or signed agreement.
 - Deployment credentials and private keys must never enter the repository.
 
+## Provenance proof requirements
+See [`docs/PROVENANCE_REQUIREMENTS.md`](PROVENANCE_REQUIREMENTS.md) for the exact external claim, minimum evidence, authorization invariants, and deployment gates. The requirements are defined; the implementation choice remains blocked on verification of any deployed Soneium IP registry interface.
+
 ## Contract design gate
 Do not write/deploy a contract until the local workflow and exact external proof requirement are defined. Keep the contract minimal and avoid storing full content, personal information, or broad mutable permissions. Enforce creator authorization onchain if the UI claims approvals are onchain-authorized.
 
