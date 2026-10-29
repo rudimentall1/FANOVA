@@ -49,7 +49,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await assertNotice(page, "only the story's authorized creator may review contributions");
     assert.equal(await page.locator(".chip.pending").count(), 1, "unauthorized attempt must leave contribution pending");
 
-    await page.getByRole("button", { name: "Creator" }).click();
+    await page.getByRole("button", { name: "Creator", exact: true }).click();
     await page.locator('[data-review="approved"]').click();
     await assertNotice(page, "Decision saved locally");
     assert.equal(await page.locator(".chip.approved").count(), 1, "creator approval should update the contribution state");
@@ -61,7 +61,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await page.locator("#contribution-form button").click();
     await assertNotice(page, "Contribution saved locally");
 
-    await page.getByRole("button", { name: "Creator" }).click();
+    await page.getByRole("button", { name: "Creator", exact: true }).click();
     await page.locator('[data-review="rejected"]').click();
     await assertNotice(page, "Decision saved locally");
     assert.equal(await page.locator(".chip.approved").count(), 1);
