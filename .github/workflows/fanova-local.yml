@@ -20,9 +20,18 @@ jobs:
       - name: Run domain tests
         working-directory: apps/web
         run: npm test
+      - name: Install browser-test dependency
+        working-directory: apps/web
+        run: npm install --no-save playwright
+      - name: Install Chromium
+        run: npx --yes playwright install --with-deps chromium
+      - name: Run browser end-to-end test
+        working-directory: apps/web
+        run: node --test e2e.test.js
       - name: Check JavaScript syntax
         working-directory: apps/web
         run: |
           node --check app.js
           node --check domain.js
           node --check serve.mjs
+          node --check e2e.test.js
