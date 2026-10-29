@@ -18,6 +18,8 @@ Sources:
 
 ## Adjacent products and infrastructure
 
+Soneium's official contract directory and the EAS deployment catalog list the generic EAS and SchemaRegistry contracts at `0x4200000000000000000000000000000000000021` and `0x4200000000000000000000000000000000000020`. These are a potential lower-scope attestation substrate, not an IP registry and not yet independently verified by FANOVA on Mainnet. EAS schemas alone do not enforce that a reviewer is the creator; that relationship must be verified from attester identity or enforced by a resolver/contract.
+
 | Product/category | Publicly stated focus | Overlap with FANOVA | Product gap FANOVA could test; not a proven advantage |
 |---|---|---|---|
 | Soneium Portal | Official discovery and participation hub for Tokenized IP, including IP Tokens, IP Vaults and IP Bonds | Creator/IP discovery and fan participation on the same ecosystem | A focused operational workflow for a creator to define contribution permissions, receive text/story derivatives, review them, and publish a decision may complement Portal; integration/overlap must be checked, not assumed. |
