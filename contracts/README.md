@@ -8,7 +8,7 @@
 
 - A story ID is derived from the registering creator address and a creator-chosen salt, preventing another address from front-running the same ID; only that creator can register later versions.
 - Source versions are sequential. A changed permission hash requires a higher permission version.
-- A contribution must reference the exact current source version and permission hash, and explicitly acknowledge the permissions.
+- A contribution must reference the exact current source version and permission hash, and submit an explicit acknowledgement flag. This is the contributor's onchain assertion, not proof they read or understood the text or that they have legal rights.
 - A version bump makes older pending contributions stale for review.
 - Only the story creator can approve/reject a contribution, and only one final decision is allowed.
 - Content and personal data stay offchain; the contract stores hashes and identifiers only.
