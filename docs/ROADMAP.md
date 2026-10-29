@@ -5,18 +5,19 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 ## P0 — Baseline and application mapping (Days 1–3)
 - [x] Map all 24 official application questions to evidence, answer owner, and status in `docs/APPLICATION_EVIDENCE_MAP.md`; founder-specific answers remain open.
 - [ ] Freeze core user story and one original-IP pilot scenario.
-- [x] Complete initial desk research on Soneium IP architecture and adjacent product categories in `docs/COMPETITIVE_LANDSCAPE.md`.\n- [ ] Hands-on competitor comparison and creator interviews remain outstanding.
+- [x] Complete initial desk research on Soneium IP architecture and adjacent product categories in `docs/COMPETITIVE_LANDSCAPE.md`.
+- [ ] Hands-on competitor comparison and creator interviews remain outstanding.
 - [x] Review the official six-page questionnaire: it asks current token issuance status and IEO plans; it does not require launching a FANOVA token.
 - [x] Set Soneium Mainnet as target; Minato is optional, not a required milestone.
 **Exit gate:** clear MVP, target user, target network, and evidence requirements.
 
 ## P1 — Local vertical slice (Days 4–12)
 **Status: IN PROGRESS.** A local browser prototype and domain tests are committed. Do not mark P1 complete until repository tests and the full browser flow are verified.
-- [x] Establish a dependency-free browser app and domain rules in `apps/web/`.
+- [x] Establish a dependency-free browser app and domain rules in `apps/web/`.\n- [x] Add permission-version linkage to contributions and reject stale permission versions in domain rules.
 - [ ] Creator publishes story plus explicit permissions.
 - [ ] Fan submits contribution linked to exact source version.
 - [ ] Creator approves/rejects; unauthorized approval fails.
-- [ ] Test core workflow and meaningful failure path.
+- [ ] Test core workflow and meaningful failure path (domain tests run in an isolated harness; repository checkout/browser flow still pending).
 - [ ] Make UI states honest and understandable.
 **Exit gate:** fresh checkout runs app/tests and a full local demo works.
 
