@@ -12,14 +12,15 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 **Exit gate:** clear MVP, target user, target network, and evidence requirements.
 
 ## P1 — Local vertical slice (Days 4–12)
-**Status: IN PROGRESS.** A local browser prototype and domain tests are committed. Do not mark P1 complete until repository tests and the full browser flow are verified.
+**Status: IN PROGRESS.** Six domain tests and JavaScript syntax checks pass in GitHub Actions on a clean checkout. The full interactive browser flow is not yet manually verified.
 - [x] Establish a dependency-free browser app and domain rules in `apps/web/`.
 - [x] Add permission-version linkage to contributions and reject stale permission versions in domain rules.
-- [ ] Creator publishes story plus explicit permissions.
-- [ ] Fan submits contribution linked to exact source version.
-- [ ] Creator approves/rejects; unauthorized approval fails.
-- [ ] Test core workflow and meaningful failure path (domain tests run in an isolated harness; repository checkout/browser flow still pending).
-- [ ] Make UI states honest and understandable.
+- [x] Implement creator story publication with explicit permissions.
+- [x] Implement fan submission linked to source and permission versions.
+- [x] Implement creator approve/reject rules and unauthorized-review rejection in the domain layer.
+- [x] Add and pass six domain tests, including authorization, stale permission version, and duplicate review.
+- [ ] Manually verify the full browser flow and visible failure path.
+- [x] Label the prototype as local and explicitly state that no chain writes occur; verify the full UI flow manually.
 **Exit gate:** fresh checkout runs app/tests and a full local demo works.
 
 ## P2 — Mainnet provenance path (Days 13–19)
