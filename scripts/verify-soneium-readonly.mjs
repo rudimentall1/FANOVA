@@ -121,10 +121,27 @@ async function inspectRuntime(address) {
 
 const proxyAdminRuntime = await inspectRuntime(PROXY_ADMIN.address);
 if (!proxyAdminRuntime.runtimeBytecodePresent) throw new Error('ProxyAdmin has no runtime bytecode');
+const proxyAdminImplementationWord = await rpc('eth_getStorageAt', [PROXY_ADMIN.address, EIP1967_IMPLEMENTATION_SLOT, 'latest']);
+const proxyAdminImplementationAddress = `0x${proxyAdminImplementationWord.slice(-40)}`;
+const proxyAdminAdminWord = await rpc('eth_getStorageAt', [PROXY_ADMIN.address, EIP1967_ADMIN_SLOT, 'latest']);
+const proxyAdminAdminAddress = `0x${proxyAdminAdminWord.slice(-40)}`;
+const proxyAdminBeaconWord = await rpc('eth_getStorageAt', [PROXY_ADMIN.address, EIP1967_BEACON_SLOT, 'latest']);
+const proxyAdminBeaconAddress = `0x${proxyAdminBeaconWord.slice(-40)}`;
+const proxyAdminImplementationRuntime = /^0x0{40}$/i.test(proxyAdminImplementationAddress)
+  ? null
+  : await inspectRuntime(proxyAdminImplementationAddress);
 report.proxyAdmin = {
   address: PROXY_ADMIN.address,
   ...proxyAdminRuntime,
   explorerSourceMetadata: await inspectExplorer(PROXY_ADMIN.address),
+  eip1967ImplementationAddress: /^0x0{40}$/i.test(proxyAdminImplementationAddress) ? null : proxyAdminImplementationAddress,
+  eip1967AdminAddress: /^0x0{40}$/i.test(proxyAdminAdminAddress) ? null : proxyAdminAdminAddress,
+  eip1967BeaconAddress: /^0x0{40}$/i.test(proxyAdminBeaconAddress) ? null : proxyAdminBeaconAddress,
+  implementation: proxyAdminImplementationRuntime && {
+    address: proxyAdminImplementationAddress,
+    ...proxyAdminImplementationRuntime,
+    explorerSourceMetadata: await inspectExplorer(proxyAdminImplementationAddress),
+  },
 };
 
 for (const target of TARGETS) {
@@ -171,7 +188,12 @@ const schemaRegistryCall = report.readOnlyViewCalls.find(call => call.name === '
 if (schemaRegistryCall?.status === 'OK' && schemaRegistryCall.value.toLowerCase() !== TARGETS[0].address.toLowerCase()) {
   throw new Error(`EAS returned unexpected SchemaRegistry address: ${schemaRegistryCall.value}`);
 }
-console.log(JSON.stringify(report, null, 2));
 const proxyAdminOwnerCall = report.readOnlyViewCalls.find(call => call.name === 'proxyAdminOwner');
 if (proxyAdminOwnerCall?.status !== 'OK') throw new Error(`ProxyAdmin owner() read failed: ${proxyAdminOwnerCall?.note || proxyAdminOwnerCall?.status}`);
+if (proxyAdminOwnerCall.value.toLowerCase() === '0x0000000000000000000000000000000000000000') {
+  throw new Error('ProxyAdmin owner() returned the zero address');
+}
+report.proxyAdmin.ownerAddress = proxyAdminOwnerCall.value;
+report.proxyAdmin.ownerAddressRuntime = await inspectRuntime(proxyAdminOwnerCall.value);
+console.log(JSON.stringify(report, null, 2));
 console.log('\nInterpretation: runtime code and EIP-1967 implementation/admin/beacon slots are queried from the configured RPC. These slots only cover the standard EIP-1967 pattern and do not identify all possible upgrade authorities. SHA-256 is a reproducible fingerprint, not the EVM keccak code hash. Explorer source metadata is reported separately for proxy and implementation. eth_call checks only the EAS version, EAS SchemaRegistry address, and SchemaRegistry version. No transactions are submitted; existing attestations, schema semantics, resolver behavior, and write paths are not tested.');
