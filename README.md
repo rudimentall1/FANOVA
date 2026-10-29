@@ -1,0 +1,59 @@
+# FANOVA
+
+**Fans don't just follow stories. They help shape them.**
+
+FANOVA is an onchain entertainment product concept for creators and fan communities. The initial product lets a creator publish an original story, define what fan-created derivative works are permitted, review submissions, approve selected works, preserve their relationship to the source IP, and (only when a real payment flow is implemented) distribute proceeds according to explicit terms.
+
+## Project status
+
+**Stage:** skeleton / pre-MVP. No deployed contracts, production integrations, verified users, revenue, or token currently claimed.
+
+**Target:** Sony Onchain Entertainment Incubation Program.
+
+**Chain strategy:** Soneium Minato testnet for development and demonstrable proof; consider Soneium mainnet only after testnet verification, security review, and a justified user need.
+
+## Non-negotiable scope
+
+The MVP is one complete, inspectable vertical slice:
+
+1. Creator publishes an original story and permitted-use rules.
+2. Fan submits a derivative work referencing the source story.
+3. Creator approves or rejects the submission.
+4. The app records provenance and the approval outcome; onchain writes are used only where they add durable, externally verifiable value.
+5. If payment is implemented, a real testnet transaction demonstrates the declared split. No simulated transaction may be presented as live.
+
+No marketplace sprawl, speculative DAO, invented Sony partnership, unlicensed third-party IP, or premature token launch.
+
+## Source of truth
+
+Before every implementation task, read [`AGENTS.md`](./AGENTS.md) and [`docs/PROJECT_SKELETON.md`](./docs/PROJECT_SKELETON.md). Then read the relevant architecture, roadmap, and decision records. If a request conflicts with the skeleton, stop and explain the conflict before changing scope. Update the skeleton only through an explicit, documented decision; do not silently drift.
+
+## Planned structure
+
+- `apps/web/` — creator and fan experience
+- `packages/shared/` — shared types, validation, and domain rules
+- `contracts/` — minimal EVM contracts and Foundry tests
+- `docs/` — product contract, architecture, roadmap, decisions, demo/evidence protocol
+- `scripts/` — reproducible development and verification commands
+
+The repository may not yet contain all planned directories. Their presence in this document is not a claim that the implementation exists.
+
+## Soneium
+
+- Minato testnet: chain ID `1946`, RPC `https://rpc.minato.soneium.org/`, explorer `https://soneium-minato.blockscout.com/`.
+- Mainnet: chain ID `1868`, RPC `https://rpc.soneium.org/`, explorer `https://soneium.blockscout.com/`.
+- Native gas token is ETH. FANOVA does not need its own token to pay gas.
+
+Network details: [official Soneium docs](https://docs.soneium.org/docs/users/wallets).
+
+## Truth labels
+
+Use these labels in docs, demo, and application materials: `PLANNED`, `LOCAL`, `TESTNET`, `MAINNET`, `INDEPENDENTLY VERIFIED`. Never call a feature live unless its transaction or behavior can be independently checked.
+
+## Current priorities
+
+1. Freeze product scope and architecture.
+2. Build the smallest end-to-end story → submission → creator approval flow.
+3. Add a minimal Soneium testnet proof only after the domain flow works locally.
+4. Validate the experience with a real creator and fan users.
+5. Prepare the Sony application using evidence, not claims.
