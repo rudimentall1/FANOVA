@@ -4,6 +4,13 @@ const RPC_URL = process.env.SONEIUM_RPC_URL || 'https://rpc.soneium.org/';
 const EXPLORER_BASE = 'https://soneium.blockscout.com';
 const EXPECTED_CHAIN_ID = '0x74c'; // 1868
 const EIP1967_IMPLEMENTATION_SLOT = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+const EIP1967_ADMIN_SLOT = '0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103';
+const EIP1967_BEACON_SLOT = '0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50';
+const VIEW_CALLS = {
+  easVersion: { address: '0x4200000000000000000000000000000000000021', data: '0x54fd4d50', decode: 'string' },
+  easSchemaRegistry: { address: '0x4200000000000000000000000000000000000021', data: '0xf10b5cc8', decode: 'address' },
+  schemaRegistryVersion: { address: '0x4200000000000000000000000000000000000020', data: '0x54fd4d50', decode: 'string' },
+};
 const TARGETS = [
   { name: 'SchemaRegistry', address: '0x4200000000000000000000000000000000000020' },
   { name: 'EAS', address: '0x4200000000000000000000000000000000000021' },
@@ -67,6 +74,36 @@ async function inspectExplorer(address) {
   }
 }
 
+function decodeAbiString(data) {
+  if (typeof data !== 'string' || !/^0x[0-9a-f]*$/i.test(data) || data.length < 130) {
+    throw new Error('Malformed ABI string return data');
+  }
+  const bytes = data.slice(2);
+  const offset = Number(BigInt(`0x${bytes.slice(0, 64)}`)) * 2;
+  const length = Number(BigInt(`0x${bytes.slice(offset, offset + 64)}`));
+  const start = offset + 64;
+  const hex = bytes.slice(start, start + length * 2);
+  if (hex.length !== length * 2) throw new Error('Truncated ABI string return data');
+  return Buffer.from(hex, 'hex').toString('utf8');
+}
+
+function decodeAbiAddress(data) {
+  if (typeof data !== 'string' || !/^0x[0-9a-f]{64}$/i.test(data)) {
+    throw new Error('Malformed ABI address return data');
+  }
+  return `0x${data.slice(-40)}`;
+}
+
+async function inspectViewCall(name, call) {
+  try {
+    const result = await rpc('eth_call', [{ to: call.address, data: call.data }, 'latest']);
+    const value = call.decode === 'string' ? decodeAbiString(result) : decodeAbiAddress(result);
+    return { name, status: 'OK', value };
+  } catch (error) {
+    return { name, status: 'UNAVAILABLE', note: String(error).slice(0, 240) };
+  }
+}
+
 async function inspectRuntime(address) {
   const code = await rpc('eth_getCode', [address, 'latest']);
   if (typeof code !== 'string' || !/^0x[0-9a-f]*$/i.test(code)) throw new Error(`Malformed eth_getCode result for ${address}`);
@@ -85,6 +122,10 @@ for (const target of TARGETS) {
   const implementationWord = await rpc('eth_getStorageAt', [target.address, EIP1967_IMPLEMENTATION_SLOT, 'latest']);
   const implementationAddress = `0x${implementationWord.slice(-40)}`;
   const hasImplementation = !/^0x0{40}$/i.test(implementationAddress);
+  const adminWord = await rpc('eth_getStorageAt', [target.address, EIP1967_ADMIN_SLOT, 'latest']);
+  const adminAddress = `0x${adminWord.slice(-40)}`;
+  const beaconWord = await rpc('eth_getStorageAt', [target.address, EIP1967_BEACON_SLOT, 'latest']);
+  const beaconAddress = `0x${beaconWord.slice(-40)}`;
   let implementation = null;
   if (hasImplementation) {
     const implementationRuntime = await inspectRuntime(implementationAddress);
@@ -103,6 +144,14 @@ for (const target of TARGETS) {
     eip1967ImplementationAddress: hasImplementation ? implementationAddress : null,
     implementation,
   });
+}
+report.readOnlyViewCalls = [];
+for (const [name, call] of Object.entries(VIEW_CALLS)) {
+  report.readOnlyViewCalls.push(await inspectViewCall(name, call));
+}
+const schemaRegistryCall = report.readOnlyViewCalls.find(call => call.name === 'easSchemaRegistry');
+if (schemaRegistryCall?.status === 'OK' && schemaRegistryCall.value.toLowerCase() !== TARGETS[0].address.toLowerCase()) {
+  throw new Error(`EAS returned unexpected SchemaRegistry address: ${schemaRegistryCall.value}`);
 }
 console.log(JSON.stringify(report, null, 2));
 console.log('\nInterpretation: runtime code and the EIP-1967 implementation slot are queried from the configured RPC. The slot check only detects the standard EIP-1967 implementation pattern; a zero slot does not prove a contract is not a proxy under another design. SHA-256 is a reproducible fingerprint, not the EVM keccak code hash. Explorer source metadata is reported separately for proxy and implementation. This check does not test contract methods, attestations, schemas, resolver behavior, or any write path.');
