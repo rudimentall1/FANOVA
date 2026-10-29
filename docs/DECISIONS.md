@@ -80,3 +80,12 @@ This file is the append-only record of material project decisions. New decisions
 - **Limitations:** Upstream artifact equivalence, proxy admin/upgrade authority, EAS method behavior, schema semantics, and resolver behavior remain unverified. This finding does not approve integration or deployment.
 - **Consequences:** The initial address/runtime existence uncertainty is resolved. P2 remains open pending implementation-level review and functional read-only checks.
 - **Explicit user approval:** Not required for read-only inspection; no writes or funds used.
+
+## ADR-009 — Live EAS version and upgrade-control mismatch requires further verification
+- **Date:** 2026-10-29
+- **Status:** Accepted as an evidence finding; architecture choice remains open
+- **Context:** The successful read-only run [40894496102](https://github.com/rudimentall1/FANOVA/actions/runs/40894496102) returned EAS version `1.4.1-beta.3`, SchemaRegistry version `1.3.1-beta.2`, and ProxyAdmin owner `0x6b1bae59d09fccbddb6c6cceb07b7279367c4e3b`. EAS and SchemaRegistry EIP-1967 admin slots both point to Soneium's documented ProxyAdmin predeploy at `0x4200000000000000000000000000000000000018`.
+- **Finding:** The EAS repository's current Soneium `solcInputs/ab2e55c92b39ec3be86af0608f634927.json` declares Solidity 0.8.27 and source constructors `Semver(1,3,0)`; Blockscout live implementation metadata reports compiler 0.8.19 and the live view methods return different beta versions. This input is not evidence of exact equivalence to the deployed implementation.
+- **Decision:** Do not integrate EAS or rely on its current upstream input as a matching build artifact yet. Continue read-only investigation of the ProxyAdmin implementation/owner control and locate a source/build artifact that matches the deployed implementation metadata and onchain versions. Keep EAS vs minimal FANOVA contract decision open.
+- **Consequences:** Existing runtime/address checks are useful but insufficient for a final architecture decision. No transactions, schema registration, or attestations have been submitted.
+- **Explicit user approval:** Not required for read-only research; required before any Mainnet write or spending.
