@@ -16,7 +16,8 @@ contract FanovaProvenanceTest {
     address private constant FAN = address(0xB0B);
     address private constant ATTACKER = address(0xBAD);
 
-    bytes32 private constant STORY_ID = keccak256("story-1");
+    bytes32 private constant STORY_SALT = keccak256("creator-salt-1");
+    bytes32 private storyId;
     bytes32 private constant SOURCE_HASH_V1 = keccak256("source-v1");
     bytes32 private constant SOURCE_HASH_V2 = keccak256("source-v2");
     bytes32 private constant PERMISSION_HASH_V1 = keccak256("permission-v1");
@@ -26,8 +27,30 @@ contract FanovaProvenanceTest {
 
     function setUp() public {
         provenance = new FanovaProvenance();
+        storyId = provenance.computeStoryId(CREATOR, STORY_SALT);
         vm.prank(CREATOR);
-        provenance.registerStoryVersion(STORY_ID, 1, SOURCE_HASH_V1, 1, PERMISSION_HASH_V1);
+        provenance.registerStoryVersion(storyId, STORY_SALT, 1, SOURCE_HASH_V1, 1, PERMISSION_HASH_V1);
+    }
+
+    function testStoryIdCannotBeClaimedByAnotherAddress() public {
+        bytes32 salt = keccak256("unclaimed-story-salt");
+        bytes32 creatorDerivedId = provenance.computeStoryId(CREATOR, salt);
+
+        vm.prank(ATTACKER);
+        (bool success,) = address(provenance).call(
+            abi.encodeWithSelector(
+                provenance.registerStoryVersion.selector,
+                creatorDerivedId,
+                salt,
+                uint64(1),
+                SOURCE_HASH_V1,
+                uint64(1),
+                PERMISSION_HASH_V1
+            )
+        );
+
+        require(!success, "attacker claimed creator-bound story ID");
+        require(!provenance.getStory(creatorDerivedId).exists, "failed claim mutated state");
     }
 
     function testFanSubmissionAndCreatorDecision() public {
@@ -71,7 +94,7 @@ contract FanovaProvenanceTest {
             abi.encodeWithSelector(
                 provenance.registerContribution.selector,
                 CONTRIBUTION_ID,
-                STORY_ID,
+                storyId,
                 uint64(1),
                 uint64(1),
                 PERMISSION_HASH_V1,
@@ -90,7 +113,7 @@ contract FanovaProvenanceTest {
             abi.encodeWithSelector(
                 provenance.registerContribution.selector,
                 CONTRIBUTION_ID,
-                STORY_ID,
+                storyId,
                 uint64(1),
                 uint64(1),
                 PERMISSION_HASH_V2,
@@ -111,7 +134,7 @@ contract FanovaProvenanceTest {
             abi.encodeWithSelector(
                 provenance.registerContribution.selector,
                 CONTRIBUTION_ID,
-                STORY_ID,
+                storyId,
                 uint64(1),
                 uint64(1),
                 PERMISSION_HASH_V1,
@@ -173,7 +196,7 @@ contract FanovaProvenanceTest {
             abi.encodeWithSelector(
                 provenance.registerContribution.selector,
                 CONTRIBUTION_ID,
-                STORY_ID,
+                storyId,
                 uint64(1),
                 uint64(1),
                 PERMISSION_HASH_V1,
@@ -194,7 +217,8 @@ contract FanovaProvenanceTest {
         (bool success,) = address(provenance).call(
             abi.encodeWithSelector(
                 provenance.registerStoryVersion.selector,
-                STORY_ID,
+                storyId,
+                STORY_SALT,
                 uint64(2),
                 SOURCE_HASH_V2,
                 uint64(1),
@@ -203,7 +227,7 @@ contract FanovaProvenanceTest {
         );
 
         require(!success, "non-creator registered a version");
-        require(provenance.getStory(STORY_ID).latestVersion == 1, "failed call changed latest version");
+        require(provenance.getStory(storyId).latestVersion == 1, "failed call changed latest version");
     }
 
     function testPermissionVersionMustIncreaseWhenPermissionTextChanges() public {
@@ -211,7 +235,8 @@ contract FanovaProvenanceTest {
         (bool success,) = address(provenance).call(
             abi.encodeWithSelector(
                 provenance.registerStoryVersion.selector,
-                STORY_ID,
+                storyId,
+                STORY_SALT,
                 uint64(2),
                 SOURCE_HASH_V2,
                 uint64(1),
@@ -220,11 +245,11 @@ contract FanovaProvenanceTest {
         );
 
         require(!success, "changed permissions reused old version number");
-        require(provenance.getStory(STORY_ID).latestVersion == 1, "failed call changed latest version");
+        require(provenance.getStory(storyId).latestVersion == 1, "failed call changed latest version");
 
         vm.prank(CREATOR);
-        provenance.registerStoryVersion(STORY_ID, 2, SOURCE_HASH_V2, 2, PERMISSION_HASH_V2);
-        require(provenance.getStory(STORY_ID).latestVersion == 2, "valid version update failed");
+        provenance.registerStoryVersion(storyId, STORY_SALT, 2, SOURCE_HASH_V2, 2, PERMISSION_HASH_V2);
+        require(provenance.getStory(storyId).latestVersion == 2, "valid version update failed");
     }
 
     function testSourceVersionsMustBeSequential() public {
@@ -232,7 +257,8 @@ contract FanovaProvenanceTest {
         (bool success,) = address(provenance).call(
             abi.encodeWithSelector(
                 provenance.registerStoryVersion.selector,
-                STORY_ID,
+                storyId,
+                STORY_SALT,
                 uint64(3),
                 SOURCE_HASH_V2,
                 uint64(1),
@@ -241,7 +267,7 @@ contract FanovaProvenanceTest {
         );
 
         require(!success, "non-sequential version accepted");
-        require(provenance.getStory(STORY_ID).latestVersion == 1, "failed call changed latest version");
+        require(provenance.getStory(storyId).latestVersion == 1, "failed call changed latest version");
     }
 
     function testZeroHashesAreRejected() public {
@@ -249,7 +275,8 @@ contract FanovaProvenanceTest {
         (bool success,) = address(provenance).call(
             abi.encodeWithSelector(
                 provenance.registerStoryVersion.selector,
-                keccak256("another-story"),
+                provenance.computeStoryId(CREATOR, keccak256("another-salt")),
+                keccak256("another-salt"),
                 uint64(1),
                 bytes32(0),
                 uint64(1),
@@ -258,14 +285,17 @@ contract FanovaProvenanceTest {
         );
 
         require(!success, "zero source hash accepted");
-        require(!provenance.getStory(keccak256("another-story")).exists, "failed registration mutated state");
+        require(
+            !provenance.getStory(provenance.computeStoryId(CREATOR, keccak256("another-salt"))).exists,
+            "failed registration mutated state"
+        );
     }
 
     function _submit(bytes32 contributionId) internal {
         vm.prank(FAN);
         provenance.registerContribution(
             contributionId,
-            STORY_ID,
+            storyId,
             1,
             1,
             PERMISSION_HASH_V1,
@@ -276,6 +306,6 @@ contract FanovaProvenanceTest {
 
     function _registerVersion2() internal {
         vm.prank(CREATOR);
-        provenance.registerStoryVersion(STORY_ID, 2, SOURCE_HASH_V2, 1, PERMISSION_HASH_V1);
+        provenance.registerStoryVersion(storyId, STORY_SALT, 2, SOURCE_HASH_V2, 1, PERMISSION_HASH_V1);
     }
 }
