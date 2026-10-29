@@ -50,3 +50,12 @@ This file is the append-only record of material project decisions. New decisions
 - **Alternatives rejected:** Treat Minato as mandatory; deploy to mainnet before implementation and security gates pass; multi-chain deployment.
 - **Consequences:** Product architecture and public configuration are Mainnet-oriented. Local tests remain mandatory; testnet is optional. No real-value transaction is made without explicit approval.
 - **Explicit user approval:** Yes, in project conversation on 2026-10-29.
+
+## ADR-006 — Evaluate shared Soneium IP infrastructure before custom provenance contract
+- **Date:** 2026-10-29
+- **Status:** Accepted for investigation; no production integration claimed
+- **Context:** Soneium's published October 2026 direction describes an IP Registry, IP Graph, IP Execution Layer, and support for ERC-8432. A custom FANOVA registry could duplicate ecosystem infrastructure and weaken interoperability.
+- **Decision:** Before implementing a custom provenance contract, inspect official docs and deployed contract/interface availability; determine whether FANOVA can reference existing IP/license records and add only the creator-review workflow/proof that is missing. Build a custom minimal contract only if a specific gap is documented.
+- **Alternatives:** Build a bespoke registry immediately; assume ERC-8432 is fully deployed without verification; abandon onchain provenance entirely.
+- **Consequences:** Potentially stronger ecosystem fit and less duplicated infrastructure. Integration availability and compatibility remain unverified and must be established before code or claims.
+- **Explicit user approval:** Not required for research and architecture assessment; no deployment or spending authorized.
