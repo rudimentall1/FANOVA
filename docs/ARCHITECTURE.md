@@ -33,7 +33,7 @@ Domain rules + validation
 - Solidity contracts tested locally with Foundry and established libraries where appropriate.
 - Mainnet adapter checks chain ID and distinguishes disconnected/local/mainnet states.
 - Minato is optional for isolated pre-deployment checks, not the default target or required milestone.
-- Story bodies stay offchain. Onchain data is limited to hashes/identifiers, authorization and decision events, and non-sensitive references.
+- Story bodies stay offchain. Onchain data is limited to hashes/identifiers, authorization and decision events, and non-sensitive references.\n- Before designing a custom provenance registry, verify the actual availability, interfaces, and licensing model of Soneium's IP Registry/IP Graph architecture and ERC-8432. Prefer interoperating with shared infrastructure where practical; do not duplicate registry functionality without a documented gap.
 - No AI generation in the first vertical slice.
 
 ## Domain entities
