@@ -38,11 +38,12 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [x] Review contract dependency surface: no third-party Solidity imports, external calls, value transfers, owner, or upgrade path. Record manual threat model and limitations in `docs/CONTRACT_SECURITY_REVIEW.md`.
 - [x] Add a reproducible local deployment-manifest generator and upload the manifest as a CI artifact. Latest contract run [40899723650](https://github.com/rudimentall1/FANOVA/actions/runs/40899723650) reports 4,329 runtime bytes and 4,357 initcode bytes.
 - [x] Add a read-only Soneium Mainnet deployment estimate and local Foundry gas report. Run [40900185493](https://github.com/rudimentall1/FANOVA/actions/runs/40900185493) estimated 998,201 deployment gas at 13,000,000 wei/gas, or 0.000012976613 ETH for execution fee at the recorded time. The estimate explicitly excludes a separately measured OP Stack L1 data fee and must be refreshed before deployment.
-- [ ] Complete independent post-deployment verification instructions and final security checklist, including L1 data fee estimation, before requesting deployment approval.
-- [ ] Obtain explicit user approval before mainnet deployment or any real-value transaction.
-- [ ] If approved and gates pass, deploy to Soneium Mainnet and verify source/address/chain ID.
-- [ ] Connect app or provide a clearly labelled explorer-backed proof panel.
-**Exit gate:** an outsider can verify a relevant mainnet transaction/event if deployment is approved and completed. Until then, label onchain path PLANNED or LOCAL.
+- [x] Deploy the workflow contract to Soneium Mainnet and record its address/transaction in the repository README. Deployment exists, but source metadata is not an exact full-runtime match.
+- [x] Add a read-only browser panel that checks Soneium chain ID and whether bytecode exists at the deployed address; it links to Blockscout and reports RPC failures.
+- [ ] Complete independent verification instructions and final security checklist, including a fresh gas and L1 data-fee estimate before further mainnet transactions.
+- [ ] Implement wallet-driven story registration, contribution registration, and creator decision writes with chain mismatch, rejected prompt, RPC/transaction failure handling, and event verification. User must initiate and approve each wallet transaction.
+- [ ] Demonstrate one complete real Mainnet story → contribution → decision flow with independently inspectable transactions/events and accessible offchain bytes for hash recomputation.
+**Exit gate:** an outsider can verify a real story registration, contribution, and final decision from Mainnet transactions/events and can retrieve the exact referenced offchain bytes to recompute hashes. Contract deployment alone and a code-presence check do not satisfy this gate.
 
 ## P3 — Pilot and differentiation (Days 20–24)
 - [ ] Obtain permission for original pilot story/materials.
