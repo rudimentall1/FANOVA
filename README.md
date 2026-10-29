@@ -28,6 +28,16 @@ No marketplace sprawl, speculative DAO, invented Sony partnership, unlicensed th
 
 Before every implementation task, read [`AGENTS.md`](./AGENTS.md) and [`docs/PROJECT_SKELETON.md`](./docs/PROJECT_SKELETON.md). Then read the relevant architecture, roadmap, and decision records. If a request conflicts with the skeleton, stop and explain the conflict before changing scope. Update the skeleton only through an explicit, documented decision; do not silently drift.
 
+## Project documents
+
+- [Canonical scope and acceptance criteria](./docs/PROJECT_SKELETON.md)
+- [Architecture and security boundaries](./docs/ARCHITECTURE.md)
+- [Roadmap and current gates](./docs/ROADMAP.md)
+- [Sony application evidence map (24 questions)](./docs/APPLICATION_EVIDENCE_MAP.md)
+- [Competitive landscape](./docs/COMPETITIVE_LANDSCAPE.md)
+- [Creator validation and pilot plan](./docs/CREATOR_VALIDATION.md)
+- [Architecture decisions](./docs/DECISIONS.md)
+
 ## Planned structure
 
 - `apps/web/` — creator and fan experience
