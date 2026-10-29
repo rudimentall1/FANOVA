@@ -3,10 +3,10 @@
 Dates are relative to kickoff. Status changes only after evidence is checked.
 
 ## P0 — Baseline and application mapping (Days 1–3)
-- [ ] Map every official application question to evidence, answer owner, and status.
+- [x] Map all 24 official application questions to evidence, answer owner, and status in `docs/APPLICATION_EVIDENCE_MAP.md`; founder-specific answers remain open.
 - [ ] Freeze core user story and one original-IP pilot scenario.
-- [ ] Review Soneium ecosystem products and competitors.
-- [ ] Verify token-plan requirements against the actual application form.
+- [x] Complete initial desk research on Soneium IP architecture and adjacent product categories in `docs/COMPETITIVE_LANDSCAPE.md`.\n- [ ] Hands-on competitor comparison and creator interviews remain outstanding.
+- [x] Review the official six-page questionnaire: it asks current token issuance status and IEO plans; it does not require launching a FANOVA token.
 - [x] Set Soneium Mainnet as target; Minato is optional, not a required milestone.
 **Exit gate:** clear MVP, target user, target network, and evidence requirements.
 
