@@ -33,7 +33,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await page.getByLabel("Story title").fill("The Glass City");
     await page.getByLabel("Story text").fill("A courier discovers a city that changes every midnight.");
     await page.getByLabel("Permitted-use rules").fill("Fans may submit non-commercial continuations. No adaptations outside this story.");
-    await page.locator("#story-form button[type=submit]").click();
+    await page.locator("#story-form button").click();
     await assertNotice(page, "Story published locally");
     assert.match(await page.locator(".permission-box").innerText(), /Permitted-use rules · v1/);
 
@@ -41,7 +41,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await page.getByLabel("Contribution title").fill("The Midnight Map");
     await page.getByLabel("Your contribution").fill("The courier finds a map that records tomorrow's streets.");
     await page.locator('input[name="acknowledged"]').check();
-    await page.locator("#contribution-form button[type=submit]").click();
+    await page.locator("#contribution-form button").click();
     await assertNotice(page, "Contribution saved locally");
     assert.match(await page.locator(".contribution-card .source-ref").first().innerText(), /source v1 · permissions v1/);
 
@@ -58,7 +58,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await page.getByLabel("Contribution title").fill("The Lantern Keeper");
     await page.getByLabel("Your contribution").fill("A keeper lights a lantern to guide the courier home.");
     await page.locator('input[name="acknowledged"]').check();
-    await page.locator("#contribution-form button[type=submit]").click();
+    await page.locator("#contribution-form button").click();
     await assertNotice(page, "Contribution saved locally");
 
     await page.getByRole("button", { name: "Creator" }).click();
