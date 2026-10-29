@@ -33,7 +33,10 @@ GitHub Actions runs this browser test on a clean checkout.
 - State is stored in this browser's localStorage; there is no server or shared database.
 - Demo identities are fixed. Role switching is for demonstration and is not authentication.
 - Eleven domain tests, JavaScript syntax checks, and the Playwright Chromium browser flow pass in GitHub Actions on a clean checkout. The browser test covers publication, contribution submission, unauthorized-review rejection, creator approval, and creator rejection.
-- A read-only browser check calls the public Soneium RPC for chain ID and deployed bytecode at the known FANOVA contract address. It links to Blockscout and reports RPC errors honestly. It does not submit transactions, prove source equivalence, or anchor the local story workflow.
-- Wallet connection and onchain story/contribution writes are not implemented. Those remain PLANNED.
+- A read-only browser check calls the public Soneium RPC for chain ID and deployed bytecode at the known FANOVA contract address. It links to Blockscout and reports RPC errors honestly. It does not prove source equivalence.
+- A wallet-driven onchain workflow is implemented in the browser for Soneium Mainnet (chain ID 1868): register the local source story, register the latest local contribution from a different wallet, then record the local creator decision from the story-creator wallet. Every write requires explicit wallet confirmation and costs ETH gas. The app checks for the expected contract event in each successful receipt.
+- Ethers is loaded from jsDelivr only when the wallet workflow is used. A network/CDN failure prevents those wallet actions but does not prevent the local demo from loading.
+- Story and contribution text remain offchain. The app can export a JSON evidence bundle containing local source text, canonical hash inputs, IDs, and recorded transaction hashes. Keep that export safe; it contains the full text. The evidence bundle is a convenience, not a trustless verifier by itself.
+- The complete Mainnet story → contribution → decision flow has not yet been independently demonstrated. Do not claim the end-to-end onchain milestone complete until real receipts/events are checked from outside the app.
 - Local hashes/IDs do not establish legal ownership or licensing rights.
 - Use original pilot content or material with documented permission.
