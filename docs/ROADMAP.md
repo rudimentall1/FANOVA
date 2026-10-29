@@ -25,9 +25,11 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 
 ## P2 — Mainnet provenance path (Days 13–19)
 - [x] Define the minimum externally verifiable provenance claim and evidence requirements in `docs/PROVENANCE_REQUIREMENTS.md`.
-- [ ] Verify whether a suitable Soneium Mainnet IP Registry/ERC-8432 deployment and interface exists; decide whether FANOVA needs a custom contract only after this check.
-- [ ] Independently verify Soneium Mainnet EAS/SchemaRegistry bytecode and evaluate an EAS-attestation design against the authorization requirements.
-- [ ] Finalize the contract/adapter surface after the infrastructure decision.
+- [x] Check the official Soneium contract directory and EAS deployment catalog; EAS/SchemaRegistry addresses are documented, but live bytecode/source/runtime behavior is not yet independently verified.
+- [x] Compare EAS-only attestations with a minimal workflow contract in docs/ONCHAIN_PROOF_DESIGN.md; EAS alone does not enforce creator authorization or one final decision.
+- [ ] Read-only verify EAS/SchemaRegistry runtime bytecode, source/ABI and behavior on chain ID 1868.
+- [ ] Check for any suitable deployed Soneium IP Registry/ERC-8432 interface; official contract directory reviewed so far does not list one.
+- [ ] Record an accepted architecture decision after read-only verification, before writing contract code.
 - [ ] Write and run contract tests locally, including unauthorized-call rejection.
 - [ ] Complete static checks, dependency review, deployment-cost estimate, and security checklist.
 - [ ] Prepare deployment manifest and independent verification steps.
