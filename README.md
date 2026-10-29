@@ -6,7 +6,7 @@ FANOVA is an onchain entertainment product concept for creators and fan communit
 
 ## Project status
 
-**Stage:** local prototype / pre-MVP verification. A browser-local creator/fan flow and domain tests are committed. Eleven domain tests and JavaScript syntax checks pass in GitHub Actions on a clean checkout; the complete interactive browser flow still needs manual verification. No deployed contracts, production integrations, verified users, revenue, or token are claimed.
+**Stage:** local prototype plus un-deployed contract implementation. Eleven domain tests, JavaScript syntax checks, and the full Playwright Chromium browser E2E flow pass in GitHub Actions on a clean checkout. A minimal Solidity provenance contract and adversarial Foundry tests are now in the repository; their CI result is pending. No deployed contracts, production integrations, verified users, revenue, or token are claimed.
 
 **Target:** Sony Onchain Entertainment Incubation Program.
 
@@ -42,7 +42,7 @@ Before every implementation task, read [`AGENTS.md`](./AGENTS.md) and [`docs/PRO
 
 - `apps/web/` — creator and fan experience
 - `packages/shared/` — shared types, validation, and domain rules
-- `contracts/` — minimal EVM contracts and Foundry tests
+- `contracts/` — minimal EVM provenance contract and Foundry tests (LOCAL, not deployed)
 - `docs/` — product contract, architecture, roadmap, decisions, demo/evidence protocol
 - `scripts/` — reproducible development and verification commands
 
