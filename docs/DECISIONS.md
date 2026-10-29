@@ -99,3 +99,13 @@ This file is the append-only record of material project decisions. New decisions
 - **Decision:** Record the observed upgrade-control path but do not infer the owner identity, key custody, or governance process from the address alone. Upstream source/build equivalence and schema/resolver behavior remain unresolved, so ADR-007 remains open.
 - **Consequences:** The admin path is more transparent than an unknown slot, but it is not enough to assert that upgrades are protected by a multisig or timelock.
 - **Explicit user approval:** Not required for read-only research; required before any Mainnet write or spending.
+
+
+## ADR-011 — Map the Soneium L2 ProxyAdmin owner to its L1 governance multisig
+- **Date:** 2026-10-29
+- **Status:** Accepted as an evidence finding; does not approve EAS integration
+- **Context:** Read-only RPC found L2 ProxyAdmin owner `0x6b1bae59d09fccbddb6c6cceb07b7279367c4e3b`, with no code at that L2 address. The absence of code was initially ambiguous.
+- **Finding:** The [official Superchain Registry Soneium config](https://github.com/ethereum-optimism/superchain-registry/blob/main/superchain/configs/mainnet/soneium.toml) lists L1 `ProxyAdminOwner = 0x5a0Aae59D09fccBdDb6C6CcEB07B7279367C3d2A` and marks Soneium as governed by Optimism. The L2 owner value matches the standard OP Stack L1-to-L2 address alias of that address. [L2BEAT's Soneium assessment](https://l2beat.com/layer2s/projects/soneium) identifies the L1 owner as a 2-of-2 multisig and says upgrades have no delay.
+- **Decision:** Interpret the L2 no-code address as the expected alias, not evidence of an EOA-controlled key. Record upgrade governance as a multisig-controlled path with no delay per L2BEAT; do not claim the current Safe signer set was independently verified in this audit.
+- **Consequences:** Upgrade authority is better characterized. A no-delay upgrade path remains a trust consideration; EAS source/build equivalence and schema/resolver behavior are still unresolved, so ADR-007 remains open.
+- **Explicit user approval:** Not required for read-only research; required before any Mainnet write or spending.
