@@ -149,7 +149,9 @@ for (const target of TARGETS) {
 }
 report.readOnlyViewCalls = [];
 for (const [name, call] of Object.entries(VIEW_CALLS)) {
-  report.readOnlyViewCalls.push(await inspectViewCall(name, call));
+  const result = await inspectViewCall(name, call);
+  report.readOnlyViewCalls.push(result);
+  if (result.status !== 'OK') throw new Error(`Read-only method check failed for ${name}: ${result.note || result.status}`);
 }
 const schemaRegistryCall = report.readOnlyViewCalls.find(call => call.name === 'easSchemaRegistry');
 if (schemaRegistryCall?.status === 'OK' && schemaRegistryCall.value.toLowerCase() !== TARGETS[0].address.toLowerCase()) {
