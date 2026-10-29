@@ -5,9 +5,9 @@
 2. Show a creator publishing an original story and visible permission rules.
 3. Show a fan submitting a contribution tied to the source version.
 4. Show the creator approving it.
-5. Show the provenance/decision record and independently inspectable Minato transaction, if deployed.
+5. Show the provenance/decision record and independently inspectable Soneium Mainnet transaction, if deployed.
 6. Show a meaningful failure: unauthorized reviewer or invalid permission acknowledgement is rejected.
-7. State what is local, testnet, mocked, or still planned.
+7. State what is local, mocked, mainnet, or still planned. Minato may be mentioned only if optional testing was actually performed.
 
 ## Evidence checklist
 - Git commit and reproducible setup.
@@ -21,7 +21,7 @@
 ## Truth labels
 - `PLANNED`: designed but not implemented.
 - `LOCAL`: implemented locally, no external deployment.
-- `TESTNET`: deployed/executed on the named testnet, evidence available.
+- `TESTNET`: used only to describe optional pre-deployment testing on a named testnet, with evidence.
 - `MAINNET`: deployed/executed on the named mainnet, evidence available.
 - `INDEPENDENTLY VERIFIED`: a third party or repeatable outsider procedure has confirmed the specific claim.
 
