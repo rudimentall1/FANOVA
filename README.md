@@ -6,7 +6,7 @@ FANOVA is an onchain entertainment product concept for creators and fan communit
 
 ## Project status
 
-**Stage:** skeleton / pre-MVP. No deployed contracts, production integrations, verified users, revenue, or token currently claimed.
+**Stage:** local prototype / pre-MVP verification. A browser-local creator/fan flow and domain tests are committed. The repository test command and complete browser flow have not yet been independently run from a clean checkout. No deployed contracts, production integrations, verified users, revenue, or token are claimed.
 
 **Target:** Sony Onchain Entertainment Incubation Program.
 
