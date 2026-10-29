@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 
 const ADDRESS = "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880";
 const RPC_URL = process.env.SONEIUM_RPC_URL || "https://rpc.soneium.org/";
@@ -36,6 +37,8 @@ function splitSolidityMetadata(hex) {
   };
 }
 
+const localSource = readFileSync("contracts/src/FanovaProvenance.sol", "utf8");
+const localSourceSha256 = createHash("sha256").update(localSource).digest("hex");
 const artifact = JSON.parse(readFileSync(ARTIFACT_PATH, "utf8"));
 const local = normalize(artifact.deployedBytecode?.object);
 const response = await fetch(RPC_URL, {
@@ -98,8 +101,8 @@ async function fetchJson(url) {
       return {
         url,
         status: response.status,
-        compilerVersion: json.compiler?.version ?? null,
-        evmVersion: json.settings?.evmVersion ?? null,
+        compilerVersion: json.compiler?.version ?? json.compiler_version ?? null,
+        evmVersion: json.settings?.evmVersion ?? json.evm_version ?? null,
         optimizer: json.settings?.optimizer ?? null,
         compilationTarget: json.settings?.compilationTarget ?? null,
         sourcePaths: json.sources ? Object.keys(json.sources) : null,
@@ -111,7 +114,16 @@ async function fetchJson(url) {
         verificationStatus: json.verification_status ?? json.verificationStatus ?? null,
         fileNames: Array.isArray(json.source_code) ? json.source_code.map(x => x.file_path ?? x.name).filter(Boolean) : null,
         sourceCodeType: typeof json.source_code,
-        sourceCodeLength: typeof json.source_code === "string" ? json.source_code.length : null
+        sourceCodeLength: typeof json.source_code === "string" ? json.source_code.length : null,
+        sourceCodeSha256: typeof json.source_code === "string"
+          ? createHash("sha256").update(json.source_code).digest("hex")
+          : null,
+        sourceCodeMatchesCurrentFile: typeof json.source_code === "string"
+          ? json.source_code === localSource
+          : null,
+        sourceCodeMatchesCurrentFileIgnoringFinalNewline: typeof json.source_code === "string"
+          ? json.source_code.replace(/\\n$/, "") === localSource.replace(/\\n$/, "")
+          : null
       };
     } catch {
       return { url, status: response.status, nonJson: true };
@@ -148,6 +160,8 @@ const report = {
   evmVersion: "cancun",
   optimizer: true,
   optimizerRuns: 200,
+  localSourceBytes: Buffer.byteLength(localSource),
+  localSourceSha256,
   localRuntimeBytes: local.length / 2,
   deployedRuntimeBytes: deployed.length / 2,
   exactRuntimeMatch: exact,
