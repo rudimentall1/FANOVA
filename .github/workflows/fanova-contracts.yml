@@ -1,0 +1,32 @@
+name: FANOVA contract tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - 'foundry.toml'
+      - '.github/workflows/fanova-contracts.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - 'foundry.toml'
+      - '.github/workflows/fanova-contracts.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: Check Solidity formatting
+        run: forge fmt --check
+      - name: Run adversarial contract tests
+        run: forge test -vvv
