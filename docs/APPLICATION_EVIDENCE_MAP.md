@@ -11,7 +11,7 @@
 | 1 | What would you like to do? | Select “Apply for the Program” if submitting an application. | This project is intended for the program, not an inquiry. |
 | 2 | Please provide the name of your project. | FANOVA | Public repository: https://github.com/rudimentall1/FANOVA |
 | 3 | Select the category that best describes your project. | Likely “IP/Media” | Product is about creator-authorized fan derivative works; confirm the current form's options. |
-| 4 | What is the current stage of your project development? | Do not select “MVP” until the end-to-end local flow is run and verified. Current evidence is a committed local prototype with tests, but repo-level/browser verification remains pending. | Run clean-checkout tests and browser flow. If not verified by submission, choose the closest truthful stage. |
+| 4 | What is the current stage of your project development? | A local end-to-end browser workflow is now verified in GitHub Actions on a clean checkout; the project remains a local prototype, not a deployed product. | Evidence: domain tests, JavaScript syntax checks, and Playwright Chromium end-to-end workflow pass in GitHub Actions. Confirm the form's stage definitions before choosing the label. |
 | 5 | If you have a website, demo, or any relevant links, please provide them below. | GitHub repository is available; no production app or verified live demo yet. | Publish an accessible demo only after the workflow and status labels are checked. |
 | 6 | Please select the range that best represents your current user base. | Unknown; do not infer from repository visitors or test identities. | Count real product users, not demo identities. Confirm whether zero users fits the “0–1,000” option. |
 | 7 | Please indicate your project's current level of blockchain integration. | “Planning to go onchain” until a real Soneium integration is implemented. | Mainnet target is recorded in the canonical skeleton; no FANOVA contract or transaction exists. |
@@ -46,7 +46,7 @@
 - Legal ownership or licensing rights established solely by hashes or onchain records.
 - Sony endorsement, partnership, contact, or selection.
 - User traction, creator demand, revenue, funding, or runway without founder-supplied evidence.
-- Completed end-to-end MVP until a clean checkout, test suite, and browser workflow have actually been verified.
+- A deployed, authenticated, or onchain MVP. The local end-to-end workflow is verified, but there is no server persistence, authentication, wallet, contract, or Soneium transaction.
 
 ## Official program context
 
