@@ -4,12 +4,12 @@
 
 ## Strategic finding
 
-Soneium's own October 2026 direction now explicitly includes an IP Registry, IP Graph, IP Execution Layer, and support for ERC-8432 as a machine-readable IP/licensing interface. Its stated use cases include narrative content, fan-created derivatives, attribution, and optional monetization. FANOVA must not position generic “onchain provenance for derivatives” as a unique invention. Its product-level differentiation has to be a better creator-facing workflow and real creator/community adoption, built to interoperate with shared Soneium infrastructure rather than duplicate it.
+Soneium's October 2026 direction describes an IP Registry, IP Graph, IP Execution Layer, and its intention to support ERC-8432 as a machine-readable IP/licensing interface. The ERC itself is still a draft; its forum post says the reference implementation is not audited and is not intended for production use. We have not verified a deployed production-ready ERC-8432 implementation on Soneium. Its stated use cases include narrative content, fan-created derivatives, attribution, and optional monetization. FANOVA must not position generic “onchain provenance for derivatives” as a unique invention. Its product-level differentiation has to be a better creator-facing workflow and real creator/community adoption, built to interoperate with shared Soneium infrastructure rather than duplicate it.
 
 Sources:
 - Soneium, “Unveiling the Onchain Entertainment Economy” (2026-10-26): https://soneium.org/en/blog/onchain-entertainment-economy
 - Soneium Vision Paper — ecosystem and use cases: https://docs.soneium.org/docs/vision-paper/ecosystem-and-use-cases
-- Soneium initiatives / ERC-8432: https://docs.soneium.org/docs/vision-paper/key-initiatives
+- Soneium initiatives / ERC-8432: https://docs.soneium.org/docs/vision-paper/key-initiatives\n- ERC-8432 draft discussion and implementation caveat: https://ethereum-magicians.org/t/erc-8432-onchain-ip-asset-and-license-registry/29792
 - Soneium Portal: https://portal.soneium.org/en
 
 ## Adjacent products and infrastructure
@@ -17,7 +17,7 @@ Sources:
 | Product/category | Publicly stated focus | Overlap with FANOVA | Product gap FANOVA could test; not a proven advantage |
 |---|---|---|---|
 | Soneium Portal | Official discovery and participation hub for Tokenized IP, including IP Tokens, IP Vaults and IP Bonds | Creator/IP discovery and fan participation on the same ecosystem | A focused operational workflow for a creator to define contribution permissions, receive text/story derivatives, review them, and publish a decision may complement Portal; integration/overlap must be checked, not assumed. |
-| Soneium Onchain IP Architecture / ERC-8432 | IP registration, machine-readable licensing, relationships between originals and derivatives, and programmable value flow | Direct architectural overlap in rights metadata and provenance | FANOVA should use or reference these shared standards where practical, and focus on user workflow, moderation, permission acknowledgement, and editorial decisions. Actual contract availability and interface details must be verified. |
+| Soneium Onchain IP Architecture / ERC-8432 | IP registration, machine-readable licensing, relationships between originals and derivatives, and programmable value flow | Direct architectural overlap in rights metadata and provenance | FANOVA should use or reference these shared standards where practical, and focus on user workflow, moderation, permission acknowledgement, and editorial decisions. The standard is draft-stage and its reference implementation is explicitly not production-ready; deployed contract availability and interface details must be verified. |
 | General fan-fiction / creator-publishing platforms | Publish stories, host communities, and allow creators or communities to review content depending on the platform | Core creative behavior and audience habit; often familiar UX | FANOVA's potential differentiator is not “fans can write stories”; it is explicit creator-defined permitted use, contribution-to-source version linkage, and an auditable approval decision. Validate whether creators care enough to change workflow. |
 | General IP/provenance protocols and registries | Records, licensing metadata, attribution, or content provenance | Infrastructure overlap | Not a substitute for finding an author who needs the workflow. FANOVA should avoid building a new registry until an integration gap is demonstrated. |
 
