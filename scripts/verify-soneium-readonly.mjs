@@ -142,6 +142,8 @@ for (const target of TARGETS) {
     ...proxyRuntime,
     proxyExplorerSourceMetadata: await inspectExplorer(target.address),
     eip1967ImplementationAddress: hasImplementation ? implementationAddress : null,
+    eip1967AdminAddress: /^0x0{40}$/i.test(adminAddress) ? null : adminAddress,
+    eip1967BeaconAddress: /^0x0{40}$/i.test(beaconAddress) ? null : beaconAddress,
     implementation,
   });
 }
@@ -154,4 +156,4 @@ if (schemaRegistryCall?.status === 'OK' && schemaRegistryCall.value.toLowerCase(
   throw new Error(`EAS returned unexpected SchemaRegistry address: ${schemaRegistryCall.value}`);
 }
 console.log(JSON.stringify(report, null, 2));
-console.log('\nInterpretation: runtime code and the EIP-1967 implementation slot are queried from the configured RPC. The slot check only detects the standard EIP-1967 implementation pattern; a zero slot does not prove a contract is not a proxy under another design. SHA-256 is a reproducible fingerprint, not the EVM keccak code hash. Explorer source metadata is reported separately for proxy and implementation. This check does not test contract methods, attestations, schemas, resolver behavior, or any write path.');
+console.log('\nInterpretation: runtime code and EIP-1967 implementation/admin/beacon slots are queried from the configured RPC. These slots only cover the standard EIP-1967 pattern and do not identify all possible upgrade authorities. SHA-256 is a reproducible fingerprint, not the EVM keccak code hash. Explorer source metadata is reported separately for proxy and implementation. eth_call checks only the EAS version, EAS SchemaRegistry address, and SchemaRegistry version. No transactions are submitted; existing attestations, schema semantics, resolver behavior, and write paths are not tested.');
