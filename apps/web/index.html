@@ -17,7 +17,7 @@
       <p class="eyebrow">CREATOR × COMMUNITY</p>
       <h1>Stories grow<br><em>with their fans.</em></h1>
       <p class="intro">A creator sets the rules. Fans contribute within them. Every decision stays linked to the source story.</p>
-      <div class="network-note"><strong>Current proof level</strong><span>Local browser workflow · Soneium Mainnet integration not yet implemented</span></div>
+      <div class="network-note"><strong>Current proof level</strong><span>Local browser workflow plus a read-only check that the FANOVA contract has code on Soneium Mainnet. Story actions still remain local.</span></div>
     </section>
     <section class="workspace">
       <div class="section-heading">
@@ -27,6 +27,7 @@
           <button type="button" data-role="fan">Fan</button>
         </div>
       </div>
+      <section class="onchain-proof" aria-labelledby="onchain-proof-title"><div><p class="eyebrow">SONEIUM MAINNET · READ ONLY</p><h3 id="onchain-proof-title">Contract deployment check</h3><p id="chain-proof-detail" class="muted" role="status" aria-live="polite">Checking chain ID and contract bytecode through the public RPC…</p></div><span id="chain-proof-status" class="proof-status">CHECKING</span><a href="https://soneium.blockscout.com/address/0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880" target="_blank" rel="noopener noreferrer">Open contract on Blockscout ↗</a><p class="proof-limit">This confirms only that the configured RPC reports contract code at this address. It does not verify source equivalence or write this browser’s story data onchain.</p></section>
       <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
       <div id="app"></div>
       <div class="footnote">Demo identities are fixed and simulated. This prototype does not authenticate users, persist data on a server, verify legal rights, or write to Soneium. Browser data is stored locally on this device.</div>
@@ -34,5 +35,6 @@
     </section>
   </main>
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./onchain-proof.js"></script>
 </body>
 </html>
