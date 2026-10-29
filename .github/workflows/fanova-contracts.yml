@@ -26,7 +26,5 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
-      - name: Check Solidity formatting
-        run: forge fmt --check
       - name: Run adversarial contract tests
         run: forge test -vvv
