@@ -28,8 +28,9 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [x] Check the official Soneium contract directory and EAS deployment catalog; EAS/SchemaRegistry addresses are documented, but live bytecode/source/runtime behavior is not yet independently verified.
 - [x] Compare EAS-only attestations with a minimal workflow contract in docs/ONCHAIN_PROOF_DESIGN.md; EAS alone does not enforce creator authorization or one final decision.
 - [x] Read-only verify EAS/SchemaRegistry runtime bytecode, EIP-1967 implementation addresses, and explorer source-verification flags on chain ID 1868. Successful CI run and output are recorded in `docs/ONCHAIN_PROOF_DESIGN.md`.
-- [ ] Compare deployed implementation source/compiler settings with the EAS release artifacts; the official deployment JSON files contain ABI/address but no runtime bytecode/compiler metadata, and explorer source verification alone does not prove upstream artifact equivalence.
-- [ ] Verify the new read-only EIP-1967 admin/beacon-slot and EAS/SchemaRegistry method checks in CI; no schema registration or attestation writes.
+- [ ] Compare deployed implementation source/compiler settings with the EAS release artifacts. The upstream repository has a `solcInputs` JSON, but it declares Solidity 0.8.27 and Semver(1,3,0), while live explorer metadata reports compiler 0.8.19 and onchain versions are EAS 1.4.1-beta.3 / SchemaRegistry 1.3.1-beta.2. This mismatch is unresolved.
+- [x] Read-only verify EIP-1967 implementation/admin/beacon slots and call EAS `version()`, `getSchemaRegistry()`, SchemaRegistry `version()`, and ProxyAdmin `owner()` in successful CI run [40894496102](https://github.com/rudimentall1/FANOVA/actions/runs/40894496102). No schema registration or attestation writes.
+- [ ] Inspect ProxyAdmin's own implementation/control path and characterize the owner address; the owner value is observed but governance/control semantics are not yet established.
 - [ ] Check for any suitable deployed Soneium IP Registry/ERC-8432 interface; official contract directory reviewed so far does not list one.
 - [ ] Record an accepted architecture decision after read-only verification, before writing contract code.
 - [ ] Write and run contract tests locally, including unauthorized-call rejection.
