@@ -1,6 +1,6 @@
 # FANOVA Provenance Proof Requirements
 
-**Status:** requirements locked; initial contract implementation and 20 Foundry tests are LOCAL and passing in CI. No contract has been deployed.
+**Status:** requirements locked. The workflow contract is deployed on Soneium Mainnet at `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`; CI shows executable runtime bytecode matches the current build after removing Solidity metadata, but full runtime metadata differs. The browser has a read-only chain-ID/code-presence panel. No story or contribution transaction has yet been demonstrated by the current browser workflow.
 **Date:** 2026-10-29
 
 ## User-visible claim to prove
@@ -73,4 +73,4 @@ If no suitable deployed interface can be verified, the accepted alternative is t
 - Wallet/chain mismatch, rejected signature, RPC failure, and failed transaction handling in the client.
 - Explicit user approval for the proposed deployment and real-value transaction.
 
-Until these gates pass, status is **PLANNED** for the onchain path and **LOCAL** for the browser workflow.
+Current status: contract deployment is **MAINNET**; the browser story/contribution workflow is **LOCAL**; wallet-driven writes and a full externally verifiable story-to-decision demo remain **PLANNED**.
