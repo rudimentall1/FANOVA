@@ -25,9 +25,9 @@ The contract records story versions, source and permission hashes, contribution 
 
 ## Automated tests
 
-GitHub Actions run [40898659333](https://github.com/rudimentall1/FANOVA/actions/runs/40898659333) passed 20 Foundry tests (13 baseline tests and 7 edge-case tests), with zero failures. The run also compiled with Solidity 0.8.27 and reported the bytecode sizes above.
+GitHub Actions run [40899723650](https://github.com/rudimentall1/FANOVA/actions/runs/40899723650) passed 20 Foundry tests (13 baseline tests and 7 edge-case tests), with zero failures. Solidity 0.8.27 compiled successfully. After extracting version-validation logic into an internal helper, runtime bytecode is 4,329 bytes and initcode is 4,357 bytes.
 
-Slither CI is configured in [`.github/workflows/fanova-security.yml`](../.github/workflows/fanova-security.yml). Its result must be recorded after the workflow finishes; configuration alone is not a passed security scan.
+Slither 0.11.4 completed successfully in [run 40899723269](https://github.com/rudimentall1/FANOVA/actions/runs/40899723269): 1 contract analyzed with 100 detectors and 0 results. The earlier run reported cyclomatic complexity 14 for `registerStoryVersion`; that logic was split into a helper, and the succeeding scan reported zero results. This is static-analysis evidence, not an independent audit.
 
 ## Dependency review
 
