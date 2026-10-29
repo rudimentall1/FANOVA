@@ -43,7 +43,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await page.locator('input[name="acknowledged"]').check();
     await page.locator("#contribution-form button[type=submit]").click();
     await assertNotice(page, "Contribution saved locally");
-    assert.match(await page.locator(".source-ref").first().innerText(), /source v1 · permissions v1/);
+    assert.match(await page.locator(".contribution-card .source-ref").first().innerText(), /source v1 · permissions v1/);
 
     await page.getByRole("button", { name: "Try unauthorized approval" }).click();
     await assertNotice(page, "only the story's authorized creator may review contributions");
