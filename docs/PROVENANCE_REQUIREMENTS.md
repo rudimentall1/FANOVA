@@ -21,7 +21,7 @@ The evidence record needs to bind:
 - the review outcome, reviewer address, and decision timestamp;
 - the network, contract address, transaction hash, and emitted event needed for independent inspection.
 
-Full story/contribution text, personal data, and private review notes remain offchain. Hashes are useful only if the evaluator can obtain the referenced bytes and recompute them.
+Full story/contribution text, personal data, and private review notes remain offchain. Hashes are useful only if the evaluator can obtain the referenced bytes and recompute them. An onchain permission-acknowledgement flag records the contributor's assertion; it does not prove they read or understood the text, establish legal consent, or prove IP rights.
 
 ## Required authorization and state invariants
 
