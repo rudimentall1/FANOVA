@@ -16,7 +16,7 @@ Do not add a token, marketplace, DAO, social feed, complex AI generation, multi-
 
 ## Truth and evidence
 - Never claim a feature is implemented, deployed, live, secure, legally compliant, adopted, or independently verified without evidence.
-- Label capability status as `PLANNED`, `LOCAL`, `TESTNET`, `MAINNET`, or `INDEPENDENTLY VERIFIED`.
+- Label capability status as `PLANNED`, `LOCAL`, `MAINNET`, or `INDEPENDENTLY VERIFIED`. Use `TESTNET` only when explicitly describing optional pre-deployment testing, never as the default product target.
 - Distinguish mocked data from live data in UI and demos.
 - Never fabricate transaction hashes, users, creator permissions, rights ownership, payments, metrics, Sony involvement, or partnerships.
 - Onchain records do not establish legal ownership of IP by themselves.
