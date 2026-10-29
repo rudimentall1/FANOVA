@@ -69,3 +69,14 @@ This file is the append-only record of material project decisions. New decisions
 - **Alternatives:** Treat EAS as if it enforced application rules; deploy an EAS schema or contract immediately; build a broad IP registry; add both EAS and a custom contract without a demonstrated need.
 - **Consequences:** Avoids overstating shared infrastructure and makes the security/claim trade-off explicit. P2 remains open.
 - **Explicit user approval:** Not required for this research/design comparison; required before any Mainnet transaction or spending.
+
+
+## ADR-008 — Read-only verification of Soneium EAS deployments
+- **Date:** 2026-10-29
+- **Status:** Accepted as an evidence finding; not a decision to integrate EAS
+- **Context:** The documented EAS and SchemaRegistry addresses had not been checked against live Mainnet RPC.
+- **Decision:** A read-only GitHub Actions verifier now checks chain ID, runtime bytecode, EIP-1967 implementation slots, and Blockscout source-verification metadata. Run 4 succeeded on chain ID 1868. Both proxy addresses have 2,059-byte runtime code and distinct implementations; Blockscout marks proxy and implementation source as verified.
+- **Evidence:** https://github.com/rudimentall1/FANOVA/actions/runs/40889396396 ; detailed addresses and fingerprints in `docs/ONCHAIN_PROOF_DESIGN.md`.
+- **Limitations:** Upstream artifact equivalence, proxy admin/upgrade authority, EAS method behavior, schema semantics, and resolver behavior remain unverified. This finding does not approve integration or deployment.
+- **Consequences:** The initial address/runtime existence uncertainty is resolved. P2 remains open pending implementation-level review and functional read-only checks.
+- **Explicit user approval:** Not required for read-only inspection; no writes or funds used.
