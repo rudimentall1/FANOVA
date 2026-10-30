@@ -4,7 +4,8 @@ import {
   pgEnum,
   pgTable,
   text,
-  timestamp
+  timestamp,
+  uniqueIndex
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
