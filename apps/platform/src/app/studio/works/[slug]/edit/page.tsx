@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
@@ -25,7 +25,7 @@ export default async function EditDraftPage({ params }: { params: Promise<{ slug
     })
     .from(work)
     .innerJoin(workVersion, sql`${workVersion.id} = coalesce(${work.draftVersionId}, ${work.currentVersionId})`)
-.where(eq(work.slug, slug))
+.where(and(eq(work.slug, slug), eq(work.ownerUserId, actor.userId)))
     .limit(1);
 
   if (!draft) notFound();
