@@ -37,7 +37,7 @@ The contract source currently imports no third-party Solidity library. Foundry a
 
 1. **Source metadata:** Blockscout reports a partial source match. CI found matching executable runtime bytecode after removing Solidity metadata, but full runtime metadata equivalence is not established. Do not describe the source as fully verified.
 2. **Mainnet workflow:** one user-approved Story registration, Contribution registration, and Creator decision sequence completed successfully on Soneium Mainnet on 2026-10-30. Transaction hashes, blocks, and wallet roles are recorded in `docs/DEMO_AND_EVIDENCE.md`. This is one smoke test with placeholder content, not a creator pilot.
-3. **Project verifier:** the exported bundle from that sequence was checked by FANOVA's read-only verifier, which returned `VERIFIED` for the included story, contribution, and decision records. The verifier does not yet scan all contract events from deployment to a fixed block, so it cannot detect an omitted contribution that is absent from the bundle. This is a material completeness limitation, not an independent audit.
+3. **Project verifier:** the exported bundle from that sequence was checked by the earlier read-only verifier, which returned `VERIFIED` for the included story, contribution, and decision records. A later change adds full event-history scanning from deployment to a fixed verification block and reconciliation against the bundle; this code and its unit tests pass CI, but live Mainnet validation of the new scan remains pending. Do not treat the historical verifier run as proof that the new event-coverage path has been exercised.
 4. **Wallet exercise:** one creator/fan/creator account sequence is evidenced. Broader testing of account changes, chain mismatch, rejected prompts, pending/reverted transactions, and interrupted sessions remains open. Never retry a submitted transaction blindly.
 5. **Demo identity boundary:** the local role switch and display names are simulated. They are not authenticated identities and are not cryptographically bound to a wallet. For onchain attribution, the signer address stored by the contract is authoritative. Production authentication and server-side identity mapping are out of scope for this MVP.
 6. **Deployment:** do not redeploy the contract. Any further Mainnet write must be initiated and approved by the user through Rabby; the wallet displays the transaction and fee before signing.
@@ -55,6 +55,6 @@ The same run's local Foundry gas report recorded test-context ranges: `registerS
 - Mainnet deployment: **MAINNET**, deployed at `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`; full metadata equivalence is not established.
 - Browser wallet write integration: **LOCAL implementation; MAINNET smoke-test sequence demonstrated once** (see `docs/DEMO_AND_EVIDENCE.md`).
 - Mainnet story → contribution → creator-decision proof: **MAINNET**, one user-approved sequence; not a creator pilot.
-- Evidence bundle completeness against the full onchain event history: **NOT YET VERIFIED**.
+- Event-history scanner and reconciliation: **LOCAL / CI PASSED**; live Mainnet execution against the recorded bundle: **PENDING**.
 - Historical `STALE` presentation in the browser UI: **NOT IMPLEMENTED**.
 - Independent security audit: **NOT PERFORMED**.

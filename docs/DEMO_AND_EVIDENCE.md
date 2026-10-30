@@ -44,7 +44,7 @@ The exported bundle was loaded into the separate read-only verifier. It returned
 
 The verifier does not request wallet access and does not send transactions. It checks the exported content/hash inputs against Soneium contract storage and the referenced transaction receipts/events.
 
-**Verifier scope:** this result covers only the story, contribution, and decision records included in the exported bundle. The current verifier does not enumerate every contract event from deployment to a fixed block, so it cannot prove that the bundle contains the complete contribution history. The browser now labels a successful result `RECORDS VERIFIED`. The earlier `VERIFIED` label in this historical run should be read with this limitation. This is not an independent audit or third-party reproduction.
+**Verifier scope at the time of this recorded run:** the result covered the story, contribution, and decision records included in the exported bundle; the original verifier did not enumerate every contract event. A later code change adds event-history scanning and bundle reconciliation, but that new path has not yet been validated against this live bundle. The current browser success label is `HISTORY VERIFIED` only after the scan and reconciliation complete. This is not an independent audit or third-party reproduction.
 
 ### Evidence retention and demo limitations
 
