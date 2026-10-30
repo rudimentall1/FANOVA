@@ -42,22 +42,63 @@ function randomBytes32(ethers) { return ethers.hexlify(ethers.randomBytes(32)); 
 function canonicalSource(story) { return JSON.stringify({ title: story.title, body: story.body }); }
 function canonicalContribution(contribution) { return JSON.stringify({ title: contribution.title, body: contribution.body }); }
 
+async function getRabbyProvider() {
+  const announcedProvider = await new Promise(resolve => {
+    let settled = false;
+    const finish = provider => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener("eip6963:announceProvider", onAnnounce);
+      clearTimeout(timer);
+      resolve(provider || null);
+    };
+    const onAnnounce = event => {
+      if (event.detail?.info?.rdns === "io.rabby") finish(event.detail.provider);
+    };
+    const timer = setTimeout(() => finish(null), 350);
+    window.addEventListener("eip6963:announceProvider", onAnnounce);
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
+  });
+  if (announcedProvider) return announcedProvider;
+
+  const injected = window.ethereum;
+  if (injected?.isRabby) return injected;
+  const legacyProviders = Array.isArray(injected?.providers) ? injected.providers : [];
+  const rabbyProvider = legacyProviders.find(provider => provider?.isRabby);
+  if (rabbyProvider) return rabbyProvider;
+
+  throw new Error("Rabby wallet was not detected. Enable the Rabby extension and refresh this page.");
+}
+
+let activeWalletProvider = null;
+function attachWalletEvents(provider) {
+  if (activeWalletProvider === provider) return;
+  activeWalletProvider = provider;
+  provider.on?.("accountsChanged", accounts => {
+    lastAccount = accounts?.[0] || null;
+    walletLabel.textContent = lastAccount || "Not connected";
+    setStatus("WALLET CHANGED", "Rabby account changed. Check the creator/fan role before sending another transaction.");
+  });
+  provider.on?.("chainChanged", () => setStatus("NETWORK CHANGED", "Rabby network changed. Reconnect and verify Soneium Mainnet before continuing.", true));
+}
+
 async function getWallet() {
-  if (!window.ethereum) throw new Error("No injected wallet found. Install or enable MetaMask, then retry.");
+  const walletProvider = await getRabbyProvider();
+  attachWalletEvents(walletProvider);
   if (!ethersModule) ethersModule = await import(ETHERS_URL);
   const { BrowserProvider, Contract } = ethersModule;
-  let chainId = await window.ethereum.request({ method: "eth_chainId" });
+  let chainId = await walletProvider.request({ method: "eth_chainId" });
   if (chainId.toLowerCase() !== CHAIN_HEX) {
     try {
-      await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CHAIN_HEX }] });
-      chainId = await window.ethereum.request({ method: "eth_chainId" });
+      await walletProvider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CHAIN_HEX }] });
+      chainId = await walletProvider.request({ method: "eth_chainId" });
     } catch (error) {
       if (error?.code === 4001) throw new Error("Network switch was rejected. Select Soneium Mainnet (chain ID 1868) and retry.");
       throw new Error("Wallet is not on Soneium Mainnet (chain ID 1868). Switch networks in your wallet and retry.");
     }
   }
   if (chainId.toLowerCase() !== CHAIN_HEX) throw new Error("Wallet is not on Soneium Mainnet (chain ID 1868).");
-  const provider = new BrowserProvider(window.ethereum);
+  const provider = new BrowserProvider(walletProvider);
   await provider.send("eth_requestAccounts", []);
   const signer = await provider.getSigner();
   const address = await signer.getAddress();
@@ -241,11 +282,4 @@ async function run(action) {
 document.querySelectorAll("[data-onchain-action]").forEach(button => {
   button.addEventListener("click", () => run(button.dataset.onchainAction));
 });
-if (window.ethereum) {
-  window.ethereum.on?.("accountsChanged", accounts => {
-    lastAccount = accounts?.[0] || null;
-    walletLabel.textContent = lastAccount || "Not connected";
-    setStatus("WALLET CHANGED", "Account changed in the wallet. Check the role and source registration before sending another transaction.");
-  });
-  window.ethereum.on?.("chainChanged", () => setStatus("NETWORK CHANGED", "Network changed. Reconnect and verify Soneium Mainnet before continuing.", true));
-}
+
