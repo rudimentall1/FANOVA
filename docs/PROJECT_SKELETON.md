@@ -1,6 +1,6 @@
 # FANOVA — Canonical Project Skeleton
 
-**Status:** LOCKED BASELINE v1.1  
+**Status:** LOCKED BASELINE v1.2  
 **Product line:** Fans don't just follow stories. They help shape them.  
 **Target:** Sony Onchain Entertainment Incubation Program  
 **Delivery constraint:** approximately one month for a credible application and working MVP.
@@ -8,7 +8,9 @@
 This is the project contract. Every request and coding session must read this file and `AGENTS.md` before implementation. No silent scope changes.
 
 ## 1. Product
-FANOVA lets a creator publish an original story with explicit permitted-use rules, receive fan-created derivative submissions, approve or reject them, and preserve verifiable provenance between the source story and approved contributions.
+FANOVA is a creator-controlled collaborative IP product for story-based communities. It lets a creator publish an original story with explicit permitted-use rules, receive fan-created derivative contributions, approve or reject them, and preserve verifiable provenance between the source version, contributor address, and creator decision on Soneium.
+
+FANOVA is the product and workflow layer, not a replacement IP registry, IP graph, or general-purpose licensing protocol. It should use suitable Soneium-native IP and licensing primitives if and when their deployed interfaces and behavior are verified. No such integration is claimed today.
 
 The market-demand hypothesis is not yet validated. The MVP targets one creator and one original story, not a general-purpose platform.
 
@@ -69,7 +71,15 @@ Maintain a token concept only if the actual application requirement and creator/
 - **P4:** prepare reproducible demo and evidence-backed Sony application.
 - **P5:** consider a token only if requirements, utility, and economics justify it.
 
-## 10. Change control
+## 10. Product boundary and future direction
+
+**Implemented foundation:** story/version registration, contribution registration, creator decision, and evidence checks for records included in an exported bundle.
+
+**Future direction, not current functionality:** creative campaigns, structured derivative licensing, commercial use, and contributor revenue participation under explicit terms and a real payment mechanism. These capabilities require separate product, legal, and technical decisions.
+
+FANOVA does not currently provide legal IP ownership verification, enforceable licensing, authenticated multi-user accounts, server-backed persistence, token issuance, or revenue distribution. A display name is not proof of wallet identity; the onchain contributor/reviewer addresses are the authoritative identities for contract actions.
+
+## 11. Change control
 Change this baseline only when a concrete requirement/blocker is identified, the trade-off is recorded in `docs/DECISIONS.md`, related architecture/roadmap text is updated, and the user explicitly approves.
 
 **Rule:** if a task does not advance P0–P4, it is not MVP work unless a plan change is explicitly approved.
