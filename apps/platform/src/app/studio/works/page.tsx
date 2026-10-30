@@ -46,7 +46,7 @@ export default async function CreatorWorksPage() {
           {rows.map((row) => (
             <article className="work-row" key={row.id}>
               <div><span className={row.status === "published" ? "work-status published" : "work-status"}>{row.status}</span><h2>{row.title}</h2><p>{row.synopsis}</p><small>Version {row.versionNumber}</small></div>
-              {row.status === "published" ? <Link className="text-link" href={`/works/${row.slug}`}>Open public page</Link> : <span className="field-note">Private draft</span>}
+              {row.status === "published" ? <Link className="text-link" href={`/works/${row.slug}`}>Open public page</Link> : <Link className="text-link" href={`/studio/works/${row.slug}/edit`}>Edit draft</Link>}
             </article>
           ))}
         </section>
