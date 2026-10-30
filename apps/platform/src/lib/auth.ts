@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth/minimal";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
+import { userProfile, userRole } from "@/db/schema";
 
 const secret = process.env.BETTER_AUTH_SECRET;
 if (process.env.NODE_ENV !== "test" && (!secret || secret.length < 32)) {
@@ -40,6 +41,25 @@ export const auth = betterAuth({
       httpOnly: true,
       sameSite: "lax",
       secure: isProduction
+    }
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (createdUser) => {
+          const suffix = crypto.randomUUID().replaceAll("-", "").slice(0, 10);
+          await db.insert(userProfile).values({
+            userId: createdUser.id,
+            handle: "member-" + suffix,
+            displayName: createdUser.name
+          }).onConflictDoNothing();
+          await db.insert(userRole).values({
+            id: crypto.randomUUID(),
+            userId: createdUser.id,
+            role: "reader"
+          }).onConflictDoNothing();
+        }
+      }
     }
   }
 });
