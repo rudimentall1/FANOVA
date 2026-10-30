@@ -146,7 +146,8 @@ function downloadBundle() {
       sourceHash: "keccak256(UTF8(JSON.stringify({title, body}))) using the exact exported title and body strings",
       permissionHash: "keccak256(UTF8(permission text)) using the exact exported permissions string",
       contributionHash: "keccak256(UTF8(JSON.stringify({title, body}))) using the exact exported contribution title and body strings",
-      reasonCode: "keccak256(UTF8(decision reason)); if reason is empty, the UI hashes the outcome label"
+      reasonCode: "keccak256(UTF8(decision reason)); if reason is empty, the UI hashes the outcome label",
+      localIntegrity: "SHA-256 checksums captured when local story/contribution records are created; stored beside the content and not signed or externally anchored"
     }
   };
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
