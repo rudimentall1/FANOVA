@@ -20,7 +20,7 @@ jobs:
       - name: Install browser and ABI test dependencies
         working-directory: apps/web
         run: npm install --no-save playwright ethers@6.15.0
-      - name: Run domain and ABI tests
+      - name: Run domain, ABI, and transaction tests
         working-directory: apps/web
         run: |
           npm test
