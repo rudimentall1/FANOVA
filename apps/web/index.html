@@ -48,7 +48,7 @@
       <section class="onchain-actions evidence-verifier" aria-labelledby="evidence-verifier-title">
         <p class="eyebrow">READ-ONLY EVIDENCE CHECK</p>
         <h3 id="evidence-verifier-title">Verify an evidence bundle</h3>
-        <p class="muted">Select a JSON bundle exported by FANOVA. The verifier recomputes content hashes and checks the records included in that bundle against contract storage and referenced Soneium Mainnet receipts/events. It never requests wallet access or sends transactions. It does not yet scan the full contract event history, so it cannot prove that the bundle contains every contribution for the story.</p>
+        <p class="muted">Select a JSON bundle exported by FANOVA. The read-only verifier recomputes content hashes, checks contract storage and transaction receipts, then scans StoryVersionRegistered, ContributionRegistered, and ContributionDecided events from the deployment block through a fixed verification block. It compares the discovered event history for this story with the exported bundle. It never requests wallet access or sends transactions.</p>
         <label class="reason-field">Evidence JSON file<input id="evidence-file" type="file" accept="application/json,.json"></label>
         <button class="secondary" id="verify-evidence" type="button">Verify bundle</button>
         <p id="evidence-verify-detail" class="muted" role="status" aria-live="polite">No bundle selected.</p>
