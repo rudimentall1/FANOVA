@@ -85,11 +85,15 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 - [x] Confirm that FANOVA's final product is a multi-user creator/contributor platform, not a single-page local demo.
 - [x] Define public pages, account flows, creator workspace, contributor dashboard, roles, core entities, security boundaries, and acceptance criteria in [WEB_PRODUCT_SPEC.md](WEB_PRODUCT_SPEC.md).
 - [x] Select a provider-portable local implementation stack in [STACK_DECISION.md](STACK_DECISION.md): Next.js + TypeScript, PostgreSQL, Drizzle migrations, Better Auth, Zod, local development mail sink, and a storage adapter. Production hosting/email/object-storage provider remains undecided pending a documented cost, retention, backup, privacy, and deployment-fit review.
-- [x] Create the isolated Next.js platform app, local PostgreSQL Compose service, Drizzle account/profile/role schema, Better Auth configuration, and server-side role lookup foundation.\n- [ ] Verify generated auth schema and committed migrations; run the app against local PostgreSQL.\n- [ ] Complete and test server-backed registration, email verification, login, logout, recovery, sessions, and role model.
-- [ ] Implement public profiles, Discover catalogue, work detail pages, and creator work management.
-- [ ] Implement contributor submissions, creator review queue, server-side authorization, and stale-version lifecycle.
+- [x] Create the isolated Next.js platform app, local PostgreSQL Compose service, Drizzle account/profile/role schema, Better Auth configuration, and server-side role lookup foundation.
+- [x] Validate dependency resolution, TypeScript, authorization unit tests, PostgreSQL migration generation/application, Better Auth schema, and production build in [CI run 41057846264](https://github.com/rudimentall1/FANOVA/actions/runs/41057846264).
+- [x] Implement registration, sign-in, email-verification instructions, password-reset request and completion screens, protected dashboard, account overview, and sign-out in [PR #15](https://github.com/rudimentall1/FANOVA/pull/15).
+- [x] Implement PostgreSQL-backed work records, append-only draft version snapshots, explicit permitted-use rules, SHA-256 content/permission hashes, creator-gated creation/edit APIs, public Discover catalogue/search, and published work detail in [PR #16](https://github.com/rudimentall1/FANOVA/pull/16). PR #16 is pending final CI.
+- [ ] Run registration, verification, login, logout, and recovery end-to-end against local PostgreSQL with two independent accounts.
+- [ ] Add creator-access request and admin review process; creator role is server-assigned and cannot be self-selected.
+- [ ] Implement new public versions for published works, public profiles, contributor submissions, creator review queue, and stale-version lifecycle.
 - [ ] Integrate existing wallet and provenance flow with authenticated accounts; no contract changes or Mainnet writes without separate approval.
-- [ ] Add cross-account/cross-role security tests, persistent-storage tests, and browser E2E coverage.
+- [ ] Add cross-account/cross-role API tests, persistent-storage tests, and browser E2E coverage.
 - [ ] Deploy and verify the complete user journey from a clean browser and a second independent account.
 
 **Exit gate:** the acceptance criteria in WEB_PRODUCT_SPEC.md pass. Only then move to final demo recording and application polish.
