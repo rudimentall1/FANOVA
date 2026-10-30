@@ -59,6 +59,7 @@ jobs:
           node --check domain.js
           node --check serve.mjs
           node --check e2e.test.js
+          node --check platform-e2e.test.js
 
       - name: Install platform dependencies
         working-directory: apps/platform
