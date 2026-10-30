@@ -44,6 +44,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await page.locator("#contribution-form button").click();
     await assertNotice(page, "Contribution saved locally");
     assert.match(await page.locator(".contribution-card .source-ref").first().innerText(), /source v1 · permissions v1/);
+    assert.match(await page.locator(".contribution-top").first().innerText(), /Submitted by Demo Fan/);
 
     await page.getByRole("button", { name: "Try unauthorized approval" }).click();
     await assertNotice(page, "only the story's authorized creator may review contributions");
@@ -53,6 +54,11 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await page.locator('[data-review="approved"]').click();
     await assertNotice(page, "Decision saved locally");
     assert.equal(await page.locator(".chip.approved").count(), 1, "creator approval should update the contribution state");
+    const approvedCard = page.locator(".contribution-card").filter({ hasText: "The Midnight Map" });
+    assert.match(await approvedCard.locator(".contribution-top").innerText(), /Approved\s+Submitted by Demo Fan/);
+    assert.match(await approvedCard.locator(".decision-note").innerText(), /Decision: approved/);
+    assert.match(await approvedCard.locator(".decision-note").innerText(), /Reviewed by Demo Creator/);
+    assert.doesNotMatch(await approvedCard.locator(".contribution-top").innerText(), /Approved by Demo Fan/);
 
     await page.getByRole("button", { name: "Fan" }).click();
     await page.getByLabel("Contribution title").fill("The Lantern Keeper");
