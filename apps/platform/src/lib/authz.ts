@@ -16,3 +16,11 @@ export function canReadPrivateSubmission(actor: AuthenticatedActor, contributorI
 export function canReviewSubmission(actor: AuthenticatedActor, workOwnerId: string): boolean {
   return actor.userId === workOwnerId && actor.roles.includes("creator");
 }
+
+export function canRequestCreatorAccess(actor: AuthenticatedActor): boolean {
+  return actor.roles.includes("reader") && !actor.roles.includes("creator");
+}
+
+export function canReviewCreatorRequests(actor: AuthenticatedActor): boolean {
+  return actor.roles.includes("admin");
+}
