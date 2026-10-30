@@ -1,6 +1,6 @@
 # FANOVA Onchain Proof Design: EAS vs Minimal Workflow Contract
 
-**Status (2026-10-30):** minimal workflow contract is deployed on Soneium Mainnet. One user-approved Story registration, Contribution registration, and Creator decision sequence completed on Mainnet; the transaction evidence is recorded in `docs/DEMO_AND_EVIDENCE.md`. FANOVA's read-only verifier returned `VERIFIED` for the records included in the exported bundle. It does not yet enumerate the full contract event history, so bundle completeness is not established. The deployed runtime has matching executable bytecode after Solidity metadata is excluded, but full runtime metadata differs.
+**Status (2026-10-30):** minimal workflow contract is deployed on Soneium Mainnet. One user-approved Story registration, Contribution registration, and Creator decision sequence completed on Mainnet; the transaction evidence is recorded in `docs/DEMO_AND_EVIDENCE.md`. The original read-only verifier returned `VERIFIED` for the records included in the exported bundle. A subsequent implementation adds bounded event-history scanning and reconciliation against the bundle; unit tests pass CI, but live Mainnet validation of the new scan remains pending. The deployed runtime has matching executable bytecode after Solidity metadata is excluded, but full runtime metadata differs.
 **Date:** 2026-10-29
 **Milestone:** P2 — Mainnet provenance path.
 
@@ -95,5 +95,5 @@ The implementation must derive each story ID from the creator address and salt t
 - Minimal FANOVA workflow contract and 20 Foundry tests: **LOCAL / CI PASSED** in [run 40899723650](https://github.com/rudimentall1/FANOVA/actions/runs/40899723650). `forge build --sizes` reported 4,329 runtime bytes and 4,357 initcode bytes for that build.
 - Contract deployment: **MAINNET**, address and deployment transaction are recorded in `README.md`.
 - Story registration, contribution registration, and creator decision: **MAINNET**, one user-approved sequence on 2026-10-30; see `docs/DEMO_AND_EVIDENCE.md`.
-- Exported-bundle verification: **PROJECT VERIFIER PASSED FOR INCLUDED RECORDS**; full event-history coverage and bundle completeness are **NOT YET VERIFIED**.
+- Exported-bundle event-history scanner and reconciliation: **LOCAL / CI PASSED**; live Mainnet execution against the recorded bundle: **PENDING**.
 - Independent security audit: **NOT PERFORMED**.
