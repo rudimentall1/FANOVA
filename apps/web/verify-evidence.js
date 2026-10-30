@@ -2,6 +2,7 @@ import { PROVENANCE_ABI } from "./provenance-abi.js";
 import { inspectLocalBundle } from "./evidence-validation.js";
 import { verifyLocalContentCommitments } from "./content-integrity.js";
 import { compareEventCoverage } from "./event-coverage.js";
+import { scanStoryEventHistory } from "./event-history.js";
 
 const CONTRACT_ADDRESS = "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880";
 const DEPLOYMENT_TX_HASH = "0xb2086bd26326b428f4806e9a93a202631528ec8bffe4ff9f9f8f102cf9e34c";
@@ -39,28 +40,6 @@ async function receiptEvent(provider, iface, txHash, eventName, predicate) {
     } catch {}
   }
   throw new Error(`Expected ${eventName} event was not found in receipt ${txHash}.`);
-}
-
-async function scanStoryEventHistory(provider, iface, storyId, fromBlock, toBlock) {
-  const storyTopic = iface.getEvent("StoryVersionRegistered").topicHash;
-  const contributionTopic = iface.getEvent("ContributionRegistered").topicHash;
-  const decisionTopic = iface.getEvent("ContributionDecided").topicHash;
-  const storyVersionEvents = [];
-  const contributionEvents = [];
-  const decisionEvents = [];
-
-  for (let from = fromBlock; from <= toBlock; from += LOG_CHUNK_SIZE) {
-    const to = Math.min(from + LOG_CHUNK_SIZE - 1, toBlock);
-    const [storyLogs, contributionLogs, decisionLogs] = await Promise.all([
-      provider.getLogs({ address: CONTRACT_ADDRESS, fromBlock: from, toBlock: to, topics: [storyTopic, storyId] }),
-      provider.getLogs({ address: CONTRACT_ADDRESS, fromBlock: from, toBlock: to, topics: [contributionTopic, null, storyId] }),
-      provider.getLogs({ address: CONTRACT_ADDRESS, fromBlock: from, toBlock: to, topics: [decisionTopic, null, storyId] })
-    ]);
-    for (const log of storyLogs) storyVersionEvents.push({ args: iface.parseLog(log).args, transactionHash: log.transactionHash, blockNumber: log.blockNumber });
-    for (const log of contributionLogs) contributionEvents.push({ args: iface.parseLog(log).args, transactionHash: log.transactionHash, blockNumber: log.blockNumber });
-    for (const log of decisionLogs) decisionEvents.push({ args: iface.parseLog(log).args, transactionHash: log.transactionHash, blockNumber: log.blockNumber });
-  }
-  return { storyVersionEvents, contributionEvents, decisionEvents };
 }
 
 async function verifyBundle(bundle) {
@@ -185,13 +164,15 @@ async function verifyBundle(bundle) {
   }
   if (verifiedContributions === 0) incompleteEvidence.push("No contribution registration could be independently verified onchain.");
 
-  const eventHistory = await scanStoryEventHistory(
+  const eventHistory = await scanStoryEventHistory({
     provider,
     iface,
-    storyRecord.storyId,
-    deploymentReceipt.blockNumber,
-    verificationBlock
-  );
+    contractAddress: CONTRACT_ADDRESS,
+    storyId: storyRecord.storyId,
+    fromBlock: deploymentReceipt.blockNumber,
+    toBlock: verificationBlock,
+    chunkSize: LOG_CHUNK_SIZE
+  });
   const coverage = compareEventCoverage({
     storyId: storyRecord.storyId,
     storyRecord,
