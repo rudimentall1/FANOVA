@@ -73,13 +73,20 @@ export async function POST(request: Request) {
   if (pending) return NextResponse.json({ error: "You already have a pending creator application." }, { status: 409 });
 
   const id = randomUUID();
-  await db.insert(creatorAccessRequest).values({
-    id,
-    userId: actor.userId,
-    portfolioUrl: parsed.data.portfolioUrl || null,
-    statement: parsed.data.statement,
-    status: "pending"
-  });
+  try {
+    await db.insert(creatorAccessRequest).values({
+      id,
+      userId: actor.userId,
+      portfolioUrl: parsed.data.portfolioUrl || null,
+      statement: parsed.data.statement,
+      status: "pending"
+    });
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "23505") {
+      return NextResponse.json({ error: "You already have a pending creator application." }, { status: 409 });
+    }
+    throw error;
+  }
 
   return NextResponse.json({ request: { id, status: "pending" } }, { status: 201 });
 }
