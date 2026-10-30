@@ -43,6 +43,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
         <h1>{entry.title}</h1>
         <p className="work-synopsis">{entry.synopsis}</p>
         <p className="creator-byline">By {entry.creatorName ?? "FANOVA creator"} · @{entry.creatorHandle ?? "creator"}</p>
+        <Link className="primary-button button-link" href={`/works/${slug}/contribute`}>Submit a contribution</Link>
         <div className="work-body">{entry.body.split("\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
         <section className="permission-panel">
           <p className="eyebrow">PERMITTED USE</p>
