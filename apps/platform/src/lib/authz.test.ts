@@ -26,4 +26,19 @@ describe("server authorization policy", () => {
     expect(canManageOwnWork(moderator, "creator-a")).toBe(false);
     expect(canReviewSubmission(moderator, "creator-a")).toBe(false);
   });
+
+  it("allows a reader to request creator access but not to approve requests", () => {
+    expect(canRequestCreatorAccess(contributor)).toBe(true);
+    expect(canReviewCreatorRequests(contributor)).toBe(false);
+  });
+
+  it("does not let a creator submit a second creator application", () => {
+    expect(canRequestCreatorAccess(creatorA)).toBe(false);
+  });
+
+  it("restricts creator application review to administrators", () => {
+    const admin: AuthenticatedActor = { userId: "admin-1", roles: ["admin"] };
+    expect(canReviewCreatorRequests(admin)).toBe(true);
+    expect(canReviewCreatorRequests(creatorA)).toBe(false);
+  });
 });
