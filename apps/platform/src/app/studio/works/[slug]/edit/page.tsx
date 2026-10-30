@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
@@ -16,18 +16,16 @@ export default async function EditDraftPage({ params }: { params: Promise<{ slug
 
   const [draft] = await db
     .select({
+      status: work.status,
+      draftVersionId: work.draftVersionId,
       title: workVersion.title,
       synopsis: workVersion.synopsis,
       body: workVersion.body,
       permissions: workVersion.permissions
     })
     .from(work)
-    .innerJoin(workVersion, eq(work.currentVersionId, workVersion.id))
-    .where(and(
-      eq(work.slug, slug),
-      eq(work.ownerUserId, actor.userId),
-      eq(work.status, "draft")
-    ))
+    .innerJoin(workVersion, sql`${workVersion.id} = coalesce(${work.draftVersionId}, ${work.currentVersionId})`)
+.where(and(eq(work.slug, slug), eq(work.ownerUserId, actor.userId), inArray(work.status, ["draft", "published"])))
     .limit(1);
 
   if (!draft) notFound();
@@ -36,9 +34,9 @@ export default async function EditDraftPage({ params }: { params: Promise<{ slug
     <main className="shell dashboard-shell">
       <header className="topbar"><Link className="brand" href="/">FANOVA</Link><Link href="/studio/works" className="text-link">Your works</Link></header>
       <section className="dashboard-hero compact-hero">
-        <p className="eyebrow">EDIT PRIVATE DRAFT</p>
+        <p className="eyebrow">{draft.status === "published" ? (draft.draftVersionId ? "EDIT UNPUBLISHED REVISION" : "CREATE NEW VERSION") : "EDIT PRIVATE DRAFT"}</p>
         <h1>Keep shaping it.</h1>
-        <p className="intro">Saving changes creates a new immutable draft version. Publishing makes that version public.</p>
+        <p className="intro">{draft.status === "published" ? "Changes are saved as a private revision. The current public version stays live until you publish the revision." : "Saving changes creates a new draft version. Publishing makes that version public."}</p>
       </section>
       <NewWorkForm slug={slug} initial={draft} />
     </main>

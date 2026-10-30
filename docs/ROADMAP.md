@@ -80,7 +80,7 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 
 ## P1.5 — Multi-user web product foundation (new priority after product expansion)
 
-**Status: creator onboarding merged; version-bound contribution submission and review workflow implemented on the current branch.**
+**Status: account, creator, and contribution workflows merged; published-work versioning and automatic stale-submission handling implemented on the current branch.**
 
 - [x] Confirm that FANOVA's final product is a multi-user creator/contributor platform, not a single-page local demo.
 - [x] Define public pages, account flows, creator workspace, contributor dashboard, roles, core entities, security boundaries, and acceptance criteria in [WEB_PRODUCT_SPEC.md](WEB_PRODUCT_SPEC.md).
@@ -89,11 +89,12 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 - [x] Validate dependency resolution, TypeScript, authorization unit tests, PostgreSQL migration generation/application, Better Auth schema, and production build in [CI run 41057846264](https://github.com/rudimentall1/FANOVA/actions/runs/41057846264).
 - [x] Implement registration, sign-in, email-verification instructions, password-reset request and completion screens, protected dashboard, account overview, and sign-out in [PR #15](https://github.com/rudimentall1/FANOVA/pull/15).
 - [x] Implement PostgreSQL-backed work records, append-only draft version snapshots, explicit permitted-use rules, SHA-256 content/permission hashes, creator-gated creation/edit APIs, public Discover catalogue/search, and published work detail in [PR #16](https://github.com/rudimentall1/FANOVA/pull/16).
-- [x] Implement creator-access applications, one-pending-request-per-account database constraint, administrator review, and server-side creator role assignment. First admin provisioning is documented in [ADMIN_BOOTSTRAP.md](ADMIN_BOOTSTRAP.md). PR #17 is pending CI.
-- [x] Implement version-bound contribution submission, explicit permission acknowledgement, permission-type enforcement, contributor dashboard/detail, creator review queue, approve/reject feedback, and opt-in public contribution pages. PR #18 is pending CI.
+- [x] Implement creator-access applications, one-pending-request-per-account database constraint, administrator review, and server-side creator role assignment. First admin provisioning is documented in [ADMIN_BOOTSTRAP.md](ADMIN_BOOTSTRAP.md) ([PR #17](https://github.com/rudimentall1/FANOVA/pull/17)).
+- [x] Implement version-bound contribution submission, explicit permission acknowledgement, permission-type enforcement, contributor dashboard/detail, creator review queue, approve/reject feedback, and opt-in public contribution pages ([PR #18](https://github.com/rudimentall1/FANOVA/pull/18)).
 - [ ] Run registration, verification, login, logout, and recovery end-to-end against local PostgreSQL with two independent accounts.
-- [ ] Add creator-access request and admin review process; creator role is server-assigned and cannot be self-selected.
-- [ ] Implement new public versions for published works, public profiles, contributor submissions, creator review queue, and stale-version lifecycle.
+- [x] Add creator-access request and admin review process; creator role is server-assigned and cannot be self-selected.
+- [x] Implement private revisions for published works, explicit publish action, version history, and automatic stale marking for pending contributions when a new source version is published.
+- [ ] Implement public creator profiles and richer work discovery filters.
 - [ ] Integrate existing wallet and provenance flow with authenticated accounts; no contract changes or Mainnet writes without separate approval.
 - [ ] Add cross-account/cross-role API tests, persistent-storage tests, and browser E2E coverage.
 - [ ] Deploy and verify the complete user journey from a clean browser and a second independent account.

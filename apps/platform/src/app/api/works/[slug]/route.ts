@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { userProfile, work, workVersion } from "@/db/schema";
+import { contribution, userProfile, work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
 import { createWorkSchema } from "@/lib/work-validation";
 import { hashWorkPermissions, hashWorkSource } from "@/lib/work-hash";
@@ -44,17 +44,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
 
   const { slug } = await params;
   const [existing] = await db
-    .select({ id: work.id, status: work.status })
+    .select({ id: work.id })
     .from(work)
     .where(and(eq(work.slug, slug), eq(work.ownerUserId, actor.userId)))
     .limit(1);
 
-  if (!existing) return NextResponse.json({ error: "Draft not found." }, { status: 404 });
-  if (existing.status !== "draft") {
-    return NextResponse.json({ error: "Published works are immutable in this release. Create a new version in the next versioning workflow." }, { status: 409 });
-  }
-
-  if (!request.headers.get("content-type")?.includes("application/json")) {
+  if (!existing) return NextResponse.json({ error: "Work not found." }, { status: 404 });
+  if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
     return NextResponse.json({ error: "Content-Type must be application/json." }, { status: 415 });
   }
 
@@ -83,19 +79,28 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
   const permissionHash = hashWorkPermissions(input.permissions);
   const now = new Date();
 
-  const versionNumber = await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
+    const [lockedWork] = await tx
+      .select({ status: work.status })
+      .from(work)
+      .where(eq(work.id, existing.id))
+      .for("update");
+
+    if (!lockedWork) return { kind: "not_found" as const };
+    if (lockedWork.status === "archived") return { kind: "archived" as const };
+
     const [latest] = await tx
       .select({ versionNumber: workVersion.versionNumber })
       .from(workVersion)
       .where(eq(workVersion.workId, existing.id))
       .orderBy(desc(workVersion.versionNumber))
       .limit(1);
-    const nextVersion = (latest?.versionNumber ?? 0) + 1;
+    const versionNumber = (latest?.versionNumber ?? 0) + 1;
 
     await tx.insert(workVersion).values({
       id: versionId,
       workId: existing.id,
-      versionNumber: nextVersion,
+      versionNumber,
       title: input.title,
       synopsis: input.synopsis,
       body: input.body,
@@ -104,18 +109,55 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
       permissionHash,
       createdAt: now
     });
-    await tx.update(work).set({
-      currentVersionId: versionId,
-      status: input.publish ? "published" : "draft",
-      updatedAt: now,
-      publishedAt: input.publish ? now : null
-    }).where(eq(work.id, existing.id));
-    return nextVersion;
+
+    if (input.publish) {
+      await tx.update(work).set({
+        currentVersionId: versionId,
+        draftVersionId: null,
+        status: "published",
+        updatedAt: now,
+        publishedAt: now
+      }).where(eq(work.id, existing.id));
+
+      await tx.update(contribution).set({
+        status: "stale",
+        updatedAt: now
+      }).where(and(
+        eq(contribution.workId, existing.id),
+        eq(contribution.status, "pending")
+      ));
+    } else if (lockedWork.status === "draft") {
+      await tx.update(work).set({
+        currentVersionId: versionId,
+        updatedAt: now
+      }).where(eq(work.id, existing.id));
+    } else {
+      await tx.update(work).set({
+        draftVersionId: versionId,
+        updatedAt: now
+      }).where(eq(work.id, existing.id));
+    }
+
+    return {
+      kind: "saved" as const,
+      versionNumber,
+      status: input.publish ? "published" as const : lockedWork.status
+    };
   });
 
+  if (result.kind === "not_found") return NextResponse.json({ error: "Work not found." }, { status: 404 });
+  if (result.kind === "archived") return NextResponse.json({ error: "Archived works cannot be edited." }, { status: 409 });
+
   return NextResponse.json({
-    work: { id: existing.id, slug, status: input.publish ? "published" : "draft", versionNumber },
+    work: {
+      id: existing.id,
+      slug,
+      status: result.status,
+      versionNumber: result.versionNumber,
+      published: input.publish
+    },
     hashes: { sourceHash, permissionHash },
+    staleContributionsMarked: input.publish,
     onchain: "not_submitted"
   });
 }

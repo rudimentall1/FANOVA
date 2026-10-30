@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
@@ -17,13 +17,14 @@ export default async function CreatorWorksPage() {
       id: work.id,
       slug: work.slug,
       status: work.status,
+      draftVersionId: work.draftVersionId,
       updatedAt: work.updatedAt,
       title: workVersion.title,
       synopsis: workVersion.synopsis,
       versionNumber: workVersion.versionNumber
     })
     .from(work)
-    .innerJoin(workVersion, eq(work.currentVersionId, workVersion.id))
+    .innerJoin(workVersion, sql`${workVersion.id} = coalesce(${work.draftVersionId}, ${work.currentVersionId})`)
     .where(eq(work.ownerUserId, actor.userId))
     .orderBy(desc(work.updatedAt));
 
@@ -45,8 +46,8 @@ export default async function CreatorWorksPage() {
         <section className="work-list">
           {rows.map((row) => (
             <article className="work-row" key={row.id}>
-              <div><span className={row.status === "published" ? "work-status published" : "work-status"}>{row.status}</span><h2>{row.title}</h2><p>{row.synopsis}</p><small>Version {row.versionNumber}</small></div>
-              {row.status === "published" ? <div className="work-row-actions"><Link className="text-link" href={`/works/${row.slug}`}>Open public page</Link><Link className="text-link" href={`/studio/works/${row.slug}/submissions`}>Review submissions</Link></div> : <Link className="text-link" href={`/studio/works/${row.slug}/edit`}>Edit draft</Link>}
+              <div><span className={row.status === "published" ? "work-status published" : "work-status"}>{row.draftVersionId ? "draft revision" : row.status}</span><h2>{row.title}</h2><p>{row.synopsis}</p><small>Version {row.versionNumber}</small></div>
+              {row.status === "published" ? <div className="work-row-actions"><Link className="text-link" href={`/works/${row.slug}`}>Open public page</Link><Link className="text-link" href={`/studio/works/${row.slug}/edit`}>{row.draftVersionId ? "Edit unpublished revision" : "Create new version"}</Link><Link className="text-link" href={`/studio/works/${row.slug}/versions`}>Version history</Link><Link className="text-link" href={`/studio/works/${row.slug}/submissions`}>Review submissions</Link></div> : row.status === "draft" ? <Link className="text-link" href={`/studio/works/${row.slug}/edit`}>Edit draft</Link> : <span className="field-note">Archived</span>}
             </article>
           ))}
         </section>
