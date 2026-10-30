@@ -13,18 +13,12 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const query = url.searchParams.get("q")?.trim().slice(0, 100);
-
   const filters = [eq(work.status, "published")];
+
   if (query) {
-    const escapedQuery = query.replace(/[\\%_]/g, "\\  if (query) {
     filters.push(or(
       ilike(workVersion.title, `%${query}%`),
       ilike(workVersion.synopsis, `%${query}%`)
-    ) as typeof filters[number]);
-  }");
-    filters.push(or(
-      ilike(workVersion.title, `%${escapedQuery}%`),
-      ilike(workVersion.synopsis, `%${escapedQuery}%`)
     ) as typeof filters[number]);
   }
 
