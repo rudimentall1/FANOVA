@@ -64,3 +64,13 @@ export function reviewContribution({ story, contribution, actorId, outcome, reas
     }
   };
 }
+
+export function contributionLifecycleStatus(story, contribution) {
+  if (!contribution) throw new Error("Contribution is required.");
+  if (contribution.status !== "pending") return contribution.status;
+  if (!story || contribution.storyId !== story.id) return "stale";
+  if (Number(contribution.sourceVersion) !== Number(story.version)) return "stale";
+  if (Number(contribution.permissionVersion) !== Number(story.permissionVersion)) return "stale";
+  if (contribution.permissionSnapshot !== story.permissions) return "stale";
+  return "pending";
+}
