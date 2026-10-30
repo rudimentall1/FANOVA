@@ -1,6 +1,6 @@
 # FANOVA Contract Security Review
 
-**Date:** 2026-10-29  
+**Date:** 2026-10-30  
 **Scope:** `contracts/src/FanovaProvenance.sol` and Foundry tests.  
 **Status:** Engineering review only. The contract is deployed on Soneium Mainnet, but this document is not an independent audit. Deployment does not imply a security audit or full source-metadata equivalence.
 
@@ -13,7 +13,7 @@ The contract records story versions, source and permission hashes, contribution 
 | Area | Current evidence | Remaining limitation |
 |---|---|---|
 | Creator binding | Story ID derives from creator address and creator-selected salt; subsequent versions require same creator and salt | Does not establish legal ownership or prevent false claims about the content |
-| Version integrity | Source versions are sequential; submissions must match the latest source and exact permission hash/version | A new source version intentionally makes pending submissions against old versions undecidable; UI must explain this |
+| Version integrity | Source versions are sequential; submissions must match the latest source and exact permission hash/version; creator decisions against stale source versions revert | A newer source version makes older pending submissions ineligible for a decision. The contract retains historical records, but the UI still needs an explicit `STALE` state and historical review presentation |
 | Permission acknowledgement | Submission requires an explicit boolean and emits it with the contribution event | Records the caller's assertion only; does not prove informed or legally valid consent |
 | Decision authorization | Only the registered creator can decide; decision is final | No appeal, correction, delegation, or dispute process exists in MVP |
 | Replay/duplicates | Story and contribution IDs are checked; duplicate contribution IDs are rejected | The client must generate stable, collision-resistant IDs and retain the referenced bytes offchain |
@@ -33,13 +33,14 @@ Slither 0.11.4 completed successfully in [run 40899723269](https://github.com/ru
 
 The contract source currently imports no third-party Solidity library. Foundry and the compiler are development dependencies, not contract runtime dependencies. This reduces dependency surface but does not replace static analysis, compiler review, or an independent audit.
 
-## Outstanding post-deployment proof gaps
+## Post-deployment findings and remaining gaps (2026-10-30)
 
-1. Blockscout reports a partial source match. CI found matching executable runtime bytecode after removing Solidity metadata, but full runtime metadata equivalence is not established. Do not describe the source as fully verified.
-2. The browser implements user-approved wallet writes for story registration, contribution registration, and creator decisions. The complete real Mainnet sequence has not yet been demonstrated.
-3. The independent evidence verifier must be exercised against an exported bundle from a real flow, with exact offchain story/contribution bytes retained so an outsider can recompute the hashes.
-4. The wallet path must be exercised with Rabby on Soneium Mainnet, including creator/fan account switching, chain mismatch, rejected prompts, pending/reverted transactions, and receipt/event checks. No transaction should be retried blindly after submission.
-5. Do not redeploy the contract. Any further Mainnet write must be initiated and approved by the user through Rabby; the wallet displays the transaction and fee before signing.
+1. **Source metadata:** Blockscout reports a partial source match. CI found matching executable runtime bytecode after removing Solidity metadata, but full runtime metadata equivalence is not established. Do not describe the source as fully verified.
+2. **Mainnet workflow:** one user-approved Story registration, Contribution registration, and Creator decision sequence completed successfully on Soneium Mainnet on 2026-10-30. Transaction hashes, blocks, and wallet roles are recorded in `docs/DEMO_AND_EVIDENCE.md`. This is one smoke test with placeholder content, not a creator pilot.
+3. **Project verifier:** the exported bundle from that sequence was checked by FANOVA's read-only verifier, which returned `VERIFIED` for the included story, contribution, and decision records. The verifier does not yet scan all contract events from deployment to a fixed block, so it cannot detect an omitted contribution that is absent from the bundle. This is a material completeness limitation, not an independent audit.
+4. **Wallet exercise:** one creator/fan/creator account sequence is evidenced. Broader testing of account changes, chain mismatch, rejected prompts, pending/reverted transactions, and interrupted sessions remains open. Never retry a submitted transaction blindly.
+5. **Demo identity boundary:** the local role switch and display names are simulated. They are not authenticated identities and are not cryptographically bound to a wallet. For onchain attribution, the signer address stored by the contract is authoritative. Production authentication and server-side identity mapping are out of scope for this MVP.
+6. **Deployment:** do not redeploy the contract. Any further Mainnet write must be initiated and approved by the user through Rabby; the wallet displays the transaction and fee before signing.
 
 ## Gas evidence
 
@@ -52,6 +53,8 @@ The same run's local Foundry gas report recorded test-context ranges: `registerS
 - Contract and 20 tests: **LOCAL**, CI-passing.
 - Slither 0.11.4: **PASS**, 100 detectors, zero results in [run 40899723269](https://github.com/rudimentall1/FANOVA/actions/runs/40899723269).
 - Mainnet deployment: **MAINNET**, deployed at `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`; full metadata equivalence is not established.
-- Browser wallet write integration: **LOCAL** (user-approved Rabby path implemented; pending live wallet exercise).
-- Complete Mainnet story → contribution → creator-decision proof: **NOT YET DEMONSTRATED**.
+- Browser wallet write integration: **LOCAL implementation; MAINNET smoke-test sequence demonstrated once** (see `docs/DEMO_AND_EVIDENCE.md`).
+- Mainnet story → contribution → creator-decision proof: **MAINNET**, one user-approved sequence; not a creator pilot.
+- Evidence bundle completeness against the full onchain event history: **NOT YET VERIFIED**.
+- Historical `STALE` presentation in the browser UI: **NOT IMPLEMENTED**.
 - Independent security audit: **NOT PERFORMED**.
