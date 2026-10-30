@@ -8,3 +8,5 @@
 .evidence-verifier .reason-field{margin:12px 0}.evidence-verifier>button{width:100%;min-height:42px}.evidence-verifier #evidence-verify-detail{margin:12px 0 10px;overflow-wrap:anywhere}
 
 .proof-status.partial{color:#ffd18b;border-color:#8a6b37}
+
+.chip.stale{border-color:#8a6b37;color:#ffd18b}
