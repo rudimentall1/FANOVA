@@ -44,8 +44,8 @@ async function registerAndVerify(context, name, email, callbackURL = "/dashboard
   return page;
 }
 
-async function submitContribution(page, title, text) {
-  await page.goto(page.url().includes("/works/") ? page.url() : baseUrl);
+async function submitContribution(page, slug, title, text) {
+  await page.goto(`${baseUrl}/works/${slug}/contribute`);
   await page.getByLabel("Contribution type").selectOption("fan_art");
   await page.getByLabel("Title").fill(title);
   await page.getByLabel("Your contribution").fill(text);
@@ -144,6 +144,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     const firstTitle = "E2E Fan Art Submission";
     const firstId = await submitContribution(
       contributorPage,
+      slug,
       firstTitle,
       "A fan-art concept showing the orchard at dusk, with the map folded beside a lantern. " +
       "The composition follows the creator's published rules and is submitted for review. ".repeat(2)
@@ -164,6 +165,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     const secondTitle = "E2E Pending Submission";
     const secondId = await submitContribution(
       contributorPage,
+      slug,
       secondTitle,
       "A second contribution tied to the original version. It must become stale after the creator publishes a revised source. " +
       "This record remains in history and cannot be approved against the new version. ".repeat(2)
@@ -178,13 +180,8 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await contributorPage.goto(`${baseUrl}/dashboard/contributions`);
     const staleRow = contributorPage.locator(".work-row").filter({ hasText: secondTitle });
     await staleRow.getByText("stale").waitFor({ timeout: 15_000 });
-    await assert.rejects(
-      contributorPage.goto(`${baseUrl}/dashboard/contributions/${secondId}`).then(() => {
-        // The contributor can still inspect their own stale submission.
-        return contributorPage.getByText("stale").waitFor();
-      }),
-      /never/ // placeholder assertion is replaced below
-    ).catch(() => {});
+    await contributorPage.goto(`${baseUrl}/dashboard/contributions/${secondId}`);
+    await contributorPage.getByText("YOUR CONTRIBUTION · STALE").waitFor();
 
     // Other accounts cannot read a contributor's private submission detail.
     const forbiddenPrivateRead = await adminPage.goto(`${baseUrl}/dashboard/contributions/${secondId}`);
