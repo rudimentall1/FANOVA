@@ -3,6 +3,7 @@
 Dates are relative to kickoff. Status changes only after evidence is checked.
 
 ## P0 - Baseline and application mapping (Days 1–3)
+- [x] Lock creator-controlled collaborative IP product positioning and document current/future capability boundaries in `docs/PRODUCT_MANIFEST.md`.
 - [x] Map all 24 official application questions to evidence, answer owner, and status in `docs/APPLICATION_EVIDENCE_MAP.md`; founder-specific answers remain open.
 - [ ] Freeze core user story and one original-IP pilot scenario.
 - [x] Complete initial desk research on Soneium IP architecture and adjacent product categories in `docs/COMPETITIVE_LANDSCAPE.md`.
@@ -45,7 +46,13 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [x] Add a read-only evidence-bundle verifier that recomputes story/permission/contribution hashes, checks creator-bound story IDs, reads matching contract storage, and verifies referenced transaction receipts/events. Missing registration or local-only decisions are reported as PARTIALLY VERIFIED, not VERIFIED.
 - [x] Persist story/contribution identifiers before wallet submission and save each returned transaction hash before waiting for its receipt. Unit tests cover successful confirmation, reverted receipts, and local metadata-save failure.
 - [x] Demonstrate one complete real Mainnet story registration, contribution registration, and creator decision flow. Three user-approved transactions succeeded, and the exported bundle was checked by FANOVA's read-only verifier, which returned `VERIFIED`. The exact bundle contains the offchain bytes needed for hash recomputation and must be retained/shared with an evaluator when appropriate. This is not a third-party audit or external certification; see `docs/DEMO_AND_EVIDENCE.md`.
-**Mainnet workflow demonstration gate:** MET for the recorded smoke-test bundle: all three Mainnet operations succeeded and the project verifier returned `VERIFIED` after recomputing hashes and checking contract storage/receipts/events. To reproduce as an outsider, provide the unchanged exported bundle through an appropriate access-controlled channel. This does not close the remaining P2 due-diligence and security-checklist items above, or the original-IP pilot work in P3.
+**Mainnet workflow demonstration gate:** MET for the recorded smoke-test bundle: all three Mainnet operations succeeded and the project verifier returned `VERIFIED` after recomputing hashes and checking contract storage/receipts/events for the records included in that bundle. This is not proof that the bundle contains every contribution ever registered for the story. To reproduce the recorded checks, provide the unchanged exported bundle through an appropriate access-controlled channel. This does not close the remaining P2 due-diligence and security-checklist items above, or the original-IP pilot work in P3.
+
+**Post-deployment hardening still open:**
+- [ ] Extend the read-only verifier to enumerate `StoryVersionRegistered`, `ContributionRegistered`, and `ContributionDecided` events from the deployment block through a fixed verification block, then compare the complete expected set with the bundle. Handle RPC log-range limits and reorg/finality assumptions explicitly.
+- [ ] Report the verification block and event-coverage scope. Until event enumeration is implemented, use `RECORDS VERIFIED` rather than implying bundle completeness.
+- [ ] Make historical pending contributions visibly `STALE` in the UI when a newer source version exists; retain read-only verification of their historical records.
+- [ ] Add explicit UI/export tests showing that demo display names are simulated and wallet addresses are the source of truth for onchain attribution.
 
 ## P3 - Pilot and differentiation (Days 20–24)
 - [ ] Obtain permission for original pilot story/materials.
