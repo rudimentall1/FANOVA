@@ -33,7 +33,10 @@ export default async function DashboardPage() {
       </section>
       <section className="dashboard-links">
         <Link href="/discover" className="dashboard-link"><span>01</span><strong>Discover stories</strong><small>Explore creator-published works.</small></Link>
-        <Link href="/settings/account" className="dashboard-link"><span>02</span><strong>Account settings</strong><small>Manage your profile and account details.</small></Link>
+        <Link href="/settings/account" className="dashboard-link"><span>02</span><strong>Account</strong><small>View your profile and access level.</small></Link>
+        {actor.roles.includes("creator") ? (
+          <Link href="/studio" className="dashboard-link"><span>03</span><strong>Creator Studio</strong><small>Publish works and manage permitted-use rules.</small></Link>
+        ) : null}
       </section>
     </main>
   );
