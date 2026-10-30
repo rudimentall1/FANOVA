@@ -42,6 +42,14 @@ Before implementation tasks, read [`AGENTS.md`](./AGENTS.md) and [`docs/PROJECT_
 - [Creator validation and pilot plan](./docs/CREATOR_VALIDATION.md)
 - [Architecture decisions](./docs/DECISIONS.md)
 
+## Evidence bundle verification
+
+The browser includes a read-only verifier for exported FANOVA evidence bundles. It recomputes the story, permission, and contribution hashes; checks the creator-bound story ID; reads the matching story version and contribution records from Soneium contract storage; and checks the referenced transaction receipts and events. Older exported story versions remain verifiable after a later version is registered.
+
+The verifier reports **PARTIALLY VERIFIED** when a local contribution has no verifiable registration transaction reference or when a local approve/reject decision has no verifiable onchain decision transaction. A bundle is not marked **VERIFIED** when its local decision outcome conflicts with the onchain evidence. The verifier is read-only and does not connect a wallet or submit transactions.
+
+An evidence bundle contains the offchain story and contribution text needed to recompute hashes. Treat the downloaded JSON as content that may need access controls. Onchain hashes and decisions do not establish legal ownership, copyright clearance, or enforceable consent.
+
 ## Soneium
 
 - Mainnet, chain ID `1868`, RPC `https://rpc.soneium.org/`, explorer `https://soneium.blockscout.com/`.
