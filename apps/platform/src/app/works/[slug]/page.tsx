@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { userProfile, work, workVersion } from "@/db/schema";
+import { contribution, userProfile, work, workVersion } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +32,24 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
   if (!entry) notFound();
 
   const permissions = entry.permissions;
+  const publicContributions = await db
+    .select({
+      id: contribution.id,
+      title: contribution.title,
+      type: contribution.type,
+      contributorName: userProfile.displayName,
+      contributorHandle: userProfile.handle,
+      createdAt: contribution.createdAt
+    })
+    .from(contribution)
+    .leftJoin(userProfile, eq(contribution.contributorUserId, userProfile.userId))
+    .where(and(
+      eq(contribution.workId, entry.id),
+      eq(contribution.status, "approved"),
+      eq(contribution.isPublic, true)
+    ))
+    .orderBy(desc(contribution.createdAt))
+    .limit(20);
   return (
     <main className="shell dashboard-shell">
       <header className="topbar">
@@ -55,6 +73,14 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
             <li>{permissions.attributionRequired ? "Attribution required" : "Attribution not required"}</li>
           </ul>
           {permissions.additionalTerms ? <p className="additional-terms">{permissions.additionalTerms}</p> : null}
+        </section>
+        <section className="public-contributions">
+          <p className="eyebrow">COMMUNITY CONTRIBUTIONS</p>
+          {publicContributions.length === 0 ? <p className="field-note">No approved public contributions yet.</p> : publicContributions.map((item) => (
+            <Link className="public-contribution-link" href={`/works/${slug}/contributions/${item.id}`} key={item.id}>
+              <strong>{item.title}</strong><small>{item.type.replace("_", " ")} · {item.contributorName ?? "Contributor"} · @{item.contributorHandle ?? "member"}</small>
+            </Link>
+          ))}
         </section>
         <section className="proof-reference">
           <p className="eyebrow">CONTENT INTEGRITY</p>
