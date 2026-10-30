@@ -1,4 +1,4 @@
-import { publishStory, submitContribution, reviewContribution } from "./domain.js";
+import { publishStory, submitContribution, reviewContribution, contributionLifecycleStatus } from "./domain.js";
 import { captureStoryIntegrity, captureContributionIntegrity } from "./content-integrity.js";
 const KEY = "fanova.local.v2", META_KEY = "fanova.onchain.v1", CREATOR = "creator-demo", FAN = "fan-demo";
 const root = document.querySelector("#app"), notice = document.querySelector("#notice");
@@ -29,7 +29,7 @@ function msg(value, error = false) {
 }
 function clearMsg() { notice.hidden = true; notice.textContent = ""; }
 function label(value) {
-  return ({ pending: "Awaiting review", approved: "Approved", rejected: "Not approved" })[value] || value;
+  return ({ pending: "Awaiting review", stale: "STALE · resubmit against current version", approved: "Approved", rejected: "Not approved" })[value] || value;
 }
 
 function render() {
@@ -91,6 +91,7 @@ function reviewQueue() {
 }
 
 function card(contribution) {
+  const lifecycleStatus = contributionLifecycleStatus(state.story, contribution);
   const meta = readOnchainMeta();
   const record = meta.contributions?.[contribution.id];
   const storyRecord = meta.stories?.[state.story?.id];
@@ -109,7 +110,7 @@ function card(contribution) {
   const decision = contribution.decision
     ? `<div class="decision-note"><strong>Decision: ${esc(contribution.decision.outcome)}</strong><p class="muted">${reviewerLabel}</p>${reviewerAttribution}${reason}</div>`
     : "";
-  return `<article class="contribution-card"><div class="contribution-top"><span class="chip ${esc(contribution.status)}">${label(contribution.status)}</span><span class="muted">Demo label: ${esc(contribution.contributorName)} (simulated)</span></div><h4>${esc(contribution.title)}</h4><p class="story-body">${esc(contribution.body).replace(/\n/g, "<br>")}</p><div class="source-ref"><span>Source</span><code>${esc(contribution.storyId)}</code><span>source v${contribution.sourceVersion} · permissions v${contribution.permissionVersion}</span>${contributorAttribution}</div>${decision}${role === "creator" && contribution.status === "pending" ? `<div class="review-actions"><input data-reason="${esc(contribution.id)}" maxlength="300" placeholder="Decision note (optional)"><button class="primary small" data-review="approved" data-id="${esc(contribution.id)}">Approve</button><button class="secondary small" data-review="rejected" data-id="${esc(contribution.id)}">Reject</button></div>` : ""}</article>`;
+  return `<article class="contribution-card"><div class="contribution-top"><span class="chip ${esc(lifecycleStatus)}">${label(lifecycleStatus)}</span><span class="muted">Demo label: ${esc(contribution.contributorName)} (simulated)</span></div><h4>${esc(contribution.title)}</h4><p class="story-body">${esc(contribution.body).replace(/\n/g, "<br>")}</p><div class="source-ref"><span>Source</span><code>${esc(contribution.storyId)}</code><span>source v${contribution.sourceVersion} · permissions v${contribution.permissionVersion}</span>${contributorAttribution}</div>${decision}${role === "creator" && lifecycleStatus === "pending" ? `<div class="review-actions"><input data-reason="${esc(contribution.id)}" maxlength="300" placeholder="Decision note (optional)"><button class="primary small" data-review="approved" data-id="${esc(contribution.id)}">Approve</button><button class="secondary small" data-review="rejected" data-id="${esc(contribution.id)}">Reject</button></div>` : ""}</article>`;
 }
 
 function fanForm() {
@@ -143,7 +144,7 @@ function bindContribution() {
 
   const button = document.querySelector("#unauthorized-test");
   if (button) button.addEventListener("click", () => {
-    const contribution = state.contributions.find(item => item.status === "pending");
+    const contribution = state.contributions.find(item => contributionLifecycleStatus(state.story, item) === "pending");
     if (!contribution) { msg("Submit a contribution first.", true); return; }
     try {
       reviewContribution({ story: state.story, contribution, actorId: FAN, outcome: "approved" });
