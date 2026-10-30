@@ -151,9 +151,9 @@ This file is the append-only record of material project decisions. New decisions
 
 ## ADR-016 — Scope of the current evidence-bundle verifier
 - **Date:** 2026-10-30
-- **Status:** Accepted; event-completeness enhancement remains open
+- **Status:** Accepted; event-history scanner implemented locally, live Mainnet validation pending
 - **Context:** The verifier recomputes hashes for the source story and contributions included in an exported bundle, reads corresponding contract storage, and checks referenced transaction receipts/events. It does not currently enumerate all contract events from deployment through a fixed verification block. Therefore a bundle can omit an onchain contribution and still pass checks for the records it does contain.
-- **Decision:** Describe the current result as verification of the included records only. Do not claim bundle completeness or use wording that implies an independent third-party verification. Add event enumeration and comparison against the bundle as a P2 post-deployment hardening task before using a complete-history claim.
+- **Decision:** Describe the original 2026-10-30 result as verification of the included records only. The browser now has a bounded event scanner and comparison logic that checks all discovered story-version, contribution, and decision events from deployment through a fixed block. Do not claim that the new full-history path has been exercised against Mainnet until that live validation is recorded. Do not imply third-party verification.
 - **Alternatives:** Continue using VERIFIED without qualification; treat the bundle as complete based only on local export metadata; change the deployed contract.
-- **Consequences:** Narrower current claim, clearer evaluator expectations, and a defined next engineering task. No contract change or Mainnet transaction is required for this verifier enhancement.
+- **Consequences:** The code now has a defined completeness check without changing the deployed contract. CI covers comparison and chunking behavior; one live Mainnet run remains necessary to validate RPC behavior and the actual exported bundle.
 - **Explicit user approval:** Yes, in project conversation on 2026-10-30.
