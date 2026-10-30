@@ -49,8 +49,8 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 **Mainnet workflow demonstration gate:** MET for the recorded smoke-test bundle: all three Mainnet operations succeeded and the project verifier returned `VERIFIED` after recomputing hashes and checking contract storage/receipts/events for the records included in that bundle. This is not proof that the bundle contains every contribution ever registered for the story. To reproduce the recorded checks, provide the unchanged exported bundle through an appropriate access-controlled channel. This does not close the remaining P2 due-diligence and security-checklist items above, or the original-IP pilot work in P3.
 
 **Post-deployment hardening still open:**
-- [ ] Extend the read-only verifier to enumerate `StoryVersionRegistered`, `ContributionRegistered`, and `ContributionDecided` events from the deployment block through a fixed verification block, then compare the complete expected set with the bundle. Handle RPC log-range limits and reorg/finality assumptions explicitly.
-- [ ] Report the verification block and event-coverage scope. Until event enumeration is implemented, use `RECORDS VERIFIED` rather than implying bundle completeness.
+- [x] Implement bounded event enumeration from the deployment block through a fixed verification block and reconcile story-version, contribution, and decision events against the exported bundle. Add unit tests for chunking and missing/extra records; CI passes.
+- [ ] Validate the new full-history scan against the existing Soneium Mainnet evidence bundle and record its verification block. The scan uses the public RPC's latest block snapshot; finality/reorg handling remains a documented limitation.
 - [ ] Make historical pending contributions visibly `STALE` in the UI when a newer source version exists; retain read-only verification of their historical records.
 - [ ] Add explicit UI/export tests showing that demo display names are simulated and wallet addresses are the source of truth for onchain attribution.
 
