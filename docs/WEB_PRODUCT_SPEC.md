@@ -22,7 +22,8 @@ The MVP must have real accounts, server-backed persistence, public work discover
 - Browse and search published works.
 - Submit a contribution after acknowledging the current permission version.
 - Track their own submissions, statuses, creator feedback, source version, and provenance.
-- Can request creator access by submitting a short application and optional public portfolio. Creator permissions are granted only after administrator review.\n- Cannot edit source works or make creator decisions.
+- Can request creator access by submitting a short application and optional public portfolio. Creator permissions are granted only after administrator review.
+- Cannot edit source works or make creator decisions.
 
 ### Creator
 - All contributor capabilities.
@@ -36,7 +37,8 @@ The MVP must have real accounts, server-backed persistence, public work discover
 A creator role or wallet address is not proof of legal IP ownership. Users remain responsible for having the rights they claim.
 
 ### Moderator / administrator
-- Review creator access applications and grant the creator role after review.\n- Minimal operational role for abuse reports, account suspension, and prohibited content.
+- Review creator access applications and grant the creator role after review.
+- Minimal operational role for abuse reports, account suspension, and prohibited content.
 - Cannot silently alter creator decisions or forge onchain attribution.
 - Security-relevant administrative actions must be auditable.
 
