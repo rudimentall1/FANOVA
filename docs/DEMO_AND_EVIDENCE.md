@@ -55,6 +55,10 @@ The verifier does not request wallet access and does not send transactions. It c
 
 ---
 
+## Original local demo fixture
+
+Use [`docs/DEMO_SCENARIO.md`](./DEMO_SCENARIO.md) for the fictional source story, permission text, fan continuation, and repeatable local walkthrough. This fixture is separate from the earlier Mainnet placeholder-content evidence and must not be described as a real creator pilot or as anchored onchain.
+
 ## Required demo path
 1. Show FANOVA's purpose in one sentence.
 2. Show a creator publishing an original story and visible permission rules.
