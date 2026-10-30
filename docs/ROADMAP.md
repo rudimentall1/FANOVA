@@ -80,7 +80,7 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 
 ## P1.5 — Multi-user web product foundation (new priority after product expansion)
 
-**Status: account, creator, and contribution workflows merged; published-work version lifecycle and stale-submission handling implemented on the current branch.**
+**Status: account, creator, and contribution workflows merged; published-work versioning and automatic stale-submission handling implemented on the current branch.**
 
 - [x] Confirm that FANOVA's final product is a multi-user creator/contributor platform, not a single-page local demo.
 - [x] Define public pages, account flows, creator workspace, contributor dashboard, roles, core entities, security boundaries, and acceptance criteria in [WEB_PRODUCT_SPEC.md](WEB_PRODUCT_SPEC.md).
