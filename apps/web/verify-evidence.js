@@ -171,7 +171,7 @@ verifyButton.addEventListener("click", async () => {
         "partial"
       );
     } else {
-      report("VERIFIED", result.checks.join(" "));
+      report("RECORDS VERIFIED", `${result.checks.join(" ")} All records included in this bundle passed the checks above. Bundle completeness against the full onchain event history has not yet been established.`);
     }
   } catch (error) {
     report("VERIFICATION FAILED", error?.message || "Evidence verification failed.", true);
