@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import { test } from "node:test";
 import { chromium } from "playwright";
@@ -26,7 +27,8 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     assert.equal(ready, true, "local app server should start");
 
     browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage();
+    const context = await browser.newContext({ acceptDownloads: true });
+    const page = await context.newPage();
     await page.goto(baseURL);
     page.once("dialog", dialog => dialog.accept());
     await page.getByRole("button", { name: "Reset local demo data" }).click();
@@ -75,6 +77,39 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     assert.match(await page.locator(".onchain-actions:not(.evidence-verifier)").innerText(), /Mainnet transactions cost ETH gas/);
     assert.match(await page.locator("#evidence-verifier-title").innerText(), /Verify an evidence bundle/);
     assert.equal(await page.locator("#verify-evidence").count(), 1, "read-only evidence verifier should render");
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: "Export evidence JSON" }).click()
+    ]);
+    const exportedPath = await download.path();
+    assert.ok(exportedPath, "evidence export should produce a downloadable JSON file");
+    const bundle = JSON.parse(await readFile(exportedPath, "utf8"));
+
+    await page.locator("#evidence-file").setInputFiles({
+      name: "fanova-evidence-valid.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(bundle))
+    });
+    await page.locator("#verify-evidence").click();
+    await page.waitForFunction(() => document.querySelector("#evidence-verify-status")?.textContent === "PARTIALLY VERIFIED");
+    const validDetail = await page.locator("#evidence-verify-detail").innerText();
+    assert.match(validDetail, /Source story and permission text match their creation-time local SHA-256 checksums/);
+    assert.match(validDetail, /Contribution "The Midnight Map" matches its creation-time local SHA-256 checksum/);
+
+    const tamperedBundle = structuredClone(bundle);
+    tamperedBundle.localStoryAndContributions.story.body += "!";
+    await page.locator("#evidence-file").setInputFiles({
+      name: "fanova-evidence-tampered.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(tamperedBundle))
+    });
+    await page.locator("#verify-evidence").click();
+    await page.waitForFunction(() => document.querySelector("#evidence-verify-status")?.textContent === "VERIFICATION FAILED");
+    assert.match(
+      await page.locator("#evidence-verify-detail").innerText(),
+      /Source story content does not match its creation-time local checksum/
+    );
   } finally {
     if (browser) await browser.close();
     server.kill("SIGTERM");
