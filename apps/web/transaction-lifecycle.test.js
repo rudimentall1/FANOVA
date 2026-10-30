@@ -18,7 +18,9 @@ test("persists a submitted transaction hash before waiting for its receipt", asy
   });
 
   assert.deepEqual(events, [`saved:${HASH}`, `pending:${HASH}`, "wait"]);
-  assert.deepEqual(result, { hash: HASH, blockNumber: 123 });
+  assert.equal(result.hash, HASH);
+  assert.equal(result.blockNumber, 123);
+  assert.deepEqual(result.receipt, { status: 1, blockNumber: 123 });
 });
 
 test("a reverted transaction retains its hash in the error", async () => {
