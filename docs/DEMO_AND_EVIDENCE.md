@@ -46,6 +46,12 @@ The verifier does not request wallet access and does not send transactions. It c
 
 **Verifier scope at the time of this recorded run:** the result covered the story, contribution, and decision records included in the exported bundle; the original verifier did not enumerate every contract event. A later code change adds event-history scanning and bundle reconciliation, but that new path has not yet been validated against this live bundle. The current browser success label is `HISTORY VERIFIED` only after the scan and reconciliation complete. This is not an independent audit or third-party reproduction.
 
+### Attribution semantics
+
+- Creator and Fan names in the local workspace are simulated profile labels. Role switching is not authentication.
+- For confirmed on-chain records, the wallet address in the contract event is the attribution source. The UI displays an address only after the corresponding transaction receipt and expected event have been confirmed.
+- A wallet address proves that the address submitted the transaction. It does not identify a natural person, establish beneficial ownership, or prove legal IP rights.
+
 ### Evidence retention and demo limitations
 
 - Retain the original exported `fanova-evidence-bundle.json`. It contains the offchain Story and Contribution text needed to recompute hashes. Do not edit the bundle after export.
