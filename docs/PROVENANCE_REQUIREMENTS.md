@@ -1,7 +1,7 @@
 # FANOVA Provenance Proof Requirements
 
-**Status:** requirements locked. The workflow contract is deployed on Soneium Mainnet at `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`; CI shows executable runtime bytecode matches the current build after removing Solidity metadata, but full runtime metadata differs. The browser has a read-only chain-ID/code-presence panel. No story or contribution transaction has yet been demonstrated by the current browser workflow.
-**Date:** 2026-10-29
+**Status (2026-10-30):** requirements remain the proof baseline. The workflow contract is deployed on Soneium Mainnet at `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`. One user-approved Story registration, Contribution registration, and Creator decision sequence has completed onchain. FANOVA's read-only evidence-bundle verifier returned `VERIFIED` for the exported bundle after recomputing hashes and checking storage/receipts/events. The deployed runtime and local build match after removing Solidity metadata, but the full runtime bytecode differs in metadata; Blockscout therefore remains a partial source match. Do not claim exact full-runtime/source verification. The verifier result is from the project implementation, not a third-party audit.
+**Date:** 2026-10-30
 
 ## User-visible claim to prove
 
@@ -73,4 +73,4 @@ If no suitable deployed interface can be verified, the accepted alternative is t
 - Wallet/chain mismatch, rejected signature, RPC failure, and failed transaction handling in the client.
 - Explicit user approval for the proposed deployment and real-value transaction.
 
-Current status: contract deployment is **MAINNET**; the browser story/contribution workflow is **LOCAL**; wallet-driven writes and a full externally verifiable story-to-decision demo remain **PLANNED**.
+Current status: contract deployment and the demonstrated Story registration, Contribution registration, and Creator decision are **MAINNET**. The browser's local draft/content state remains **LOCAL**. The exported evidence bundle was checked by FANOVA's read-only verifier, which returned **VERIFIED**. The unchanged bundle is required to reproduce hash checks; no third-party audit, external evaluator reproduction, legal-rights verification, or full source-equivalence claim is made.
