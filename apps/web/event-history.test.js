@@ -48,4 +48,15 @@ test("rejects invalid block ranges and chunk sizes", async () => {
   const base = { provider: { getLogs: async () => [] }, iface: fakeIface(), contractAddress: "0xcontract", storyId };
   await assert.rejects(scanStoryEventHistory({ ...base, fromBlock: 20, toBlock: 10 }), /Invalid event history block range/);
   await assert.rejects(scanStoryEventHistory({ ...base, fromBlock: 1, toBlock: 10, chunkSize: 0 }), /positive integer/);
+  await assert.rejects(scanStoryEventHistory({ ...base, fromBlock: 1, toBlock: 10, chunkSize: 1001 }), /Soneium RPC limit of 1000/);
+});
+
+
+test("defaults to Soneium 1000-block eth_getLogs limit", async () => {
+  const calls = [];
+  const provider = { async getLogs(filter) { calls.push(filter); return []; } };
+  await scanStoryEventHistory({ provider, iface: fakeIface(), contractAddress: "0xcontract", storyId, fromBlock: 100, toBlock: 1100 });
+  assert.equal(calls.length, 6);
+  assert.deepEqual(calls.map(call => [call.fromBlock, call.toBlock]), [[100, 1099], [100, 1099], [100, 1099], [1100, 1100], [1100, 1100], [1100, 1100]]);
+  assert.ok(calls.every(call => call.toBlock - call.fromBlock + 1 <= 1000));
 });
