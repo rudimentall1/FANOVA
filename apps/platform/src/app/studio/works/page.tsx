@@ -47,7 +47,7 @@ export default async function CreatorWorksPage() {
           {rows.map((row) => (
             <article className="work-row" key={row.id}>
               <div><span className={row.status === "published" ? "work-status published" : "work-status"}>{row.draftVersionId ? "draft revision" : row.status}</span><h2>{row.title}</h2><p>{row.synopsis}</p><small>Version {row.versionNumber}</small></div>
-              {row.status === "published" ? <div className="work-row-actions"><Link className="text-link" href={`/works/${row.slug}`}>Open public page</Link><Link className="text-link" href={`/studio/works/${row.slug}/edit`}>{row.draftVersionId ? "Edit unpublished revision" : "Create new version"}</Link><Link className="text-link" href={`/studio/works/${row.slug}/versions`}>Version history</Link><Link className="text-link" href={`/studio/works/${row.slug}/submissions`}>Review submissions</Link></div> : <Link className="text-link" href={`/studio/works/${row.slug}/edit`}>Edit draft</Link>}
+              {row.status === "published" ? <div className="work-row-actions"><Link className="text-link" href={`/works/${row.slug}`}>Open public page</Link><Link className="text-link" href={`/studio/works/${row.slug}/edit`}>{row.draftVersionId ? "Edit unpublished revision" : "Create new version"}</Link><Link className="text-link" href={`/studio/works/${row.slug}/versions`}>Version history</Link><Link className="text-link" href={`/studio/works/${row.slug}/submissions`}>Review submissions</Link></div> : row.status === "draft" ? <Link className="text-link" href={`/studio/works/${row.slug}/edit`}>Edit draft</Link> : <span className="field-note">Archived</span>}
             </article>
           ))}
         </section>
