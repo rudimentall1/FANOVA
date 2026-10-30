@@ -129,3 +129,31 @@ This file is the append-only record of material project decisions. New decisions
 - **Consequences:** Reduces ID-squatting/front-running risk without adding a signature dependency. It still does not prove legal IP ownership; the caller only controls the address-bound record.
 - **Evidence:** [Foundry CI run 40895792292](https://github.com/rudimentall1/FANOVA/actions/runs/40895792292): 13 passed, 0 failed.
 - **Explicit user approval:** Not required for local implementation/testing; Mainnet deployment still requires explicit approval.
+
+
+## ADR-014 — Position FANOVA as a creator-controlled product layer
+- **Date:** 2026-10-30
+- **Status:** Accepted
+- **Context:** The Sony Onchain Entertainment application needs a clear product identity. Describing FANOVA as a general IP infrastructure protocol risks positioning it as a duplicate of Soneium's own IP registry, graph, and licensing direction. The current implementation is a narrow story contribution and creator-decision workflow, not a general IP stack.
+- **Decision:** Position FANOVA as a creator-controlled collaborative IP product for story-based communities. FANOVA owns the user workflow: source story and permitted-use rules, contribution submission, creator review, attribution, and evidence presentation. Soneium is the provenance ecosystem. FANOVA does not claim to replace Soneium IP infrastructure or to have integrated a production IP registry/licensing primitive. Future licensing and contributor revenue participation remain roadmap directions, not current functionality.
+- **Alternatives:** Claim a new general-purpose IP protocol; position as a fanfiction/social platform; market a revenue-sharing engine before payments exist.
+- **Consequences:** Narrower and more defensible product scope. The application can explain the commercial direction without claiming licensing, revenue, or production adoption today.
+- **Explicit user approval:** Yes, in project conversation on 2026-10-30.
+
+## ADR-015 — Separate simulated demo identities from onchain wallet attribution
+- **Date:** 2026-10-30
+- **Status:** Accepted
+- **Context:** The browser MVP uses a local Creator/Fan role switch and display labels such as Demo Creator and Demo Fan. Those labels are not authenticated accounts. Separately, the onchain workflow obtains a signer address from Rabby and the contract records the transaction caller. Conflating these two identity layers would overstate attribution.
+- **Decision:** Keep the local role switch explicitly labelled as a simulation. Treat the contract-recorded creator/contributor/reviewer addresses as the authoritative identities for onchain actions. Do not claim that a display name is cryptographically bound to a wallet or that the browser MVP has production authentication. Any future name-to-wallet binding requires a separately specified signed profile or authentication design.
+- **Alternatives:** Treat local role labels as real user accounts; add server-side authentication and profiles to the current MVP; remove the local workflow.
+- **Consequences:** Preserves the working demo while making its identity boundary explicit. Production identity management remains out of scope.
+- **Explicit user approval:** Yes, in project conversation on 2026-10-30.
+
+## ADR-016 — Scope of the current evidence-bundle verifier
+- **Date:** 2026-10-30
+- **Status:** Accepted; event-completeness enhancement remains open
+- **Context:** The verifier recomputes hashes for the source story and contributions included in an exported bundle, reads corresponding contract storage, and checks referenced transaction receipts/events. It does not currently enumerate all contract events from deployment through a fixed verification block. Therefore a bundle can omit an onchain contribution and still pass checks for the records it does contain.
+- **Decision:** Describe the current result as verification of the included records only. Do not claim bundle completeness or use wording that implies an independent third-party verification. Add event enumeration and comparison against the bundle as a P2 post-deployment hardening task before using a complete-history claim.
+- **Alternatives:** Continue using VERIFIED without qualification; treat the bundle as complete based only on local export metadata; change the deployed contract.
+- **Consequences:** Narrower current claim, clearer evaluator expectations, and a defined next engineering task. No contract change or Mainnet transaction is required for this verifier enhancement.
+- **Explicit user approval:** Yes, in project conversation on 2026-10-30.

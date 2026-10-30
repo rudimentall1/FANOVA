@@ -2,7 +2,7 @@
 
 **Fans don't just follow stories. They help shape them.**
 
-FANOVA is an onchain entertainment product concept for creators and fan communities. The initial product lets a creator publish an original story, define what fan-created derivative works are permitted, review submissions, approve selected works, and preserve the relationship to source IP. Revenue distribution is not implemented and is not claimed.
+FANOVA is a creator-controlled collaborative IP product for story-based communities. It gives a creator a workflow to publish an original story and permitted-use rules, receive fan-created derivative contributions, approve or reject them, and preserve a verifiable relationship between the source version, contributor address, and creator decision on Soneium. FANOVA is the product and workflow layer; it does not claim to replace Soneium's IP registry, graph, or licensing infrastructure. Revenue distribution and legal licensing are not implemented or claimed.
 
 ## Project status
 
@@ -46,6 +46,7 @@ Before implementation tasks, read [`AGENTS.md`](./AGENTS.md) and [`docs/PROJECT_
 
 ## Project documents
 
+- [Product manifesto and positioning](./docs/PRODUCT_MANIFEST.md)
 - [Canonical scope and acceptance criteria](./docs/PROJECT_SKELETON.md)
 - [Architecture and security boundaries](./docs/ARCHITECTURE.md)
 - [Roadmap and current gates](./docs/ROADMAP.md)
@@ -56,7 +57,7 @@ Before implementation tasks, read [`AGENTS.md`](./AGENTS.md) and [`docs/PROJECT_
 
 ## Evidence bundle verification
 
-The browser includes a read-only verifier for exported FANOVA evidence bundles. It recomputes the story, permission, and contribution hashes; checks the creator-bound story ID; reads the matching story version and contribution records from Soneium contract storage; and checks the referenced transaction receipts and events. Older exported story versions remain verifiable after a later version is registered.
+The browser includes a read-only verifier for exported FANOVA evidence bundles. It recomputes the story, permission, and contribution hashes; checks the creator-bound story ID; reads the matching story version and contribution records from Soneium contract storage; and checks the referenced transaction receipts and events. Older exported story versions remain verifiable when the bundle contains the matching historical story snapshot. The current verifier checks records included in the supplied bundle; it does not enumerate the full contract event history and therefore cannot prove that no contribution was omitted. A successful result applies to the included records, not to bundle completeness.
 
 The verifier reports **PARTIALLY VERIFIED** when a local contribution has no verifiable registration transaction reference or when a local approve/reject decision has no verifiable onchain decision transaction. A bundle is not marked **VERIFIED** when its local decision outcome conflicts with the onchain evidence. The verifier is read-only and does not connect a wallet or submit transactions.
 The wallet flow also stores the operation identifiers before submission and persists each returned transaction hash immediately, before waiting for a receipt. If a receipt fails or the browser is interrupted, inspect the saved hash on Blockscout before retrying; the UI deliberately blocks blind duplicate submissions.

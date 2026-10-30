@@ -1,6 +1,6 @@
 # FANOVA Onchain Proof Design: EAS vs Minimal Workflow Contract
 
-**Status:** minimal workflow contract is deployed on Soneium Mainnet. Local story/contribution/review state remains in the browser; separate user-approved Rabby wallet actions can register story versions, contributions, and creator decisions onchain. The complete real Mainnet sequence has not yet been demonstrated. The read-only deployment panel itself does not submit transactions. The deployed runtime has matching executable bytecode after Solidity metadata is excluded, but full runtime metadata differs.
+**Status (2026-10-30):** minimal workflow contract is deployed on Soneium Mainnet. One user-approved Story registration, Contribution registration, and Creator decision sequence completed on Mainnet; the transaction evidence is recorded in `docs/DEMO_AND_EVIDENCE.md`. FANOVA's read-only verifier returned `VERIFIED` for the records included in the exported bundle. It does not yet enumerate the full contract event history, so bundle completeness is not established. The deployed runtime has matching executable bytecode after Solidity metadata is excluded, but full runtime metadata differs.
 **Date:** 2026-10-29
 **Milestone:** P2 — Mainnet provenance path.
 
@@ -70,7 +70,7 @@ No full text, personal data, payment, token, NFT, royalty, or legal-rights claim
 
 ## Decision
 
-ADR-012 is accepted: use the minimal FANOVA workflow contract and do not integrate EAS in the MVP. EAS is useful for attestations, but it does not enforce the required creator authorization, exact version/permission binding, stale-version rejection, and one-final-decision invariants. The checked-in upstream `solcInputs` does not match the live implementation's compiler/version metadata, so it is not accepted as the matching build artifact. The FANOVA contract is now deployed; deployment metadata differences remain disclosed and no browser story/contribution write is yet demonstrated. No production-ready deployed Soneium IP Registry/ERC-8432 interface has been verified. The custom contract is a narrow workflow state machine, not a general IP registry; content remains offchain and no legal-rights claim is made.
+ADR-012 is accepted: use the minimal FANOVA workflow contract and do not integrate EAS in the MVP. EAS is useful for attestations, but it does not enforce the required creator authorization, exact version/permission binding, stale-version rejection, and one-final-decision invariants. The checked-in upstream `solcInputs` does not match the live implementation's compiler/version metadata, so it is not accepted as the matching build artifact. The FANOVA contract is now deployed; deployment metadata differences remain disclosed and one complete user-approved browser sequence has been demonstrated on Soneium Mainnet. No production-ready deployed Soneium IP Registry/ERC-8432 interface has been verified. The custom contract is a narrow workflow state machine, not a general IP registry; content remains offchain and no legal-rights claim is made.
 
 The implementation must derive each story ID from the creator address and salt to prevent ID front-running, require monotonically increasing source versions, bind contributions to the exact current source and permission hash, record an explicit contributor acknowledgement assertion, reject stale pending decisions after a version change, and allow only one final creator decision. The acknowledgement flag is not proof of comprehension, legal consent, or IP ownership. No EAS + custom-contract combination is planned.
 
@@ -92,5 +92,8 @@ The implementation must derive each story ID from the creator address and salt t
 - EIP-1967 proxy admin slots and the ProxyAdmin `owner()` address: **INDEPENDENTLY VERIFIED** by read-only CI. Owner mapping to the L1 SuperchainProxyAdminOwner multisig: **SUPPORTED BY OFFICIAL REGISTRY AND L2BEAT**. Current Safe owner set/threshold on L1 was not independently queried in this audit. L2BEAT reports 2-of-2 and no upgrade delay.
 - Upstream source/build equivalence and EAS schema/resolver semantics: **NOT YET VERIFIED**.
 - Architecture choice: **DECIDED** in ADR-012: minimal FANOVA workflow contract; no EAS integration in MVP.
-- Minimal FANOVA workflow contract and 13 Foundry tests: **LOCAL / CI PASSED** in [run 40896262129](https://github.com/rudimentall1/FANOVA/actions/runs/40896262129). `forge build --sizes` reports 4,306 runtime bytes and 4,334 initcode bytes; no compiler/lint warning was emitted.
-- Contract deployment and mainnet transaction: **NOT DEPLOYED / NOT PERFORMED**.
+- Minimal FANOVA workflow contract and 20 Foundry tests: **LOCAL / CI PASSED** in [run 40899723650](https://github.com/rudimentall1/FANOVA/actions/runs/40899723650). `forge build --sizes` reported 4,329 runtime bytes and 4,357 initcode bytes for that build.
+- Contract deployment: **MAINNET**, address and deployment transaction are recorded in `README.md`.
+- Story registration, contribution registration, and creator decision: **MAINNET**, one user-approved sequence on 2026-10-30; see `docs/DEMO_AND_EVIDENCE.md`.
+- Exported-bundle verification: **PROJECT VERIFIER PASSED FOR INCLUDED RECORDS**; full event-history coverage and bundle completeness are **NOT YET VERIFIED**.
+- Independent security audit: **NOT PERFORMED**.
