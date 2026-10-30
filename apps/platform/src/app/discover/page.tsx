@@ -1,11 +1,21 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike, or } from "drizzle-orm";
 import { db } from "@/db";
 import { userProfile, work, workVersion } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
-export default async function DiscoverPage() {
+export default async function DiscoverPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const params = await searchParams;
+  const query = params.q?.trim().slice(0, 100) ?? "";
+  const filters = [eq(work.status, "published")];
+  if (query) {
+    filters.push(or(
+      ilike(workVersion.title, `%${query}%`),
+      ilike(workVersion.synopsis, `%${query}%`)
+    ) as typeof filters[number]);
+  }
+
   const rows = await db
     .select({
       slug: work.slug,
@@ -18,7 +28,7 @@ export default async function DiscoverPage() {
     .from(work)
     .innerJoin(workVersion, eq(work.currentVersionId, workVersion.id))
     .leftJoin(userProfile, eq(work.ownerUserId, userProfile.userId))
-    .where(eq(work.status, "published"))
+    .where(and(...filters))
     .orderBy(desc(work.publishedAt))
     .limit(50);
 
@@ -33,12 +43,16 @@ export default async function DiscoverPage() {
         <h1>Find a story<br />worth adding to.</h1>
         <p className="intro">Explore original works and the contribution rules their creators have chosen.</p>
       </section>
+      <form className="catalogue-search" action="/discover" method="get">
+        <label htmlFor="catalogue-query">Search published works</label>
+        <div><input id="catalogue-query" name="q" maxLength={100} defaultValue={query} placeholder="Title or synopsis" /><button className="secondary-button" type="submit">Search</button></div>
+      </form>
       {rows.length === 0 ? (
         <section className="empty-state">
-          <p className="eyebrow">NO PUBLISHED WORKS YET</p>
-          <h2>The catalogue is waiting for its first creator.</h2>
-          <p>Published works will appear here. FANOVA does not fill the catalogue with demo profiles or invented stories.</p>
-          <Link className="text-link" href="/sign-up">Create an account</Link>
+          <p className="eyebrow">{query ? "NO MATCHES" : "NO PUBLISHED WORKS YET"}</p>
+          <h2>{query ? "No published work matches that search." : "The catalogue is waiting for its first creator."}</h2>
+          <p>{query ? "Try another title or a shorter search phrase." : "Published works will appear here. FANOVA does not fill the catalogue with demo profiles or invented stories."}</p>
+          {!query ? <Link className="text-link" href="/sign-up">Create an account</Link> : null}
         </section>
       ) : (
         <section className="catalogue-grid">
