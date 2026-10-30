@@ -3,20 +3,27 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { WorkPermissions } from "@/db/schema/content";
 
 type WorkStatus = { kind: "error" | "success"; message: string } | null;
+type WorkDraft = {
+  title: string;
+  synopsis: string;
+  body: string;
+  permissions: WorkPermissions;
+};
 
-export function NewWorkForm() {
+export function NewWorkForm({ initial, slug }: { initial?: WorkDraft; slug?: string }) {
   const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [synopsis, setSynopsis] = useState("");
-  const [body, setBody] = useState("");
-  const [fanArt, setFanArt] = useState(true);
-  const [translations, setTranslations] = useState(true);
-  const [adaptations, setAdaptations] = useState(false);
-  const [commercialUse, setCommercialUse] = useState(false);
-  const [attributionRequired, setAttributionRequired] = useState(true);
-  const [additionalTerms, setAdditionalTerms] = useState("");
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [synopsis, setSynopsis] = useState(initial?.synopsis ?? "");
+  const [body, setBody] = useState(initial?.body ?? "");
+  const [fanArt, setFanArt] = useState(initial?.permissions.fanArt ?? true);
+  const [translations, setTranslations] = useState(initial?.permissions.translations ?? true);
+  const [adaptations, setAdaptations] = useState(initial?.permissions.adaptations ?? false);
+  const [commercialUse, setCommercialUse] = useState(initial?.permissions.commercialUse ?? false);
+  const [attributionRequired, setAttributionRequired] = useState(initial?.permissions.attributionRequired ?? true);
+  const [additionalTerms, setAdditionalTerms] = useState(initial?.permissions.additionalTerms ?? "");
   const [status, setStatus] = useState<WorkStatus>(null);
   const [busy, setBusy] = useState(false);
 
@@ -28,8 +35,8 @@ export function NewWorkForm() {
     setStatus(null);
 
     try {
-      const response = await fetch("/api/works", {
-        method: "POST",
+      const response = await fetch(slug ? `/api/works/${slug}` : "/api/works", {
+        method: slug ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
@@ -54,7 +61,6 @@ export function NewWorkForm() {
       if (publish) {
         router.push(`/works/${result.work.slug}`);
       } else {
-        setStatus({ kind: "success", message: "Draft saved to your Creator Studio." });
         router.push("/studio/works");
         router.refresh();
       }
@@ -72,7 +78,7 @@ export function NewWorkForm() {
       <label>Original work<textarea required minLength={100} maxLength={50000} rows={12} value={body} onChange={(e) => setBody(e.target.value)} /></label>
       <section className="permission-editor">
         <p className="eyebrow">PERMITTED USE</p>
-        <p className="field-note">These rules describe what contributors may create from this work. They are stored with the published version.</p>
+        <p className="field-note">These rules describe what contributors may create from this work. They are stored with each saved version.</p>
         <label className="check-row"><input type="checkbox" checked={fanArt} onChange={(e) => setFanArt(e.target.checked)} /> Fan art</label>
         <label className="check-row"><input type="checkbox" checked={translations} onChange={(e) => setTranslations(e.target.checked)} /> Translations</label>
         <label className="check-row"><input type="checkbox" checked={adaptations} onChange={(e) => setAdaptations(e.target.checked)} /> Adaptations and derivative stories</label>
