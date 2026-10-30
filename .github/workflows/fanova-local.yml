@@ -45,3 +45,24 @@ jobs:
           node --check domain.js
           node --check serve.mjs
           node --check e2e.test.js
+
+      - name: Install platform dependencies
+        working-directory: apps/platform
+        run: npm install
+      - name: Check platform TypeScript
+        working-directory: apps/platform
+        run: npm run typecheck
+        env:
+          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+          BETTER_AUTH_URL: http://localhost:3000
+      - name: Run platform authorization tests
+        working-directory: apps/platform
+        run: npm test
+      - name: Build platform application
+        working-directory: apps/platform
+        run: npm run build
+        env:
+          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+          BETTER_AUTH_URL: http://localhost:3000
