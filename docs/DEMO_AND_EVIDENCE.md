@@ -58,6 +58,26 @@ Pending contributions are marked STALE when their source version or acknowledged
 
 **Remaining limitation:** the current browser MVP has no creator-facing source-revision action and does not yet export a complete multi-version content history for on-chain verification. The UI state handling and rejection guard are implemented, but a full version-editing and historical evidence workflow remains open.
 
+### Live evidence-bundle verification (2026-10-30)
+
+The exported Mainnet bundle for story `0x5f6e97151e2d76ad094c7af20ce86e7c5bbb86cb620b28ac19db841cbc8ebdc5` was checked read-only against Soneium RPC.
+
+| Check | Result |
+|---|---|
+| Local SHA-256 source, permission, and contribution commitments | All matched the exported values |
+| Keccak-256 source, permission, contribution, and decision reason code | All matched the exported values |
+| Creator-bound story ID | Matched creator address and creator salt |
+| Contract storage | Story, version 1, and contribution records matched |
+| Transaction receipts | Story registration, contribution registration, and creator decision succeeded at blocks 30105304, 30105412, and 30105502 |
+| Event history through snapshot block 30113277 | 1 story-version event, 1 contribution event, and 1 decision event for this story |
+| Bundle-to-event transaction references | All three matched |
+
+The scan started at deployment block 30077815 and used ranges of at most 1,000 blocks. The RPC returned one additional story-version event for a different story; it was not part of this story's history.
+
+**Result:** the bundle's current single-version story, contribution, and decision records reconcile with the observed Soneium Mainnet state and event history through block 30113277.
+
+**Limitations:** this is a read-only verification against one RPC provider, not a trustless proof of RPC completeness or an independent security audit. The exported content is placeholder test data: the story title, story body, permission text, contribution title, and contribution body are all the same string, `Story title`. The matching source and contribution Keccak hashes are therefore expected, but this is not a meaningful content-diversity test. The local profile labels `Demo Creator` and `Demo Fan` are simulated and do not identify the wallet owners. No legal ownership, copyright clearance, or enforceable consent is established.
+
 ### Evidence retention and demo limitations
 
 - Retain the original exported `fanova-evidence-bundle.json`. It contains the offchain Story and Contribution text needed to recompute hashes. Do not edit the bundle after export.
