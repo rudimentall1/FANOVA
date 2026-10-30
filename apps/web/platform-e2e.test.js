@@ -107,7 +107,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       "I create original short fiction and want to publish a story world where contributors can create fan art and translations under explicit rules."
     );
     await creatorPage.getByRole("button", { name: "Submit creator application" }).click();
-    await creatorPage.getByRole("status").waitFor();
+    await creatorPage.getByRole("heading", { name: "Application under review." }).waitFor();
 
     const application = adminPage.locator(".request-card").filter({ hasText: creatorEmail });
     await adminPage.reload();
