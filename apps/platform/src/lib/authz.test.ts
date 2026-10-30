@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canManageOwnWork, canReadPrivateSubmission, canReviewSubmission, type AuthenticatedActor } from "./authz";
+import { canManageOwnWork, canReadPrivateSubmission, canReviewSubmission, canRequestCreatorAccess, canReviewCreatorRequests, type AuthenticatedActor } from "./authz";
 
 const creatorA: AuthenticatedActor = { userId: "creator-a", roles: ["reader", "creator"] };
 const creatorB: AuthenticatedActor = { userId: "creator-b", roles: ["creator"] };
