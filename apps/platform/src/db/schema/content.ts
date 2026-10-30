@@ -27,6 +27,7 @@ export const work = pgTable("work", {
   slug: text("slug").notNull(),
   status: workStatus("status").notNull().default("draft"),
   currentVersionId: text("current_version_id"),
+  draftVersionId: text("draft_version_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   publishedAt: timestamp("published_at", { withTimezone: true })
