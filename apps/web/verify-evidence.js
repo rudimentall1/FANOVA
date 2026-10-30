@@ -1,7 +1,11 @@
 import { PROVENANCE_ABI } from "./provenance-abi.js";
 import { inspectLocalBundle } from "./evidence-validation.js";
 import { verifyLocalContentCommitments } from "./content-integrity.js";
+import { compareEventCoverage } from "./event-coverage.js";
+
 const CONTRACT_ADDRESS = "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880";
+const DEPLOYMENT_TX_HASH = "0xb2086bd26326b428f4806e9a93a202631528ec8bffe4ff9f9f8f102cf9e34c";
+const LOG_CHUNK_SIZE = 2000;
 const RPC_URL = "https://rpc.soneium.org/";
 const CHAIN_ID = 1868n;
 const ABI = PROVENANCE_ABI;
@@ -37,6 +41,28 @@ async function receiptEvent(provider, iface, txHash, eventName, predicate) {
   throw new Error(`Expected ${eventName} event was not found in receipt ${txHash}.`);
 }
 
+async function scanStoryEventHistory(provider, iface, storyId, fromBlock, toBlock) {
+  const storyTopic = iface.getEvent("StoryVersionRegistered").topicHash;
+  const contributionTopic = iface.getEvent("ContributionRegistered").topicHash;
+  const decisionTopic = iface.getEvent("ContributionDecided").topicHash;
+  const storyVersionEvents = [];
+  const contributionEvents = [];
+  const decisionEvents = [];
+
+  for (let from = fromBlock; from <= toBlock; from += LOG_CHUNK_SIZE) {
+    const to = Math.min(from + LOG_CHUNK_SIZE - 1, toBlock);
+    const [storyLogs, contributionLogs, decisionLogs] = await Promise.all([
+      provider.getLogs({ address: CONTRACT_ADDRESS, fromBlock: from, toBlock: to, topics: [storyTopic, storyId] }),
+      provider.getLogs({ address: CONTRACT_ADDRESS, fromBlock: from, toBlock: to, topics: [contributionTopic, null, storyId] }),
+      provider.getLogs({ address: CONTRACT_ADDRESS, fromBlock: from, toBlock: to, topics: [decisionTopic, null, storyId] })
+    ]);
+    for (const log of storyLogs) storyVersionEvents.push({ args: iface.parseLog(log).args, transactionHash: log.transactionHash, blockNumber: log.blockNumber });
+    for (const log of contributionLogs) contributionEvents.push({ args: iface.parseLog(log).args, transactionHash: log.transactionHash, blockNumber: log.blockNumber });
+    for (const log of decisionLogs) decisionEvents.push({ args: iface.parseLog(log).args, transactionHash: log.transactionHash, blockNumber: log.blockNumber });
+  }
+  return { storyVersionEvents, contributionEvents, decisionEvents };
+}
+
 async function verifyBundle(bundle) {
   assert(bundle?.format === "fanova-evidence-bundle-v1", "Unsupported evidence bundle format.");
   assert(Number(bundle?.network?.chainId) === Number(CHAIN_ID), "Bundle network is not Soneium Mainnet (chain ID 1868).");
@@ -62,6 +88,11 @@ async function verifyBundle(bundle) {
   const iface = new Interface(ABI);
   const contract = new ethersModule.Contract(CONTRACT_ADDRESS, ABI, provider);
   const checks = [];
+  const deploymentReceipt = await provider.getTransactionReceipt(DEPLOYMENT_TX_HASH);
+  assert(deploymentReceipt && deploymentReceipt.status === 1, "FANOVA deployment transaction receipt is unavailable or failed.");
+  assert(same(deploymentReceipt.contractAddress, CONTRACT_ADDRESS), "Configured deployment transaction does not create the configured FANOVA contract.");
+  const verificationBlock = await provider.getBlockNumber();
+  assert(verificationBlock >= deploymentReceipt.blockNumber, "RPC verification block predates FANOVA deployment.");
   const story = state.story;
   assert(story, "Evidence bundle contains no source story.");
   const storyRecord = meta.stories[story.id];
@@ -153,7 +184,29 @@ async function verifyBundle(bundle) {
     verifiedContributions++;
   }
   if (verifiedContributions === 0) incompleteEvidence.push("No contribution registration could be independently verified onchain.");
-  return { checks, incompleteEvidence };
+
+  const eventHistory = await scanStoryEventHistory(
+    provider,
+    iface,
+    storyRecord.storyId,
+    deploymentReceipt.blockNumber,
+    verificationBlock
+  );
+  const coverage = compareEventCoverage({
+    storyId: storyRecord.storyId,
+    storyRecord,
+    story,
+    storyVersionEvents: eventHistory.storyVersionEvents,
+    contributionEvents: eventHistory.contributionEvents,
+    decisionEvents: eventHistory.decisionEvents,
+    bundle
+  });
+  checks.push(
+    `Contract event history scanned from deployment block ${deploymentReceipt.blockNumber} through block ${verificationBlock}: ${eventHistory.storyVersionEvents.length} story-version events, ${eventHistory.contributionEvents.length} contribution events, and ${eventHistory.decisionEvents.length} decision events.`
+  );
+  checks.push(...coverage.checks);
+  incompleteEvidence.push(...coverage.incompleteEvidence);
+  return { checks, incompleteEvidence, verificationBlock };
 }
 
 verifyButton.addEventListener("click", async () => {
@@ -171,7 +224,7 @@ verifyButton.addEventListener("click", async () => {
         "partial"
       );
     } else {
-      report("RECORDS VERIFIED", `${result.checks.join(" ")} All records included in this bundle passed the checks above. Bundle completeness against the full onchain event history has not yet been established.`);
+      report("HISTORY VERIFIED", `${result.checks.join(" ")} All story-version, contribution, and decision events for this story were reconciled against the exported bundle through block ${result.verificationBlock}.`);
     }
   } catch (error) {
     report("VERIFICATION FAILED", error?.message || "Evidence verification failed.", true);
