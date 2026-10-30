@@ -1,28 +1,163 @@
 import { publishStory, submitContribution, reviewContribution } from "./domain.js";
-const KEY="fanova.local.v2", CREATOR="creator-demo", FAN="fan-demo";
-const root=document.querySelector("#app"), notice=document.querySelector("#notice");
-let role="creator", state=load();
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.contributions))return s}catch{}return{story:null,contributions:[]}}
-function save(){localStorage.setItem(KEY,JSON.stringify(state))}
-function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function msg(s,error=false){notice.hidden=false;notice.className="notice "+(error?"error":"success");notice.textContent=s}
-function clearMsg(){notice.hidden=true;notice.textContent=""}
-function label(s){return({pending:"Awaiting review",approved:"Approved",rejected:"Not approved"})[s]||s}
-function render(){
- document.querySelectorAll("[data-role]").forEach(b=>{b.classList.toggle("active",b.dataset.role===role);b.setAttribute("aria-pressed",String(b.dataset.role===role))});
- if(!state.story){root.innerHTML=role==="creator"?`<div class="card"><div class="card-kicker">01 / SOURCE STORY</div><h3>Publish the first story</h3><p class="muted">Use original material. Permission rules are shown to every contributor.</p><form id="story-form" class="form"><label>Story title<input name="title" required maxlength="100" placeholder="The Glass City"></label><label>Story text<textarea name="body" required maxlength="10000" rows="5"></textarea></label><label>Permitted-use rules<textarea name="permissions" required maxlength="1500" rows="3" placeholder="What may fans submit? What is prohibited?"></textarea></label><button class="primary">Publish story ↗</button></form></div>`:`<div class="empty-state"><h3>No story published yet</h3><p>Switch to Creator to publish the source story first.</p></div>`;bindStory();return}
- const s=state.story;
- root.innerHTML=`<article class="story-card"><div class="story-meta"><span class="chip">SOURCE · v${s.version}</span><span class="muted">Published by ${esc(s.creatorName)}</span></div><h3>${esc(s.title)}</h3><p class="story-body">${esc(s.body).replace(/\n/g,"<br>")}</p><div class="permission-box"><strong>Permitted-use rules · v${s.permissionVersion}</strong><p>${esc(s.permissions).replace(/\n/g,"<br>")}</p></div><div class="source-ref"><span>Source ID</span><code>${esc(s.id)}</code><span>v${s.version}</span></div></article>`+
- (role==="creator"?reviewQueue():fanForm());
- bindContribution();bindReviews();
+import { captureStoryIntegrity, captureContributionIntegrity } from "./content-integrity.js";
+const KEY = "fanova.local.v2", CREATOR = "creator-demo", FAN = "fan-demo";
+const root = document.querySelector("#app"), notice = document.querySelector("#notice");
+let role = "creator", state = load();
+
+function load() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY));
+    if (saved && Array.isArray(saved.contributions)) return saved;
+  } catch {}
+  return { story: null, contributions: [] };
 }
-function bindStory(){const f=document.querySelector("#story-form");if(!f)return;f.addEventListener("submit",e=>{e.preventDefault();const d=new FormData(f);try{state.story=publishStory({creatorId:CREATOR,creatorName:"Demo Creator",title:d.get("title"),body:d.get("body"),permissions:d.get("permissions")});state.contributions=[];save();render();msg("Story published locally. No blockchain transaction was sent.")}catch(x){msg(x.message,true)}})}
-function reviewQueue(){if(!state.contributions.length)return `<div class="card"><div class="card-kicker">02 / REVIEW QUEUE</div><h3>Waiting for contributions</h3><p class="muted">Switch to Fan to submit a continuation under these rules.</p></div>`;return `<div class="review-header"><div><p class="eyebrow">02 / REVIEW QUEUE</p><h3>Fan contributions</h3></div></div><div class="contribution-list">${state.contributions.map(card).join("")}</div>`}
-function card(c){return `<article class="contribution-card"><div class="contribution-top"><span class="chip ${esc(c.status)}">${label(c.status)}</span><span class="muted">by ${esc(c.contributorName)}</span></div><h4>${esc(c.title)}</h4><p class="story-body">${esc(c.body).replace(/\n/g,"<br>")}</p><div class="source-ref"><span>Source</span><code>${esc(c.storyId)}</code><span>source v${c.sourceVersion} · permissions v${c.permissionVersion}</span></div>${c.decision?`<div class="decision-note"><strong>Decision: ${esc(c.decision.outcome)}</strong><p>${esc(c.decision.reason)}</p></div>`:""}${role==="creator"&&c.status==="pending"?`<div class="review-actions"><input data-reason="${esc(c.id)}" maxlength="300" placeholder="Decision note (optional)"><button class="primary small" data-review="approved" data-id="${esc(c.id)}">Approve</button><button class="secondary small" data-review="rejected" data-id="${esc(c.id)}">Reject</button></div>`:""}</article>`}
-function fanForm(){const mine=state.contributions.filter(c=>c.contributorId===FAN);return `<div class="card"><div class="card-kicker">02 / YOUR CONTRIBUTION</div><h3>Add to the story</h3><p class="muted">Your submission references source version ${state.story.version} and awaits creator review.</p><form id="contribution-form" class="form"><label>Contribution title<input name="title" required maxlength="100"></label><label>Your contribution<textarea name="body" required maxlength="5000" rows="5"></textarea></label><label class="check-row"><input name="acknowledged" type="checkbox" required><span>I have read and accept the creator's permitted-use rules.</span></label><button class="primary">Submit contribution ↗</button></form>${mine.length?`<div class="submitted-list"><p class="eyebrow">YOUR SUBMISSIONS</p>${mine.map(card).join("")}</div>`:""}<div class="failure-test"><div><strong>Failure-path check</strong><p>Try to approve a pending contribution as a fan.</p></div><button class="secondary" id="unauthorized-test" type="button">Try unauthorized approval</button></div></div>`}
-function bindContribution(){const f=document.querySelector("#contribution-form");if(f)f.addEventListener("submit",e=>{e.preventDefault();const d=new FormData(f);try{const c=submitContribution({story:state.story,contributorId:FAN,contributorName:"Demo Fan",title:d.get("title"),body:d.get("body"),permissionAcknowledged:d.get("acknowledged")==="on"});state.contributions.push(c);save();render();msg("Contribution saved locally and linked to source v"+c.sourceVersion+".")}catch(x){msg(x.message,true)}});
- const b=document.querySelector("#unauthorized-test");if(b)b.addEventListener("click",()=>{const c=state.contributions.find(x=>x.status==="pending");if(!c){msg("Submit a contribution first.",true);return}try{reviewContribution({story:state.story,contribution:c,actorId:FAN,outcome:"approved"});msg("Unexpected: unauthorized approval was not blocked.",true)}catch(x){msg(x.message,true)}})}
-function bindReviews(){document.querySelectorAll("[data-review]").forEach(b=>b.addEventListener("click",()=>{const c=state.contributions.find(x=>x.id===b.dataset.id);const input=document.querySelector(`[data-reason="${CSS.escape(b.dataset.id)}"]`);try{const next=reviewContribution({story:state.story,contribution:c,actorId:CREATOR,outcome:b.dataset.review,reason:input?.value||""});state.contributions=state.contributions.map(x=>x.id===next.id?next:x);save();render();msg("Decision saved locally. Nothing was written to Soneium.")}catch(x){msg(x.message,true)}}))}
-document.querySelectorAll("[data-role]").forEach(b=>b.addEventListener("click",()=>{role=b.dataset.role;clearMsg();render()}));
-document.querySelector("#reset").addEventListener("click",()=>{if(!confirm("Delete locally saved demo data?"))return;localStorage.removeItem(KEY);state={story:null,contributions:[]};render();msg("Local demo data reset.")});
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function esc(value = "") {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[char]));
+}
+function msg(value, error = false) {
+  notice.hidden = false;
+  notice.className = "notice " + (error ? "error" : "success");
+  notice.textContent = value;
+}
+function clearMsg() { notice.hidden = true; notice.textContent = ""; }
+function label(value) {
+  return ({ pending: "Awaiting review", approved: "Approved", rejected: "Not approved" })[value] || value;
+}
+
+function render() {
+  document.querySelectorAll("[data-role]").forEach(button => {
+    button.classList.toggle("active", button.dataset.role === role);
+    button.setAttribute("aria-pressed", String(button.dataset.role === role));
+  });
+  if (!state.story) {
+    root.innerHTML = role === "creator"
+      ? `<div class="card"><div class="card-kicker">01 / SOURCE STORY</div><h3>Publish the first story</h3><p class="muted">Use original material. Permission rules are shown to every contributor.</p><form id="story-form" class="form"><label>Story title<input name="title" required maxlength="100" placeholder="The Glass City"></label><label>Story text<textarea name="body" required maxlength="10000" rows="5"></textarea></label><label>Permitted-use rules<textarea name="permissions" required maxlength="1500" rows="3" placeholder="What may fans submit? What is prohibited?"></textarea></label><button class="primary">Publish story ↗</button></form></div>`
+      : `<div class="empty-state"><h3>No story published yet</h3><p>Switch to Creator to publish the source story first.</p></div>`;
+    bindStory();
+    return;
+  }
+
+  const story = state.story;
+  root.innerHTML = `<article class="story-card"><div class="story-meta"><span class="chip">SOURCE · v${story.version}</span><span class="muted">Published by ${esc(story.creatorName)}</span></div><h3>${esc(story.title)}</h3><p class="story-body">${esc(story.body).replace(/\n/g, "<br>")}</p><div class="permission-box"><strong>Permitted-use rules · v${story.permissionVersion}</strong><p>${esc(story.permissions).replace(/\n/g, "<br>")}</p></div><div class="source-ref"><span>Source ID</span><code>${esc(story.id)}</code><span>v${story.version}</span></div></article>`
+    + (role === "creator" ? reviewQueue() : fanForm());
+  bindContribution();
+  bindReviews();
+}
+
+function bindStory() {
+  const form = document.querySelector("#story-form");
+  if (!form) return;
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const data = new FormData(form);
+    try {
+      const story = publishStory({
+        creatorId: CREATOR,
+        creatorName: "Demo Creator",
+        title: data.get("title"),
+        body: data.get("body"),
+        permissions: data.get("permissions")
+      });
+      story.integrityCommitment = await captureStoryIntegrity(story);
+      state.story = story;
+      state.contributions = [];
+      save();
+      render();
+      msg("Story published locally. A local SHA-256 checksum was captured. No blockchain transaction was sent.");
+    } catch (error) {
+      msg(error.message, true);
+    }
+  });
+}
+
+function reviewQueue() {
+  if (!state.contributions.length) {
+    return `<div class="card"><div class="card-kicker">02 / REVIEW QUEUE</div><h3>Waiting for contributions</h3><p class="muted">Switch to Fan to submit a continuation under these rules.</p></div>`;
+  }
+  return `<div class="review-header"><div><p class="eyebrow">02 / REVIEW QUEUE</p><h3>Fan contributions</h3></div></div><div class="contribution-list">${state.contributions.map(card).join("")}</div>`;
+}
+
+function card(contribution) {
+  return `<article class="contribution-card"><div class="contribution-top"><span class="chip ${esc(contribution.status)}">${label(contribution.status)}</span><span class="muted">by ${esc(contribution.contributorName)}</span></div><h4>${esc(contribution.title)}</h4><p class="story-body">${esc(contribution.body).replace(/\n/g, "<br>")}</p><div class="source-ref"><span>Source</span><code>${esc(contribution.storyId)}</code><span>source v${contribution.sourceVersion} · permissions v${contribution.permissionVersion}</span></div>${contribution.decision ? `<div class="decision-note"><strong>Decision: ${esc(contribution.decision.outcome)}</strong><p>${esc(contribution.decision.reason)}</p></div>` : ""}${role === "creator" && contribution.status === "pending" ? `<div class="review-actions"><input data-reason="${esc(contribution.id)}" maxlength="300" placeholder="Decision note (optional)"><button class="primary small" data-review="approved" data-id="${esc(contribution.id)}">Approve</button><button class="secondary small" data-review="rejected" data-id="${esc(contribution.id)}">Reject</button></div>` : ""}</article>`;
+}
+
+function fanForm() {
+  const mine = state.contributions.filter(contribution => contribution.contributorId === FAN);
+  return `<div class="card"><div class="card-kicker">02 / YOUR CONTRIBUTION</div><h3>Add to the story</h3><p class="muted">Your submission references source version ${state.story.version} and awaits creator review.</p><form id="contribution-form" class="form"><label>Contribution title<input name="title" required maxlength="100"></label><label>Your contribution<textarea name="body" required maxlength="5000" rows="5"></textarea></label><label class="check-row"><input name="acknowledged" type="checkbox" required><span>I have read and accept the creator's permitted-use rules.</span></label><button class="primary">Submit contribution ↗</button></form>${mine.length ? `<div class="submitted-list"><p class="eyebrow">YOUR SUBMISSIONS</p>${mine.map(card).join("")}</div>` : ""}<div class="failure-test"><div><strong>Failure-path check</strong><p>Try to approve a pending contribution as a fan.</p></div><button class="secondary" id="unauthorized-test" type="button">Try unauthorized approval</button></div></div>`;
+}
+
+function bindContribution() {
+  const form = document.querySelector("#contribution-form");
+  if (form) form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const data = new FormData(form);
+    try {
+      const contribution = submitContribution({
+        story: state.story,
+        contributorId: FAN,
+        contributorName: "Demo Fan",
+        title: data.get("title"),
+        body: data.get("body"),
+        permissionAcknowledged: data.get("acknowledged") === "on"
+      });
+      contribution.integrityCommitment = await captureContributionIntegrity(contribution);
+      state.contributions.push(contribution);
+      save();
+      render();
+      msg("Contribution saved locally with a SHA-256 checksum and linked to source v" + contribution.sourceVersion + ".");
+    } catch (error) {
+      msg(error.message, true);
+    }
+  });
+
+  const button = document.querySelector("#unauthorized-test");
+  if (button) button.addEventListener("click", () => {
+    const contribution = state.contributions.find(item => item.status === "pending");
+    if (!contribution) { msg("Submit a contribution first.", true); return; }
+    try {
+      reviewContribution({ story: state.story, contribution, actorId: FAN, outcome: "approved" });
+      msg("Unexpected: unauthorized approval was not blocked.", true);
+    } catch (error) {
+      msg(error.message, true);
+    }
+  });
+}
+
+function bindReviews() {
+  document.querySelectorAll("[data-review]").forEach(button => button.addEventListener("click", () => {
+    const contribution = state.contributions.find(item => item.id === button.dataset.id);
+    const input = document.querySelector(`[data-reason="${CSS.escape(button.dataset.id)}"]`);
+    try {
+      const next = reviewContribution({
+        story: state.story,
+        contribution,
+        actorId: CREATOR,
+        outcome: button.dataset.review,
+        reason: input?.value || ""
+      });
+      state.contributions = state.contributions.map(item => item.id === next.id ? next : item);
+      save();
+      render();
+      msg("Decision saved locally. Nothing was written to Soneium.");
+    } catch (error) {
+      msg(error.message, true);
+    }
+  }));
+}
+
+document.querySelectorAll("[data-role]").forEach(button => button.addEventListener("click", () => {
+  role = button.dataset.role;
+  clearMsg();
+  render();
+}));
+document.querySelector("#reset").addEventListener("click", () => {
+  if (!confirm("Delete locally saved demo data?")) return;
+  localStorage.removeItem(KEY);
+  state = { story: null, contributions: [] };
+  render();
+  msg("Local demo data reset.");
+});
 render();
