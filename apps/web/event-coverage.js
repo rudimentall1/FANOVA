@@ -34,7 +34,7 @@ export function compareEventCoverage({
   }
 
   const metadataRecords = Object.values(metadata.contributions)
-    .filter(record => key(record.storyId) === key(storyId));
+    .filter(record => key(record.storyId) === key(storyId) && record.contributionId && record.txHash);
   const metadataById = new Map(metadataRecords.map(record => [key(record.contributionId), record]));
   const localById = new Map(state.contributions.map(contribution => [String(contribution.id), contribution]));
   const chainContributionIds = new Set();
