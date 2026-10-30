@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { creatorAccessRequest, user, userProfile } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
+import { canReviewCreatorRequests } from "@/lib/authz";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const actor = await getCurrentActor();
   if (!actor) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  if (!actor.roles.includes("admin")) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
+  if (!canReviewCreatorRequests(actor)) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
 
   const requests = await db
     .select({
