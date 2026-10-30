@@ -11,10 +11,10 @@
 | 1 | What would you like to do? | Select “Apply for the Program” if submitting an application. | This project is intended for the program, not an inquiry. |
 | 2 | Please provide the name of your project. | FANOVA | Public repository: https://github.com/rudimentall1/FANOVA |
 | 3 | Select the category that best describes your project. | Likely “IP/Media” | Product is about creator-authorized fan derivative works; confirm the current form's options. |
-| 4 | What is the current stage of your project development? | A local end-to-end browser workflow is now verified in GitHub Actions on a clean checkout; the project remains a local prototype, not a deployed product. | Evidence: domain tests, JavaScript syntax checks, and Playwright Chromium end-to-end workflow pass in GitHub Actions. Confirm the form's stage definitions before choosing the label. |
-| 5 | If you have a website, demo, or any relevant links, please provide them below. | GitHub repository is available; no production app or verified live demo yet. | Publish an accessible demo only after the workflow and status labels are checked. |
+| 4 | What is the current stage of your project development? | Early-stage application prototype: the local browser workflow is verified in GitHub Actions, and a minimal provenance contract is deployed on Soneium Mainnet. The complete live creator/fan workflow is not yet demonstrated. | Evidence: CI run https://github.com/rudimentall1/FANOVA/actions/runs/41002055409; contract address and deployment transaction in README. Confirm the form's stage definitions before choosing the label. |
+| 5 | If you have a website, demo, or any relevant links, please provide them below. | Public GitHub repository is available. Do not describe the local prototype or contract deployment as a production app or completed live demo. | Provide the repository and, if published, a clearly labelled prototype/demo URL. A complete live Mainnet workflow is still outstanding. |
 | 6 | Please select the range that best represents your current user base. | Unknown; do not infer from repository visitors or test identities. | Count real product users, not demo identities. Confirm whether zero users fits the “0–1,000” option. |
-| 7 | Please indicate your project's current level of blockchain integration. | “Planning to go onchain” until a real Soneium integration is implemented. | Mainnet target is recorded in the canonical skeleton; no FANOVA contract or transaction exists. |
+| 7 | Please indicate your project's current level of blockchain integration. | A minimal provenance contract is deployed on Soneium Mainnet (chain ID 1868), and wallet write flows for story registration, contribution registration, and creator decisions are implemented in the browser. The full live sequence has not yet been demonstrated. | Contract: `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`; deployment tx: `0xb2086bd26326b428f4806e9a93a202631528ec8bffe4ff9f9f8f102cf9e34c`. Blockscout reports a partial source match; do not claim full source verification. |
 | 8 | Tell us about the composition of your core team. | Likely “Founder only”, subject to founder confirmation. | Confirm who is actively working on the project and which functions are genuinely covered. |
 | 9 | Please select the option that best reflects your company's current organizational status. | Unknown. | Founder must confirm incorporation and full-time employee count. |
 | 10 | Where is your company or project primarily based? | Unknown. | Founder must choose the truthful geography option based on the actual company/project base, not inferred IP location. |
@@ -35,14 +35,16 @@
 
 ## Product claims that can be made now
 
-- FANOVA is an early-stage project with a public repository and a local browser prototype.
+- FANOVA is an early-stage project with a public repository, a CI-verified local browser workflow, and one minimal provenance contract deployed on Soneium Mainnet.
 - Its intended workflow is creator publishes story + permissions → fan submits a contribution → creator approves/rejects → provenance is made inspectable.
+- The deployed contract is at `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`; deployment transaction: `0xb2086bd26326b428f4806e9a93a202631528ec8bffe4ff9f9f8f102cf9e34c`.
+- Browser wallet write paths are implemented, but no complete real Mainnet story → contribution → decision sequence is yet demonstrated. The deployment alone does not prove the workflow is live.
 - Soneium Mainnet is the target network (chain ID 1868); Minato is optional, not a required milestone.
-- No FANOVA token, deployed contract, verified creator partner, real user base, or Soneium transaction has been established by the current evidence.
+- No FANOVA token has been issued, and no verified creator partner, real user base, or product revenue has been established by the current evidence.
 
 ## Must not claim yet
 
-- A live or independently verified Mainnet integration.
+- A complete live or independently verified Mainnet creator/fan workflow. Contract deployment and bytecode checks are not proof that story, contribution, and decision transactions have all succeeded.
 - Legal ownership or licensing rights established solely by hashes or onchain records.
 - Sony endorsement, partnership, contact, or selection.
 - User traction, creator demand, revenue, funding, or runway without founder-supplied evidence.
