@@ -48,6 +48,7 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 **Mainnet workflow demonstration gate:** MET for the recorded smoke-test bundle: all three Mainnet operations succeeded and the project verifier returned `VERIFIED` after recomputing hashes and checking contract storage/receipts/events. To reproduce as an outsider, provide the unchanged exported bundle through an appropriate access-controlled channel. This does not close the remaining P2 due-diligence and security-checklist items above, or the original-IP pilot work in P3.
 
 ## P3 - Pilot and differentiation (Days 20–24)
+- [x] Prepare a fictional local demo fixture with source story, bounded permission text, sample fan continuation, and operator steps in `docs/DEMO_SCENARIO.md`. This is demo content only, not creator permission or pilot evidence.
 - [ ] Obtain permission for original pilot story/materials.
 - [ ] Run a small creator/fan test.
 - [ ] Record real observations and feedback; never invent metrics.

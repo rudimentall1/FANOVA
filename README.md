@@ -52,6 +52,7 @@ Before implementation tasks, read [`AGENTS.md`](./AGENTS.md) and [`docs/PROJECT_
 - [Sony application evidence map](./docs/APPLICATION_EVIDENCE_MAP.md)
 - [Competitive landscape](./docs/COMPETITIVE_LANDSCAPE.md)
 - [Creator validation and pilot plan](./docs/CREATOR_VALIDATION.md)
+- [Original fictional demo scenario and operator steps](./docs/DEMO_SCENARIO.md)
 - [Architecture decisions](./docs/DECISIONS.md)
 
 ## Evidence bundle verification
