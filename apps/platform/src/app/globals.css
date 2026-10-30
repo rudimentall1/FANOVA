@@ -63,3 +63,8 @@ a { color: inherit; text-decoration: none; }
   .home-nav .nav-cta { padding: 9px 10px; }
   .hero-actions { align-items: flex-start; flex-direction: column; gap: 16px; }
 }
+
+.empty-state { max-width: 680px; margin: 12px 0 80px; padding: 34px; border: 1px solid #34383b; background: #151719; }
+.empty-state h2 { margin: 16px 0 10px; font-size: 28px; letter-spacing: -.035em; }
+.empty-state p:not(.eyebrow) { max-width: 560px; color: #9ea4a6; line-height: 1.65; }
+.empty-state .text-link { display: inline-block; margin-top: 12px; }
