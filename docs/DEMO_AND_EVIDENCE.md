@@ -55,6 +55,24 @@ The verifier does not request wallet access and does not send transactions. It c
 - The verifier result is project-generated. Do not describe it as a third-party audit or claim an outside evaluator has reproduced it until that has actually happened.
 - Onchain hashes, addresses, acknowledgements, and decision events do not prove legal IP ownership, copyright clearance, enforceable consent, or a valid license.
 
+### Read-only Mainnet event-history probe (2026-10-30)
+
+A separate read-only RPC probe was run after the event scanner was added. The Soneium public RPC rejected an eth_getLogs range larger than 1,000 blocks, so the scanner's chunk size is capped at 1,000.
+
+| Item | Result |
+|---|---|
+| RPC | https://rpc.soneium.org/ |
+| Chain ID | 1868 |
+| Deployment transaction | 0xb2086bd26326b428f4806e9a93a202631528ec8bffe4ff59ff9f8f102cf9e34c |
+| Deployment block | 30077815 |
+| Story ID checked | 0x5f6e97151e2d76ad094c7af20ce86e7c5bbb86cb620b28ac19db841cbc8ebdc5 |
+| Verification snapshot | Block 30112330 |
+| Scan | 35 bounded ranges of at most 1,000 blocks |
+
+The RPC returned one StoryVersionRegistered event (block 30105304), one ContributionRegistered event (block 30105412), and one ContributionDecided event (block 30105502) for that story ID. The event transaction hashes match the three workflow transactions listed above.
+
+**Scope limitation:** this was a read-only event-history probe against one RPC provider. The original exported evidence JSON was not available during this run, so this does not establish bundle reconciliation or a HISTORY VERIFIED result. It is not an independent provider check or an audit. The corrected deployment transaction hash and 1,000-block RPC limit are now enforced by the verifier code.
+
 ---
 
 ## Required demo path
