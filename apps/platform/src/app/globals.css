@@ -131,3 +131,28 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 640px) {
   .review-actions { align-items: stretch; flex-direction: column; }
 }
+
+.work-form select, .review-editor select { min-height: 44px; padding: 0 12px; border: 1px solid #3a3e41; border-radius: 0; background: #101112; color: var(--text); font: inherit; }
+.work-form select:focus, .review-editor select:focus { outline: none; border-color: var(--accent); }
+.contribution-list { display: grid; gap: 16px; margin-bottom: 90px; }
+.contribution-card { padding: 24px; border: 1px solid #34383b; background: #151719; }
+.contribution-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.contribution-card h2 { margin: 12px 0 6px; font-size: 24px; }
+.contribution-card-head p { margin: 0; color: #9ea4a6; font-size: 12px; }
+.contribution-card-head small { color: #7e8588; font-size: 11px; }
+.contribution-content { margin: 24px 0; color: #d9ddda; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+.review-editor { display: grid; gap: 14px; padding-top: 20px; border-top: 1px solid #34383b; }
+.review-editor label:not(.check-row) { display: grid; gap: 8px; color: #e7e8e4; font-size: 13px; font-weight: 700; }
+.review-editor textarea { width: 100%; padding: 12px; border: 1px solid #3a3e41; background: #101112; color: var(--text); font: inherit; resize: vertical; }
+.review-feedback { padding: 14px; border-left: 2px solid var(--accent); color: #aeb3b5; line-height: 1.55; }
+.work-row-actions { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+@media (max-width: 640px) {
+  .contribution-card-head { flex-direction: column; }
+  .work-row-actions { align-items: flex-start; }
+}
+
+.public-contributions { display: grid; gap: 12px; margin-top: 46px; padding: 25px; border: 1px solid #34383b; background: #151719; }
+.public-contribution-link { display: grid; gap: 6px; padding: 14px 0; border-bottom: 1px solid #303437; }
+.public-contribution-link:last-child { border-bottom: 0; }
+.public-contribution-link strong { color: #e3e6e1; font-size: 15px; }
+.public-contribution-link small { color: #8d9698; font-size: 11px; }
