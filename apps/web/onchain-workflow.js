@@ -79,17 +79,11 @@ async function verifyReceipt(receipt, eventName, match) {
 async function sendAndVerify(tx, eventName, match, onSubmitted) {
   setStatus("WALLET CONFIRMATION", "Review the transaction and gas fee in your wallet. No transaction is sent until you approve it.");
   const txResponse = await tx;
-  const result = await confirmWalletTransaction(txResponse, {
+  const { receipt, ...result } = await confirmWalletTransaction(txResponse, {
     onSubmitted,
     onPending: hash => setStatus("TRANSACTION PENDING", `Transaction ${hash} was submitted. Waiting for confirmation.`)
   });
-  const receipt = await txResponse.waitReceipt?.();
-  if (receipt) await verifyReceipt(receipt, eventName, match);
-  else {
-    const checkedReceipt = await new ethersModule.JsonRpcProvider("https://rpc.soneium.org/").getTransactionReceipt(result.hash);
-    if (!checkedReceipt) throw new Error(`Transaction ${result.hash} was confirmed by the wallet but its receipt is not available from the RPC. Export or inspect the transaction before retrying.`);
-    await verifyReceipt(checkedReceipt, eventName, match);
-  }
+  await verifyReceipt(receipt, eventName, match);
   return result;
 }
 function rememberTx(meta, type, result, extra = {}) {
