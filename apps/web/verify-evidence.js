@@ -5,8 +5,8 @@ import { compareEventCoverage } from "./event-coverage.js";
 import { scanStoryEventHistory } from "./event-history.js";
 
 const CONTRACT_ADDRESS = "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880";
-const DEPLOYMENT_TX_HASH = "0xb2086bd26326b428f4806e9a93a202631528ec8bffe4ff9f9f8f102cf9e34c";
-const LOG_CHUNK_SIZE = 2000;
+const DEPLOYMENT_TX_HASH = "0xb2086bd26326b428f4806e9a93a202631528ec8bffe4ff59ff9f8f102cf9e34c";
+const LOG_CHUNK_SIZE = 1000;
 const RPC_URL = "https://rpc.soneium.org/";
 const CHAIN_ID = 1868n;
 const ABI = PROVENANCE_ABI;
@@ -67,6 +67,7 @@ async function verifyBundle(bundle) {
   const iface = new Interface(ABI);
   const contract = new ethersModule.Contract(CONTRACT_ADDRESS, ABI, provider);
   const checks = [];
+  assert(/^0x[0-9a-fA-F]{64}$/.test(DEPLOYMENT_TX_HASH), "Configured FANOVA deployment transaction hash is malformed.");
   const deploymentReceipt = await provider.getTransactionReceipt(DEPLOYMENT_TX_HASH);
   assert(deploymentReceipt && deploymentReceipt.status === 1, "FANOVA deployment transaction receipt is unavailable or failed.");
   assert(same(deploymentReceipt.contractAddress, CONTRACT_ADDRESS), "Configured deployment transaction does not create the configured FANOVA contract.");
