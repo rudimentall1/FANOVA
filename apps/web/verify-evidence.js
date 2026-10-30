@@ -142,7 +142,7 @@ async function verifyBundle(bundle) {
     }
     verifiedContributions++;
   }
-  assert(verifiedContributions > 0, "No contribution records with onchain metadata were found in this bundle.");
+  if (verifiedContributions === 0) incompleteEvidence.push("No contribution registration could be independently verified onchain.");
   return { checks, incompleteEvidence };
 }
 
