@@ -80,11 +80,11 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 
 ## P1.5 — Multi-user web product foundation (new priority after product expansion)
 
-**Status: SPECIFICATION ACCEPTED; implementation not started.**
+**Status: STACK SELECTED FOR LOCAL IMPLEMENTATION; application code not started.**
 
 - [x] Confirm that FANOVA's final product is a multi-user creator/contributor platform, not a single-page local demo.
 - [x] Define public pages, account flows, creator workspace, contributor dashboard, roles, core entities, security boundaries, and acceptance criteria in [WEB_PRODUCT_SPEC.md](WEB_PRODUCT_SPEC.md).
-- [ ] Inspect current deployment and choose a sustainable backend, database, authentication, and file-storage stack. Prefer a low-cost managed service or existing infrastructure only after checking security, limits, backups, and deployment fit.
+- [x] Select a provider-portable local implementation stack in [STACK_DECISION.md](STACK_DECISION.md): Next.js + TypeScript, PostgreSQL, Drizzle migrations, Better Auth, Zod, local development mail sink, and a storage adapter. Production hosting/email/object-storage provider remains undecided pending a documented cost, retention, backup, privacy, and deployment-fit review.
 - [ ] Implement server-backed registration, email verification, login, logout, recovery, sessions, and role model.
 - [ ] Implement public profiles, Discover catalogue, work detail pages, and creator work management.
 - [ ] Implement contributor submissions, creator review queue, server-side authorization, and stale-version lifecycle.
