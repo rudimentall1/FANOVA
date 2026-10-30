@@ -1,6 +1,6 @@
 # FANOVA Onchain Proof Design: EAS vs Minimal Workflow Contract
 
-**Status:** minimal workflow contract is deployed on Soneium Mainnet. Browser story actions remain local; the read-only deployment panel does not submit transactions. The deployed runtime has matching executable bytecode after Solidity metadata is excluded, but full runtime metadata differs.
+**Status:** minimal workflow contract is deployed on Soneium Mainnet. Local story/contribution/review state remains in the browser; separate user-approved Rabby wallet actions can register story versions, contributions, and creator decisions onchain. The complete real Mainnet sequence has not yet been demonstrated. The read-only deployment panel itself does not submit transactions. The deployed runtime has matching executable bytecode after Solidity metadata is excluded, but full runtime metadata differs.
 **Date:** 2026-10-29
 **Milestone:** P2 — Mainnet provenance path.
 
