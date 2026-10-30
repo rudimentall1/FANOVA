@@ -77,3 +77,22 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - Multi-chain support.
 
 Minato may be used for optional pre-deployment testing if it materially reduces risk, but it is not the target milestone. Token or other scope expansion requires a documented decision and explicit approval.
+
+## P1.5 — Multi-user web product foundation (new priority after product expansion)
+
+**Status: SPECIFICATION ACCEPTED; implementation not started.**
+
+- [x] Confirm that FANOVA's final product is a multi-user creator/contributor platform, not a single-page local demo.
+- [x] Define public pages, account flows, creator workspace, contributor dashboard, roles, core entities, security boundaries, and acceptance criteria in [WEB_PRODUCT_SPEC.md](WEB_PRODUCT_SPEC.md).
+- [ ] Inspect current deployment and choose a sustainable backend, database, authentication, and file-storage stack. Prefer a low-cost managed service or existing infrastructure only after checking security, limits, backups, and deployment fit.
+- [ ] Implement server-backed registration, email verification, login, logout, recovery, sessions, and role model.
+- [ ] Implement public profiles, Discover catalogue, work detail pages, and creator work management.
+- [ ] Implement contributor submissions, creator review queue, server-side authorization, and stale-version lifecycle.
+- [ ] Integrate existing wallet and provenance flow with authenticated accounts; no contract changes or Mainnet writes without separate approval.
+- [ ] Add cross-account/cross-role security tests, persistent-storage tests, and browser E2E coverage.
+- [ ] Deploy and verify the complete user journey from a clean browser and a second independent account.
+
+**Exit gate:** the acceptance criteria in WEB_PRODUCT_SPEC.md pass. Only then move to final demo recording and application polish.
+
+**Demo policy:** no final video while the product is still a localStorage prototype or uses simulated user identities. Interim screen recordings may be used privately for debugging, but must not be presented as the final Sony product demo.
+
