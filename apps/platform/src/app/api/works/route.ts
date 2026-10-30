@@ -16,9 +16,15 @@ export async function GET(request: Request) {
 
   const filters = [eq(work.status, "published")];
   if (query) {
+    const escapedQuery = query.replace(/[\\%_]/g, "\\  if (query) {
     filters.push(or(
       ilike(workVersion.title, `%${query}%`),
       ilike(workVersion.synopsis, `%${query}%`)
+    ) as typeof filters[number]);
+  }");
+    filters.push(or(
+      ilike(workVersion.title, `%${escapedQuery}%`),
+      ilike(workVersion.synopsis, `%${escapedQuery}%`)
     ) as typeof filters[number]);
   }
 
@@ -47,9 +53,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Creator access is required to publish work." }, { status: 403 });
   }
 
+  if (!request.headers.get("content-type")?.includes("application/json")) {
+    return NextResponse.json({ error: "Content-Type must be application/json." }, { status: 415 });
+  }
+
   let payload: unknown;
   try {
-    payload = await request.json();
+    const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > 220_000) {
+      return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+    }
+    payload = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
   }
