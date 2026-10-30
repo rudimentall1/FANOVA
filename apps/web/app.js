@@ -1,6 +1,6 @@
 import { publishStory, submitContribution, reviewContribution } from "./domain.js";
 import { captureStoryIntegrity, captureContributionIntegrity } from "./content-integrity.js";
-const KEY = "fanova.local.v2", CREATOR = "creator-demo", FAN = "fan-demo";
+const KEY = "fanova.local.v2", META_KEY = "fanova.onchain.v1", CREATOR = "creator-demo", FAN = "fan-demo";
 const root = document.querySelector("#app"), notice = document.querySelector("#notice");
 let role = "creator", state = load();
 
@@ -12,6 +12,11 @@ function load() {
   return { story: null, contributions: [] };
 }
 function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function readOnchainMeta() {
+  try { return JSON.parse(localStorage.getItem(META_KEY)) || { stories: {}, contributions: {} }; }
+  catch { return { stories: {}, contributions: {} }; }
+}
+function shortAddress(address) { return `${address.slice(0, 6)}…${address.slice(-4)}`; }
 function esc(value = "") {
   return String(value).replace(/[&<>"']/g, char => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -41,7 +46,12 @@ function render() {
   }
 
   const story = state.story;
-  root.innerHTML = `<article class="story-card"><div class="story-meta"><span class="chip">SOURCE · v${story.version}</span><span class="muted">Published by ${esc(story.creatorName)}</span></div><h3>${esc(story.title)}</h3><p class="story-body">${esc(story.body).replace(/\n/g, "<br>")}</p><div class="permission-box"><strong>Permitted-use rules · v${story.permissionVersion}</strong><p>${esc(story.permissions).replace(/\n/g, "<br>")}</p></div><div class="source-ref"><span>Source ID</span><code>${esc(story.id)}</code><span>v${story.version}</span></div></article>`
+  const meta = readOnchainMeta();
+  const storyRecord = meta.stories?.[story.id];
+  const creatorAttribution = storyRecord?.txHash && storyRecord?.blockNumber && storyRecord?.creatorAddress
+    ? `<span>On-chain creator wallet</span><code title="${esc(storyRecord.creatorAddress)}">${esc(shortAddress(storyRecord.creatorAddress))}</code>`
+    : `<span>Creator label is local and simulated; no on-chain wallet is recorded.</span>`;
+  root.innerHTML = `<article class="story-card"><div class="story-meta"><span class="chip">SOURCE · v${story.version}</span><span class="muted">Demo label: ${esc(story.creatorName)} (simulated)</span></div><h3>${esc(story.title)}</h3><p class="story-body">${esc(story.body).replace(/\n/g, "<br>")}</p><div class="permission-box"><strong>Permitted-use rules · v${story.permissionVersion}</strong><p>${esc(story.permissions).replace(/\n/g, "<br>")}</p></div><div class="source-ref"><span>Source ID</span><code>${esc(story.id)}</code><span>v${story.version}</span>${creatorAttribution}</div></article>`
     + (role === "creator" ? reviewQueue() : fanForm());
   bindContribution();
   bindReviews();
@@ -81,18 +91,25 @@ function reviewQueue() {
 }
 
 function card(contribution) {
+  const meta = readOnchainMeta();
+  const record = meta.contributions?.[contribution.id];
+  const storyRecord = meta.stories?.[state.story?.id];
+  const contributorAttribution = record?.txHash && record?.blockNumber && record?.contributorAddress
+    ? `<span>On-chain contributor wallet</span><code title="${esc(record.contributorAddress)}">${esc(shortAddress(record.contributorAddress))}</code>`
+    : `<span>Contributor label is local and simulated; no on-chain wallet is recorded.</span>`;
+  const reviewerAttribution = record?.decisionTxHash && record?.decisionBlockNumber && storyRecord?.creatorAddress
+    ? `<span>On-chain reviewer wallet</span><code title="${esc(storyRecord.creatorAddress)}">${esc(shortAddress(storyRecord.creatorAddress))}</code>`
+    : "";
   const reviewerLabel = contribution.decision
-    ? contribution.decision.reviewerId === state.story?.creatorId
-      ? `Reviewed by ${esc(state.story.creatorName)}`
-      : "Reviewer identity recorded"
+    ? `Local reviewer label: ${esc(state.story.creatorName)} (simulated)`
     : "";
   const reason = contribution.decision?.reason
     ? `<p>${esc(contribution.decision.reason)}</p>`
     : "";
   const decision = contribution.decision
-    ? `<div class="decision-note"><strong>Decision: ${esc(contribution.decision.outcome)}</strong><p class="muted">${reviewerLabel}</p>${reason}</div>`
+    ? `<div class="decision-note"><strong>Decision: ${esc(contribution.decision.outcome)}</strong><p class="muted">${reviewerLabel}</p>${reviewerAttribution}${reason}</div>`
     : "";
-  return `<article class="contribution-card"><div class="contribution-top"><span class="chip ${esc(contribution.status)}">${label(contribution.status)}</span><span class="muted">Submitted by ${esc(contribution.contributorName)}</span></div><h4>${esc(contribution.title)}</h4><p class="story-body">${esc(contribution.body).replace(/\n/g, "<br>")}</p><div class="source-ref"><span>Source</span><code>${esc(contribution.storyId)}</code><span>source v${contribution.sourceVersion} · permissions v${contribution.permissionVersion}</span></div>${decision}${role === "creator" && contribution.status === "pending" ? `<div class="review-actions"><input data-reason="${esc(contribution.id)}" maxlength="300" placeholder="Decision note (optional)"><button class="primary small" data-review="approved" data-id="${esc(contribution.id)}">Approve</button><button class="secondary small" data-review="rejected" data-id="${esc(contribution.id)}">Reject</button></div>` : ""}</article>`;
+  return `<article class="contribution-card"><div class="contribution-top"><span class="chip ${esc(contribution.status)}">${label(contribution.status)}</span><span class="muted">Demo label: ${esc(contribution.contributorName)} (simulated)</span></div><h4>${esc(contribution.title)}</h4><p class="story-body">${esc(contribution.body).replace(/\n/g, "<br>")}</p><div class="source-ref"><span>Source</span><code>${esc(contribution.storyId)}</code><span>source v${contribution.sourceVersion} · permissions v${contribution.permissionVersion}</span>${contributorAttribution}</div>${decision}${role === "creator" && contribution.status === "pending" ? `<div class="review-actions"><input data-reason="${esc(contribution.id)}" maxlength="300" placeholder="Decision note (optional)"><button class="primary small" data-review="approved" data-id="${esc(contribution.id)}">Approve</button><button class="secondary small" data-review="rejected" data-id="${esc(contribution.id)}">Reject</button></div>` : ""}</article>`;
 }
 
 function fanForm() {
