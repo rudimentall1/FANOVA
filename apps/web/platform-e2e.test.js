@@ -205,6 +205,14 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await contributorPage.getByRole("button", { name: "Sign in" }).click();
     await contributorPage.waitForURL(/\/dashboard$/, { timeout: 15_000 });
     await contributorPage.getByRole("heading", { name: "Welcome to FANOVA." }).waitFor();
+
+    await contributorPage.getByRole("button", { name: "Sign out" }).click();
+    await contributorPage.waitForURL(/\\/sign-in$/, { timeout: 10_000 });
+    await contributorPage.goto(`${baseUrl}/dashboard`);
+    await contributorPage.waitForURL(/\\/sign-in$/, { timeout: 10_000 });
+
+    await creatorPage.goto(`${baseUrl}/admin/creator-requests`);
+    await creatorPage.waitForURL(/\\/dashboard$/, { timeout: 10_000 });
   } finally {
     await adminContext.close();
     await creatorContext.close();
