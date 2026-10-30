@@ -1,3 +1,4 @@
+import { confirmWalletTransaction } from "./transaction-lifecycle.js";
 import { PROVENANCE_ABI } from "./provenance-abi.js";
 const CONTRACT_ADDRESS = "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880";
 const CHAIN_ID = 1868n;
@@ -78,12 +79,18 @@ async function verifyReceipt(receipt, eventName, match) {
 async function sendAndVerify(tx, eventName, match, onSubmitted) {
   setStatus("WALLET CONFIRMATION", "Review the transaction and gas fee in your wallet. No transaction is sent until you approve it.");
   const txResponse = await tx;
-  onSubmitted?.(txResponse.hash);
-  setStatus("TRANSACTION PENDING", `Transaction ${txResponse.hash} was submitted. Waiting for confirmation.`);
-  const receipt = await txResponse.wait();
-  if (!receipt || receipt.status !== 1) throw new Error(`Transaction ${txResponse.hash} failed onchain. Inspect the receipt before retrying.`);
-  await verifyReceipt(receipt, eventName, match);
-  return { hash: txResponse.hash, blockNumber: receipt.blockNumber };
+  const result = await confirmWalletTransaction(txResponse, {
+    onSubmitted,
+    onPending: hash => setStatus("TRANSACTION PENDING", `Transaction ${hash} was submitted. Waiting for confirmation.`)
+  });
+  const receipt = await txResponse.waitReceipt?.();
+  if (receipt) await verifyReceipt(receipt, eventName, match);
+  else {
+    const checkedReceipt = await new ethersModule.JsonRpcProvider("https://rpc.soneium.org/").getTransactionReceipt(result.hash);
+    if (!checkedReceipt) throw new Error(`Transaction ${result.hash} was confirmed by the wallet but its receipt is not available from the RPC. Export or inspect the transaction before retrying.`);
+    await verifyReceipt(checkedReceipt, eventName, match);
+  }
+  return result;
 }
 function rememberTx(meta, type, result, extra = {}) {
   meta.txs.push({ type, transactionHash: result.hash, blockNumber: result.blockNumber, chainId: Number(CHAIN_ID), contract: CONTRACT_ADDRESS, recordedAt: new Date().toISOString(), ...extra });
