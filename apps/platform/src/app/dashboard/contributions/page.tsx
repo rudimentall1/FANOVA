@@ -45,7 +45,7 @@ export default async function MyContributionsPage() {
         <section className="work-list">
           {rows.map((row) => (
             <article className="work-row" key={row.id}>
-              <div><span className={`work-status ${row.status === "approved" ? "published" : ""}`}>{row.status}</span><h2>{row.title}</h2><p>For <Link href={`/works/${row.workSlug}`}>{row.workTitle}</Link> · {row.type.replace("_", " ")} · source version {row.sourceVersion}</p>{row.feedback ? <small>Creator feedback: {row.feedback}</small> : null}</div>
+              <div><span className={`work-status ${row.status === "approved" ? "published" : ""}`}>{row.status}</span><h2><Link href={`/dashboard/contributions/${row.id}`}>{row.title}</Link></h2><p>For <Link href={`/works/${row.workSlug}`}>{row.workTitle}</Link> · {row.type.replace("_", " ")} · source version {row.sourceVersion}</p>{row.feedback ? <small>Creator feedback: {row.feedback}</small> : null}</div>
               {row.status === "approved" && row.isPublic ? <Link className="text-link" href={`/works/${row.workSlug}/contributions/${row.id}`}>Public contribution</Link> : <span className="field-note">{row.status === "pending" ? "Awaiting creator review" : row.status === "stale" ? "Resubmit against the current version" : "Private"}</span>}
             </article>
           ))}
