@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { publishStory, submitContribution, reviewContribution } from "./domain.js";
+import { publishStory, submitContribution, reviewContribution, contributionLifecycleStatus } from "./domain.js";
 
 function setup() {
   const story = publishStory({
@@ -120,4 +120,26 @@ test("rejects changed permission text when the version number was not bumped", (
   assert.throws(() => reviewContribution({
     story, contribution, actorId: "creator-1", outcome: "approved"
   }), /acknowledged permission version and text/);
+});
+
+
+test("marks a pending contribution stale when the source version advances", () => {
+  const { story, contribution } = setup();
+  story.version += 1;
+  assert.equal(contributionLifecycleStatus(story, contribution), "stale");
+  assert.throws(() => reviewContribution({ story, contribution, actorId: "creator-1", outcome: "approved" }), /current source version/);
+});
+
+test("marks a pending contribution stale when permissions change", () => {
+  const { story, contribution } = setup();
+  story.permissionVersion += 1;
+  story.permissions = "Updated permitted-use rules.";
+  assert.equal(contributionLifecycleStatus(story, contribution), "stale");
+});
+
+test("keeps completed decisions as historical outcomes after a version change", () => {
+  const { story, contribution } = setup();
+  const reviewed = reviewContribution({ story, contribution, actorId: "creator-1", outcome: "approved" });
+  story.version += 1;
+  assert.equal(contributionLifecycleStatus(story, reviewed), "approved");
 });
