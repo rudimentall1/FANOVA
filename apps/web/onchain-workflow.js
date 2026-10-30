@@ -1,18 +1,11 @@
+import { PROVENANCE_ABI } from "./provenance-abi.js";
 const CONTRACT_ADDRESS = "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880";
 const CHAIN_ID = 1868n;
 const CHAIN_HEX = "0x74c";
 const STATE_KEY = "fanova.local.v2";
 const META_KEY = "fanova.onchain.v1";
 const ETHERS_URL = "https://cdn.jsdelivr.net/npm/ethers@6.15.0/+esm";
-const ABI = [
-  "function computeStoryId(address creator, bytes32 creatorSalt) view returns (bytes32)",
-  "function registerStoryVersion(bytes32 storyId, bytes32 creatorSalt, uint64 sourceVersion, bytes32 sourceHash, uint64 permissionVersion, bytes32 permissionHash)",
-  "function registerContribution(bytes32 contributionId, bytes32 storyId, uint64 sourceVersion, uint64 permissionVersion, bytes32 permissionHash, bytes32 contributionHash, bool permissionAcknowledged)",
-  "function decideContribution(bytes32 contributionId, bool approved, bytes32 reasonCode)",
-  "event StoryVersionRegistered(bytes32 indexed storyId, uint64 indexed sourceVersion, address indexed creator, bytes32 sourceHash, uint64 permissionVersion, bytes32 permissionHash)",
-  "event ContributionRegistered(bytes32 indexed contributionId, bytes32 indexed storyId, uint64 indexed sourceVersion, address contributor, bytes32 contributionHash, uint64 permissionVersion, bytes32 permissionHash, bool permissionAcknowledged)",
-  "event ContributionDecided(bytes32 indexed contributionId, bytes32 indexed storyId, uint64 indexed sourceVersion, address reviewer, bool approved, bytes32 reasonCode, uint256 decidedAt)"
-];
+const ABI = PROVENANCE_ABI;
 
 const status = document.querySelector("#onchain-action-status");
 const detail = document.querySelector("#onchain-action-detail");
