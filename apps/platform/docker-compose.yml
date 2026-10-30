@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fanova-platform-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fanova
+      POSTGRES_USER: fanova
+      POSTGRES_PASSWORD: fanova_dev_only
+    ports:
+      - "54329:5432"
+    volumes:
+      - fanova_platform_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fanova -d fanova"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  fanova_platform_pgdata:
