@@ -38,9 +38,9 @@ Display names in the local demo are simulated labels. They are not authenticated
 2. Contribution registration bound to a story and permission version.
 3. Creator-only final approve/reject decision.
 4. Onchain hashes, addresses, and decision events.
-5. Read-only verification of the records included in an exported evidence bundle.
+5. Read-only verification of hashes, storage, receipts, and the complete scanned story event history against the exported evidence bundle.
 
-One user-approved Mainnet sequence completed on 2026-10-30. The project's verifier returned `VERIFIED` for the included story, contribution, and decision records. It does not yet enumerate all contract events and cannot prove that no contribution was omitted from the bundle.
+One user-approved Mainnet sequence completed on 2026-10-30. The original verifier returned `VERIFIED` for the included story, contribution, and decision records. A subsequent implementation adds full event-history scanning from deployment to a fixed verification block and reconciles the discovered records with the export. Unit tests pass CI; live Mainnet validation of this new scan is still pending. Multiple story versions remain partial when the bundle contains only one story snapshot.
 
 The smoke test used placeholder content. It demonstrates the technical path, not a creator pilot, user traction, or product-market fit.
 
