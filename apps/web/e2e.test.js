@@ -4,7 +4,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { test } from "node:test";
 import { chromium } from "playwright";
 
-test("creator-to-fan workflow and unauthorized review failure work in a real browser", async () => {
+test("creator-to-fan workflow, unauthorized review, and stale contribution handling work in a real browser", async () => {
   const port = 4174;
   const baseURL = `http://127.0.0.1:${port}`;
   const server = spawn(process.execPath, ["serve.mjs"], {
@@ -75,6 +75,22 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await assertNotice(page, "Decision saved locally");
     assert.equal(await page.locator(".chip.approved").count(), 1);
     assert.equal(await page.locator(".chip.rejected").count(), 1, "creator rejection should be visible");
+
+    await page.getByRole("button", { name: "Fan" }).click();
+    await page.getByLabel("Contribution title").fill("The Unfinished Route");
+    await page.getByLabel("Your contribution").fill("An unfinished continuation tied to the previous source version.");
+    await page.locator('input[name="acknowledged"]').check();
+    await page.locator("#contribution-form button").click();
+    await assertNotice(page, "Contribution saved locally");
+    await page.evaluate(() => {
+      const saved = JSON.parse(localStorage.getItem("fanova.local.v2"));
+      saved.story.version = 2;
+      localStorage.setItem("fanova.local.v2", JSON.stringify(saved));
+    });
+    await page.reload();
+    const staleCard = page.locator(".contribution-card").filter({ hasText: "The Unfinished Route" });
+    assert.match(await staleCard.locator(".chip").innerText(), /STALE/);
+    assert.equal(await staleCard.locator("[data-review]").count(), 0, "stale contributions must not expose approval controls");
     assert.match(await page.locator(".status").innerText(), /LOCAL MVP · OPTIONAL CHAIN WRITES/);
     assert.match(await page.locator(".network-note").innerText(), /optional wallet-approved.*Soneium Mainnet/);
     assert.match(await page.locator(".onchain-proof").innerText(), /Contract deployment check/);
