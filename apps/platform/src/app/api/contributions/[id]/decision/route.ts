@@ -33,24 +33,41 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!parsed.success) return NextResponse.json({ error: "Decision details are invalid." }, { status: 422 });
 
   const result = await db.transaction(async (tx) => {
+    const [identity] = await tx
+      .select({ workId: contribution.workId })
+      .from(contribution)
+      .where(eq(contribution.id, id))
+      .limit(1);
+
+    if (!identity) return { kind: "not_found" as const };
+
+    // Lock in the same order as version publication: work first, contribution second.
+    const [sourceWork] = await tx
+      .select({
+        ownerUserId: work.ownerUserId,
+        currentVersionId: work.currentVersionId
+      })
+      .from(work)
+      .where(eq(work.id, identity.workId))
+      .for("update");
+
+    if (!sourceWork || !canManageOwnWork(actor, sourceWork.ownerUserId)) {
+      return { kind: "not_found" as const };
+    }
+
     const [row] = await tx
       .select({
-        id: contribution.id,
-        workId: contribution.workId,
         status: contribution.status,
-        sourceVersionId: contribution.sourceVersionId,
-        currentVersionId: work.currentVersionId,
-        ownerUserId: work.ownerUserId
+        sourceVersionId: contribution.sourceVersionId
       })
       .from(contribution)
-      .innerJoin(work, eq(contribution.workId, work.id))
       .where(eq(contribution.id, id))
       .for("update");
 
-    if (!row || !canManageOwnWork(actor, row.ownerUserId)) return { kind: "not_found" as const };
+    if (!row) return { kind: "not_found" as const };
     if (row.status !== "pending") return { kind: "already_reviewed" as const };
 
-    if (row.sourceVersionId !== row.currentVersionId) {
+    if (row.sourceVersionId !== sourceWork.currentVersionId) {
       await tx.update(contribution).set({
         status: "stale",
         updatedAt: new Date()
@@ -70,7 +87,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }).where(and(
       eq(contribution.id, id),
       eq(contribution.status, "pending"),
-      eq(contribution.sourceVersionId, row.currentVersionId ?? "")
+      eq(contribution.sourceVersionId, sourceWork.currentVersionId ?? "")
     )).returning({ id: contribution.id });
 
     return updated ? { kind: "decided" as const, status } : { kind: "already_reviewed" as const };
