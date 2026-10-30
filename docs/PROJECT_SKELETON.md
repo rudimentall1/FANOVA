@@ -73,7 +73,7 @@ Maintain a token concept only if the actual application requirement and creator/
 
 ## 10. Product boundary and future direction
 
-**Implemented foundation:** story/version registration, contribution registration, creator decision, and evidence checks for records included in an exported bundle.
+**Implemented foundation:** story/version registration, contribution registration, creator decision, and a read-only verifier that scans the contract event history for a story and reconciles discovered events with the exported bundle. The scanner and comparison logic pass CI; live Mainnet validation of the new scan remains pending.
 
 **Future direction, not current functionality:** creative campaigns, structured derivative licensing, commercial use, and contributor revenue participation under explicit terms and a real payment mechanism. These capabilities require separate product, legal, and technical decisions.
 
