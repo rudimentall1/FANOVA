@@ -58,7 +58,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     assert.match(await approvedCard.locator(".contribution-top").innerText(), /Approved\s+Submitted by Demo Fan/);
     assert.match(await approvedCard.locator(".decision-note").innerText(), /Decision: approved/);
     assert.match(await approvedCard.locator(".decision-note").innerText(), /Reviewed by Demo Creator/);
-    assert.doesNotMatch(await approvedCard.locator(".contribution-top").innerText(), /Approved by Demo Fan/);
+    assert.doesNotMatch(await approvedCard.locator(".contribution-top").innerText(), /Approved by Demo Fan/i);
 
     await page.getByRole("button", { name: "Fan" }).click();
     await page.getByLabel("Contribution title").fill("The Lantern Keeper");
