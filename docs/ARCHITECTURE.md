@@ -46,7 +46,7 @@ Domain rules + validation
 ## Trust boundaries
 - Client-supplied creator identity is untrusted until authenticated.
 - The local role switch and `Demo Creator` / `Demo Fan` labels are simulated demo identities, not authentication. In the onchain workflow, the signer address is read from Rabby and the contract records `msg.sender`; use that address, not a display name, as the attributable actor.
-- The current evidence verifier validates the records supplied in a bundle but does not yet enumerate the full contract event history. It cannot establish bundle completeness.
+- The evidence verifier now scans the contract's story-version, contribution, and decision events from deployment through a fixed verification block and reconciles them with the bundle. The implementation and unit tests pass CI; live Mainnet validation of the new scan remains pending.
 - A wallet address does not prove legal ownership of IP.
 - A hash proves integrity only when the referenced bytes can be compared; it does not prove authorship or legal rights.
 - Offchain storage availability is a product risk.
