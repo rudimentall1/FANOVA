@@ -84,6 +84,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
   const now = new Date();
 
   const versionNumber = await db.transaction(async (tx) => {
+    await tx.select({ id: work.id }).from(work).where(eq(work.id, existing.id)).for("update");
+
     const [latest] = await tx
       .select({ versionNumber: workVersion.versionNumber })
       .from(workVersion)
