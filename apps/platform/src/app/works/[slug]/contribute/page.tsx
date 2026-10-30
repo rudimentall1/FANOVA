@@ -9,9 +9,9 @@ import { SubmitContributionForm } from "@/components/contributions/contribution-
 export const dynamic = "force-dynamic";
 
 export default async function ContributePage({ params }: { params: Promise<{ slug: string }> }) {
-  const actor = await getCurrentActor();
-  if (!actor) redirect(`/sign-in?callbackURL=${encodeURIComponent(`/works/${(await params).slug}/contribute`)}`);
   const { slug } = await params;
+  const actor = await getCurrentActor();
+  if (!actor) redirect(`/sign-in?callbackURL=${encodeURIComponent(`/works/${slug}/contribute`)}`);
   const [source] = await db
     .select({
       id: work.id,
