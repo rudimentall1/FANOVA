@@ -3,6 +3,9 @@ const RPC_URL = "https://rpc.soneium.org/";
 const CHAIN_ID = 1868n;
 const ABI = [
   "function computeStoryId(address creator, bytes32 creatorSalt) view returns (bytes32)",
+  "function getStory(bytes32 storyId) view returns ((address creator,uint64 latestVersion,bytes32 creatorSalt,bool exists))",
+  "function getStoryVersion(bytes32 storyId,uint64 sourceVersion) view returns ((bytes32 sourceHash,bytes32 permissionHash,uint64 permissionVersion,bool exists))",
+  "function getContribution(bytes32 contributionId) view returns ((bytes32 storyId,bytes32 contributionHash,bytes32 permissionHash,address contributor,address reviewer,uint64 sourceVersion,uint64 permissionVersion,uint256 decidedAt,bool exists,bool decided,bool approved))",
   "event StoryVersionRegistered(bytes32 indexed storyId, uint64 indexed sourceVersion, address indexed creator, bytes32 sourceHash, uint64 permissionVersion, bytes32 permissionHash)",
   "event ContributionRegistered(bytes32 indexed contributionId, bytes32 indexed storyId, uint64 indexed sourceVersion, address contributor, bytes32 contributionHash, uint64 permissionVersion, bytes32 permissionHash, bool permissionAcknowledged)",
   "event ContributionDecided(bytes32 indexed contributionId, bytes32 indexed storyId, uint64 indexed sourceVersion, address reviewer, bool approved, bytes32 reasonCode, uint256 decidedAt)"
@@ -46,13 +49,14 @@ async function verifyBundle(bundle) {
   const meta = bundle.onchainMetadata;
   assert(state && Array.isArray(state.contributions) && meta?.stories && meta?.contributions, "Bundle is missing story/contribution or onchain metadata.");
   if (!ethersModule) ethersModule = await import("https://cdn.jsdelivr.net/npm/ethers@6.15.0/+esm");
-  const { JsonRpcProvider, Interface, keccak256, toUtf8Bytes, ZeroAddress } = ethersModule;
+  const { JsonRpcProvider, Interface, keccak256, toUtf8Bytes } = ethersModule;
   const provider = new JsonRpcProvider(RPC_URL);
   const network = await provider.getNetwork();
   assert(network.chainId === CHAIN_ID, `RPC returned chain ID ${network.chainId}, expected 1868.`);
   const code = await provider.getCode(CONTRACT_ADDRESS);
   assert(code !== "0x" && !/^0x0*$/.test(code), "No contract bytecode found at the configured address.");
   const iface = new Interface(ABI);
+  const contract = new ethersModule.Contract(CONTRACT_ADDRESS, ABI, provider);
   const checks = [];
   const story = state.story;
   assert(story, "Evidence bundle contains no source story.");
@@ -64,6 +68,16 @@ async function verifyBundle(bundle) {
   assert(same(permissionHash, storyRecord.permissionHash), "Permission hash does not match the exported permission text.");
   const derivedId = keccak256(ethersModule.AbiCoder.defaultAbiCoder().encode(["address", "bytes32"], [storyRecord.creatorAddress, storyRecord.creatorSalt]));
   assert(same(derivedId, storyRecord.storyId), "Story ID does not match creator address and creator salt.");
+  const chainStory = await contract.getStory(storyRecord.storyId);
+  assert(chainStory.exists === true, "Story does not exist in contract storage.");
+  assert(same(chainStory.creator, storyRecord.creatorAddress), "Stored story creator does not match the evidence bundle.");
+  assert(same(chainStory.creatorSalt, storyRecord.creatorSalt), "Stored creator salt does not match the evidence bundle.");
+  assert(Number(chainStory.latestVersion) === Number(story.version), "Stored latest story version does not match the exported story version.");
+  const chainVersion = await contract.getStoryVersion(storyRecord.storyId, story.version);
+  assert(chainVersion.exists === true, "Story version does not exist in contract storage.");
+  assert(same(chainVersion.sourceHash, sourceHash), "Stored source hash does not match the exported story.");
+  assert(same(chainVersion.permissionHash, permissionHash), "Stored permission hash does not match the exported permissions.");
+  assert(Number(chainVersion.permissionVersion) === Number(story.permissionVersion), "Stored permission version does not match the exported story.");
   const storyReceipt = await receiptEvent(provider, iface, storyRecord.txHash, "StoryVersionRegistered", args =>
     same(args.storyId, storyRecord.storyId) &&
     same(args.creator, storyRecord.creatorAddress) &&
@@ -72,7 +86,7 @@ async function verifyBundle(bundle) {
     Number(args.permissionVersion) === Number(story.permissionVersion) &&
     same(args.permissionHash, permissionHash)
   );
-  checks.push(`Story hash, permission hash, creator-bound ID, and StoryVersionRegistered receipt verified (block ${storyReceipt.blockNumber}).`);
+  checks.push(`Story content hashes, creator-bound ID, contract storage, and StoryVersionRegistered receipt verified (block ${storyReceipt.blockNumber}).`);
 
   let verifiedContributions = 0;
   for (const contribution of state.contributions) {
@@ -81,6 +95,14 @@ async function verifyBundle(bundle) {
     const contributionHash = keccak256(toUtf8Bytes(canonicalContribution(contribution)));
     assert(same(contributionHash, record.contributionHash), `Contribution hash mismatch for ${contribution.title || contribution.id}.`);
     assert(same(record.storyId, storyRecord.storyId), `Contribution is linked to a different story: ${contribution.id}.`);
+    const chainContribution = await contract.getContribution(record.contributionId);
+    assert(chainContribution.exists === true, `Contribution ${contribution.id} does not exist in contract storage.`);
+    assert(same(chainContribution.storyId, storyRecord.storyId), `Stored contribution ${contribution.id} points to a different story.`);
+    assert(same(chainContribution.contributor, record.contributorAddress), `Stored contributor address mismatch for ${contribution.id}.`);
+    assert(same(chainContribution.contributionHash, contributionHash), `Stored contribution hash mismatch for ${contribution.id}.`);
+    assert(same(chainContribution.permissionHash, permissionHash), `Stored contribution permission hash mismatch for ${contribution.id}.`);
+    assert(Number(chainContribution.sourceVersion) === Number(contribution.sourceVersion), `Stored source version mismatch for ${contribution.id}.`);
+    assert(Number(chainContribution.permissionVersion) === Number(contribution.permissionVersion), `Stored permission version mismatch for ${contribution.id}.`);
     const contributionReceipt = await receiptEvent(provider, iface, record.txHash, "ContributionRegistered", args =>
       same(args.contributionId, record.contributionId) &&
       same(args.storyId, storyRecord.storyId) &&
@@ -91,13 +113,16 @@ async function verifyBundle(bundle) {
       same(args.contributionHash, contributionHash) &&
       args.permissionAcknowledged === true
     );
-    checks.push(`Contribution "${contribution.title}" registration event verified (block ${contributionReceipt.blockNumber}).`);
+    checks.push(`Contribution "${contribution.title}" hash, contract storage, and registration event verified (block ${contributionReceipt.blockNumber}).`);
     if (record.decisionTxHash) {
       assert(["approved", "rejected"].includes(record.outcome), `Decision outcome is missing for ${contribution.id}.`);
       const reasonText = (record.reason || "").trim();
       const reasonInput = reasonText || (record.outcome === "approved" ? "APPROVED" : "REJECTED");
       const reasonCode = keccak256(toUtf8Bytes(reasonInput));
       assert(same(reasonCode, record.reasonCode), `Decision reason hash mismatch for ${contribution.id}.`);
+      assert(chainContribution.decided === true, `Contribution ${contribution.id} is not marked decided in contract storage.`);
+      assert(chainContribution.approved === (record.outcome === "approved"), `Stored decision outcome mismatch for ${contribution.id}.`);
+      assert(same(chainContribution.reviewer, storyRecord.creatorAddress), `Stored reviewer is not the story creator for ${contribution.id}.`);
       const decisionReceipt = await receiptEvent(provider, iface, record.decisionTxHash, "ContributionDecided", args =>
         same(args.contributionId, record.contributionId) &&
         same(args.storyId, storyRecord.storyId) &&
@@ -106,6 +131,8 @@ async function verifyBundle(bundle) {
         same(args.reasonCode, reasonCode)
       );
       checks.push(`Creator decision event verified for "${contribution.title}" (block ${decisionReceipt.blockNumber}).`);
+    } else {
+      assert(chainContribution.decided === false, `Contribution ${contribution.id} is decided onchain but the bundle has no decision transaction.`);
     }
     verifiedContributions++;
   }
