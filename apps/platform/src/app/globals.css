@@ -117,3 +117,17 @@ a { color: inherit; text-decoration: none; }
 .catalogue-search > div { display: flex; gap: 10px; }
 .catalogue-search input { flex: 1; min-width: 0; min-height: 44px; padding: 0 13px; border: 1px solid #3a3e41; background: #101112; color: var(--text); font: inherit; }
 .catalogue-search input:focus { outline: none; border-color: var(--accent); }
+
+.request-history { margin: 0 0 12px; padding: 18px 20px; border: 1px solid #34383b; background: #151719; }
+.request-history p { color: #aeb3b5; line-height: 1.55; }
+.request-history small, .request-card small { color: #7e8588; font-size: 11px; }
+.request-list { display: grid; gap: 14px; margin-bottom: 90px; }
+.request-card { padding: 25px; border: 1px solid #34383b; background: #151719; }
+.request-card h2 { margin: 12px 0 5px; font-size: 23px; }
+.request-card > p:not(.eyebrow) { color: #c0c5c2; line-height: 1.65; white-space: pre-wrap; }
+.request-email { margin: 0 0 18px; color: #8f989a !important; font-size: 12px; }
+.request-card > .text-link { display: inline-block; margin: 8px 0 16px; }
+.review-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; }
+@media (max-width: 640px) {
+  .review-actions { align-items: stretch; flex-direction: column; }
+}

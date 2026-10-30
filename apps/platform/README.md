@@ -23,3 +23,9 @@ The local mail sink prints verification and password-reset URLs to the developme
 - Public catalogue, creator publishing, contribution persistence, and production email delivery are not implemented yet.
 - The role table is server-owned; public sign-up must never be allowed to assign the creator, moderator, or admin role.
 - No production deployment, contract change, or Mainnet write is part of this application scaffold.
+
+## Creator access
+
+New accounts receive only the `reader` role. Users can request creator access from `/dashboard/creator-access`; an administrator reviews applications at `/admin/creator-requests`. Approval assigns the creator role server-side and records the reviewing administrator.
+
+The first administrator must be provisioned out-of-band by a trusted operator. Follow [docs/ADMIN_BOOTSTRAP.md](../../docs/ADMIN_BOOTSTRAP.md). There is intentionally no public endpoint for granting admin or creator roles.

@@ -1,6 +1,6 @@
 # FANOVA Web Product Specification
 
-**Status:** Accepted product direction; implementation not started  
+**Status:** Accepted product direction; multi-user application implementation in progress  
 **Target:** Sony Onchain Entertainment Incubation Program
 
 ## 1. Product direction
@@ -22,6 +22,7 @@ The MVP must have real accounts, server-backed persistence, public work discover
 - Browse and search published works.
 - Submit a contribution after acknowledging the current permission version.
 - Track their own submissions, statuses, creator feedback, source version, and provenance.
+- Can request creator access by submitting a short application and optional public portfolio. Creator permissions are granted only after administrator review.
 - Cannot edit source works or make creator decisions.
 
 ### Creator
@@ -36,6 +37,7 @@ The MVP must have real accounts, server-backed persistence, public work discover
 A creator role or wallet address is not proof of legal IP ownership. Users remain responsible for having the rights they claim.
 
 ### Moderator / administrator
+- Review creator access applications and grant the creator role after review.
 - Minimal operational role for abuse reports, account suspension, and prohibited content.
 - Cannot silently alter creator decisions or forge onchain attribution.
 - Security-relevant administrative actions must be auditable.
@@ -69,7 +71,7 @@ A user may be both a creator and a contributor. Roles are permissions, not mutua
 - `/studio` — creator overview and review queue.
 - `/studio/works` — creator's works.
 - `/studio/works/new` — create a work.
-- `/studio/works/[id]/edit` — edit draft/work metadata and permissions.
+- `/studio/works/[slug]/edit` — edit private draft content and permissions.
 - `/studio/works/[id]/versions` — version history.
 - `/studio/works/[id]/submissions` — submissions for a work.
 - `/studio/submissions/[id]` — review and decision screen.

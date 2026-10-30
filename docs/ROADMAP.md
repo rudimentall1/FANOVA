@@ -80,7 +80,7 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 
 ## P1.5 — Multi-user web product foundation (new priority after product expansion)
 
-**Status: authentication foundation merged; creator work publishing and public catalogue implemented on the current branch.**
+**Status: authentication and creator publishing merged; creator-access approval workflow implemented on the current branch.**
 
 - [x] Confirm that FANOVA's final product is a multi-user creator/contributor platform, not a single-page local demo.
 - [x] Define public pages, account flows, creator workspace, contributor dashboard, roles, core entities, security boundaries, and acceptance criteria in [WEB_PRODUCT_SPEC.md](WEB_PRODUCT_SPEC.md).
@@ -88,7 +88,8 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 - [x] Create the isolated Next.js platform app, local PostgreSQL Compose service, Drizzle account/profile/role schema, Better Auth configuration, and server-side role lookup foundation.
 - [x] Validate dependency resolution, TypeScript, authorization unit tests, PostgreSQL migration generation/application, Better Auth schema, and production build in [CI run 41057846264](https://github.com/rudimentall1/FANOVA/actions/runs/41057846264).
 - [x] Implement registration, sign-in, email-verification instructions, password-reset request and completion screens, protected dashboard, account overview, and sign-out in [PR #15](https://github.com/rudimentall1/FANOVA/pull/15).
-- [x] Implement PostgreSQL-backed work records, append-only draft version snapshots, explicit permitted-use rules, SHA-256 content/permission hashes, creator-gated creation/edit APIs, public Discover catalogue/search, and published work detail in [PR #16](https://github.com/rudimentall1/FANOVA/pull/16). PR #16 is pending final CI.
+- [x] Implement PostgreSQL-backed work records, append-only draft version snapshots, explicit permitted-use rules, SHA-256 content/permission hashes, creator-gated creation/edit APIs, public Discover catalogue/search, and published work detail in [PR #16](https://github.com/rudimentall1/FANOVA/pull/16).
+- [x] Implement creator-access applications, one-pending-request-per-account database constraint, administrator review, and server-side creator role assignment. First admin provisioning is documented in [ADMIN_BOOTSTRAP.md](ADMIN_BOOTSTRAP.md). PR #17 is pending CI.
 - [ ] Run registration, verification, login, logout, and recovery end-to-end against local PostgreSQL with two independent accounts.
 - [ ] Add creator-access request and admin review process; creator role is server-assigned and cannot be self-selected.
 - [ ] Implement new public versions for published works, public profiles, contributor submissions, creator review queue, and stale-version lifecycle.

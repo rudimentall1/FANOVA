@@ -36,6 +36,11 @@ export default async function DashboardPage() {
         <Link href="/settings/account" className="dashboard-link"><span>02</span><strong>Account</strong><small>View your profile and access level.</small></Link>
         {actor.roles.includes("creator") ? (
           <Link href="/studio" className="dashboard-link"><span>03</span><strong>Creator Studio</strong><small>Publish works and manage permitted-use rules.</small></Link>
+        ) : actor.roles.includes("reader") ? (
+          <Link href="/dashboard/creator-access" className="dashboard-link"><span>03</span><strong>Apply for creator access</strong><small>Submit a portfolio and request creator permissions.</small></Link>
+        ) : null}
+        {actor.roles.includes("admin") ? (
+          <Link href="/admin/creator-requests" className="dashboard-link"><span>04</span><strong>Admin review</strong><small>Review pending creator applications.</small></Link>
         ) : null}
       </section>
     </main>
