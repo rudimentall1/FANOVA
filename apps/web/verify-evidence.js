@@ -16,9 +16,10 @@ const status = document.querySelector("#evidence-verify-status");
 const detail = document.querySelector("#evidence-verify-detail");
 let ethersModule;
 
-function report(label, message, error = false) {
+function report(label, message, level = "ok") {
   status.textContent = label;
-  status.className = "proof-status" + (error ? " error" : " ok");
+  const state = level === true ? "error" : level;
+  status.className = "proof-status " + (["ok", "error", "partial"].includes(state) ? state : "error");
   detail.textContent = message;
 }
 function same(a, b) { return String(a).toLowerCase() === String(b).toLowerCase(); }
@@ -72,7 +73,7 @@ async function verifyBundle(bundle) {
   assert(chainStory.exists === true, "Story does not exist in contract storage.");
   assert(same(chainStory.creator, storyRecord.creatorAddress), "Stored story creator does not match the evidence bundle.");
   assert(same(chainStory.creatorSalt, storyRecord.creatorSalt), "Stored creator salt does not match the evidence bundle.");
-  assert(Number(chainStory.latestVersion) === Number(story.version), "Stored latest story version does not match the exported story version.");
+  assert(Number(chainStory.latestVersion) >= Number(story.version), "The exported story version is newer than the version currently stored onchain.");
   const chainVersion = await contract.getStoryVersion(storyRecord.storyId, story.version);
   assert(chainVersion.exists === true, "Story version does not exist in contract storage.");
   assert(same(chainVersion.sourceHash, sourceHash), "Stored source hash does not match the exported story.");
@@ -89,9 +90,13 @@ async function verifyBundle(bundle) {
   checks.push(`Story content hashes, creator-bound ID, contract storage, and StoryVersionRegistered receipt verified (block ${storyReceipt.blockNumber}).`);
 
   let verifiedContributions = 0;
+  const unanchoredContributions = [];
   for (const contribution of state.contributions) {
     const record = meta.contributions[contribution.id];
-    if (!record) continue;
+    if (!record?.contributionId || !record?.txHash) {
+      unanchoredContributions.push(contribution.title || contribution.id);
+      continue;
+    }
     const contributionHash = keccak256(toUtf8Bytes(canonicalContribution(contribution)));
     assert(same(contributionHash, record.contributionHash), `Contribution hash mismatch for ${contribution.title || contribution.id}.`);
     assert(same(record.storyId, storyRecord.storyId), `Contribution is linked to a different story: ${contribution.id}.`);
@@ -121,14 +126,17 @@ async function verifyBundle(bundle) {
       const reasonCode = keccak256(toUtf8Bytes(reasonInput));
       assert(same(reasonCode, record.reasonCode), `Decision reason hash mismatch for ${contribution.id}.`);
       assert(chainContribution.decided === true, `Contribution ${contribution.id} is not marked decided in contract storage.`);
+      assert(chainContribution.decidedAt > 0n, `Contribution ${contribution.id} has no stored decision timestamp.`);
       assert(chainContribution.approved === (record.outcome === "approved"), `Stored decision outcome mismatch for ${contribution.id}.`);
       assert(same(chainContribution.reviewer, storyRecord.creatorAddress), `Stored reviewer is not the story creator for ${contribution.id}.`);
       const decisionReceipt = await receiptEvent(provider, iface, record.decisionTxHash, "ContributionDecided", args =>
         same(args.contributionId, record.contributionId) &&
         same(args.storyId, storyRecord.storyId) &&
+        Number(args.sourceVersion) === Number(contribution.sourceVersion) &&
         same(args.reviewer, storyRecord.creatorAddress) &&
         args.approved === (record.outcome === "approved") &&
-        same(args.reasonCode, reasonCode)
+        same(args.reasonCode, reasonCode) &&
+        args.decidedAt === chainContribution.decidedAt
       );
       checks.push(`Creator decision event verified for "${contribution.title}" (block ${decisionReceipt.blockNumber}).`);
     } else {
@@ -137,7 +145,7 @@ async function verifyBundle(bundle) {
     verifiedContributions++;
   }
   assert(verifiedContributions > 0, "No contribution records with onchain metadata were found in this bundle.");
-  return checks;
+  return { checks, unanchoredContributions };
 }
 
 verifyButton.addEventListener("click", async () => {
@@ -147,8 +155,17 @@ verifyButton.addEventListener("click", async () => {
   report("VERIFYING", "Reading the bundle, recomputing hashes, and checking Soneium transaction receipts. No wallet or transaction is used.");
   try {
     const bundle = JSON.parse(await file.text());
-    const checks = await verifyBundle(bundle);
-    report("VERIFIED", checks.join(" "));
+    const result = await verifyBundle(bundle);
+    if (result.unanchoredContributions.length > 0) {
+      const unanchored = result.unanchoredContributions.join(", ");
+      report(
+        "PARTIALLY VERIFIED",
+        `${result.checks.join(" ")} ${result.unanchoredContributions.length} local contribution(s) have no transaction reference in this bundle and were not verified: ${unanchored}.`,
+        "partial"
+      );
+    } else {
+      report("VERIFIED", result.checks.join(" "));
+    }
   } catch (error) {
     report("VERIFICATION FAILED", error?.message || "Evidence verification failed.", true);
   } finally {
