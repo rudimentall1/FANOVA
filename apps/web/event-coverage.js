@@ -22,6 +22,7 @@ export function compareEventCoverage({
   const incompleteEvidence = [];
   const checks = [];
   const matchingStoryEvents = storyVersionEvents.filter(event => key(event.args.storyId) === key(storyId));
+  requireMatch(matchingStoryEvents.length === storyVersionEvents.length, "Story-version scan returned an event for a different story.");
   const snapshotEvent = matchingStoryEvents.find(event => Number(event.args.sourceVersion) === Number(story.version));
   requireMatch(snapshotEvent, "The exported source version was not found in the scanned Soneium event history.");
   requireMatch(key(snapshotEvent.transactionHash) === key(storyRecord.txHash), "Story registration transaction does not match the scanned event history.");
@@ -42,6 +43,7 @@ export function compareEventCoverage({
   const chainContributionIds = new Set();
 
   for (const event of contributionEvents) {
+    requireMatch(key(event.args.storyId) === key(storyId), "Contribution scan returned an event for a different story.");
     const id = key(event.args.contributionId);
     requireMatch(!chainContributionIds.has(id), `Duplicate ContributionRegistered events were found for contribution ${id}.`);
     chainContributionIds.add(id);
@@ -62,6 +64,7 @@ export function compareEventCoverage({
 
   const chainDecisionIds = new Set();
   for (const event of decisionEvents) {
+    requireMatch(key(event.args.storyId) === key(storyId), "Decision scan returned an event for a different story.");
     const id = key(event.args.contributionId);
     requireMatch(!chainDecisionIds.has(id), `Multiple ContributionDecided events were found for contribution ${id}.`);
     chainDecisionIds.add(id);
