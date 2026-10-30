@@ -41,3 +41,7 @@ Do not treat casual brainstorming as approval to expand scope.
 
 ## End-of-task report
 Report: files changed, milestone advanced, checks actually run, evidence produced, remaining blockers, and exact status labels. Be concise and factual.
+
+## Multi-user product direction (ADR-017)
+The final web MVP is a multi-user creator/contributor platform, not just the original local single-page prototype. Read `docs/WEB_PRODUCT_SPEC.md` before changing web architecture or user flows. Implement real server-backed authentication and persistence, server-enforced authorization, public catalogue/work pages, Creator Studio, contributor dashboards, and wallet linking as separate identity layers. Keep the core story → contribution → creator decision → provenance workflow narrow. Do not add social-network features, payments, royalties, tokens, NFT marketplace, DAO, AI generation, or multi-chain support without a new explicit decision. Do not change the deployed contract or send Mainnet transactions without explicit approval. The final demo is blocked until the WEB_PRODUCT_SPEC.md acceptance criteria pass.
+
