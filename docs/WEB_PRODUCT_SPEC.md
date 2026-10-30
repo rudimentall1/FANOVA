@@ -71,7 +71,9 @@ A user may be both a creator and a contributor. Roles are permissions, not mutua
 - `/studio` — creator overview and review queue.
 - `/studio/works` — creator's works.
 - `/studio/works/new` — create a work.
-- `/studio/works/[slug]/edit` — edit private draft content and permissions.
+- `/studio/works/[slug]/edit` — edit private drafts and prepare revisions to published works.
+- `/studio/works/[slug]/versions` — inspect published, draft, and superseded versions.
+- `/studio/works/[slug]/submissions` — review contributor submissions.
 - `/studio/works/[id]/versions` — version history.
 - `/studio/works/[id]/submissions` — submissions for a work.
 - `/studio/submissions/[id]` — review and decision screen.
@@ -89,8 +91,8 @@ Private drafts, unpublished submissions, email addresses, and account metadata m
 ### Publish and review
 1. Creator creates a work with title, synopsis, source material, cover, genre, and permitted-use rules.
 2. Creator previews and publishes it.
-3. Creator reviews a pending contribution and approves or rejects it with an optional reason.
-4. The decision is persisted server-side and shown with an exact status.
+3. Creator reviews a pending contribution tied to the exact source and permission version and approves or rejects it with optional feedback.
+4. The decision is persisted server-side. Public visibility is a separate creator choice.
 5. If the creator chooses to anchor it onchain, their connected wallet submits the existing contract transaction. UI verifies the expected receipt/event and links the evidence.
 
 ### Track provenance
