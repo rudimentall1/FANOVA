@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ContributePage({ params }: { params: Promise<{ slug: string }> }) {
   const actor = await getCurrentActor();
-  if (!actor) redirect("/sign-in");
+  if (!actor) redirect(`/sign-in?callbackURL=${encodeURIComponent(`/works/${(await params).slug}/contribute`)}`);
   const { slug } = await params;
   const [source] = await db
     .select({
