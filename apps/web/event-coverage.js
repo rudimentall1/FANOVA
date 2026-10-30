@@ -26,6 +26,8 @@ export function compareEventCoverage({
   requireMatch(snapshotEvent, "The exported source version was not found in the scanned Soneium event history.");
   requireMatch(key(snapshotEvent.transactionHash) === key(storyRecord.txHash), "Story registration transaction does not match the scanned event history.");
   requireMatch(new Set(matchingStoryEvents.map(event => String(event.args.sourceVersion))).size === matchingStoryEvents.length, "Duplicate StoryVersionRegistered events were found for this story.");
+  const orderedVersions = matchingStoryEvents.map(event => Number(event.args.sourceVersion)).sort((left, right) => left - right);
+  requireMatch(orderedVersions.every((version, index) => version === index + 1), "Scanned story event history contains a missing or non-sequential source version.");
 
   if (matchingStoryEvents.length > 1) {
     incompleteEvidence.push(
