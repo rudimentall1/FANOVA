@@ -44,16 +44,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
 
   const { slug } = await params;
   const [existing] = await db
-    .select({ id: work.id, status: work.status })
+    .select({ id: work.id })
     .from(work)
     .where(and(eq(work.slug, slug), eq(work.ownerUserId, actor.userId)))
     .limit(1);
 
   if (!existing) return NextResponse.json({ error: "Work not found." }, { status: 404 });
-  if (existing.status === "archived") {
-    return NextResponse.json({ error: "Archived works cannot be edited." }, { status: 409 });
-  }
-
   if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
     return NextResponse.json({ error: "Content-Type must be application/json." }, { status: 415 });
   }
@@ -83,8 +79,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
   const permissionHash = hashWorkPermissions(input.permissions);
   const now = new Date();
 
-  const versionNumber = await db.transaction(async (tx) => {
-    await tx.select({ id: work.id }).from(work).where(eq(work.id, existing.id)).for("update");
+  const result = await db.transaction(async (tx) => {
+    const [lockedWork] = await tx
+      .select({ status: work.status })
+      .from(work)
+      .where(eq(work.id, existing.id))
+      .for("update");
+
+    if (!lockedWork) return { kind: "not_found" as const };
+    if (lockedWork.status === "archived") return { kind: "archived" as const };
 
     const [latest] = await tx
       .select({ versionNumber: workVersion.versionNumber })
@@ -92,12 +95,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
       .where(eq(workVersion.workId, existing.id))
       .orderBy(desc(workVersion.versionNumber))
       .limit(1);
-    const nextVersion = (latest?.versionNumber ?? 0) + 1;
+    const versionNumber = (latest?.versionNumber ?? 0) + 1;
 
     await tx.insert(workVersion).values({
       id: versionId,
       workId: existing.id,
-      versionNumber: nextVersion,
+      versionNumber,
       title: input.title,
       synopsis: input.synopsis,
       body: input.body,
@@ -123,7 +126,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
         eq(contribution.workId, existing.id),
         eq(contribution.status, "pending")
       ));
-    } else if (existing.status === "draft") {
+    } else if (lockedWork.status === "draft") {
       await tx.update(work).set({
         currentVersionId: versionId,
         updatedAt: now
@@ -135,15 +138,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
       }).where(eq(work.id, existing.id));
     }
 
-    return nextVersion;
+    return {
+      kind: "saved" as const,
+      versionNumber,
+      status: input.publish ? "published" as const : lockedWork.status
+    };
   });
+
+  if (result.kind === "not_found") return NextResponse.json({ error: "Work not found." }, { status: 404 });
+  if (result.kind === "archived") return NextResponse.json({ error: "Archived works cannot be edited." }, { status: 409 });
 
   return NextResponse.json({
     work: {
       id: existing.id,
       slug,
-      status: existing.status === "draft" && input.publish ? "published" : existing.status,
-      versionNumber,
+      status: result.status,
+      versionNumber: result.versionNumber,
       published: input.publish
     },
     hashes: { sourceHash, permissionHash },
