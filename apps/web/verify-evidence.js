@@ -1,5 +1,6 @@
 import { PROVENANCE_ABI } from "./provenance-abi.js";
 import { inspectLocalBundle } from "./evidence-validation.js";
+import { verifyLocalContentCommitments } from "./content-integrity.js";
 const CONTRACT_ADDRESS = "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880";
 const RPC_URL = "https://rpc.soneium.org/";
 const CHAIN_ID = 1868n;
@@ -41,7 +42,14 @@ async function verifyBundle(bundle) {
   assert(Number(bundle?.network?.chainId) === Number(CHAIN_ID), "Bundle network is not Soneium Mainnet (chain ID 1868).");
   assert(same(bundle?.contract, CONTRACT_ADDRESS), "Bundle contract address does not match the configured FANOVA contract.");
   const localInspection = inspectLocalBundle(bundle);
-  if (localInspection.localOnly) return localInspection;
+  if (localInspection.localOnly) {
+    const integrity = await verifyLocalContentCommitments(bundle.localStoryAndContributions);
+    return {
+      localOnly: true,
+      checks: [...localInspection.checks, ...integrity.checks],
+      incompleteEvidence: [...localInspection.incompleteEvidence, ...integrity.incompleteEvidence]
+    };
+  }
   const state = bundle.localStoryAndContributions;
   const meta = bundle.onchainMetadata;
   if (!ethersModule) ethersModule = await import("https://cdn.jsdelivr.net/npm/ethers@6.15.0/+esm");

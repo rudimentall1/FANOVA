@@ -55,7 +55,7 @@ export function inspectLocalBundle(bundle) {
     return {
       localOnly: true,
       checks: ["Local story/contribution structure, source-version linkage, permission snapshot, acknowledgement, and decision consistency checked."],
-      incompleteEvidence: ["No onchain registration or decision evidence is present. Local demo identities are not authentication, and this bundle contains no trusted content-hash commitment; content integrity is therefore not independently verified."]
+      incompleteEvidence: ["No onchain registration or decision evidence is present."]
     };
   }
   if (!hasStoryMetadata) fail("Onchain transaction or contribution evidence exists, but source story metadata is missing.");
