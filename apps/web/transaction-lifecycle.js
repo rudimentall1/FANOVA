@@ -16,5 +16,5 @@ export async function confirmWalletTransaction(txResponse, { onSubmitted, onPend
     throw new Error(`Transaction ${hash} failed onchain. Inspect the receipt before retrying.`);
   }
 
-  return { hash, blockNumber: receipt.blockNumber };
+  return { hash, blockNumber: receipt.blockNumber, receipt };
 }
