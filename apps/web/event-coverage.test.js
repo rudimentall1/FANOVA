@@ -76,3 +76,14 @@ test("rejects bundle contribution metadata without a matching chain event", () =
   };
   assert.throws(() => compareEventCoverage(args), /registration event was not found/);
 });
+
+test("ignores a locally prepared contribution that has no submitted transaction", () => {
+  const { args } = fixture();
+  args.bundle.onchainMetadata.contributions["pending-local"] = {
+    contributionId: "0x" + "77".repeat(32),
+    storyId,
+    localContributionId: "pending-local"
+  };
+  const result = compareEventCoverage(args);
+  assert.deepEqual(result.incompleteEvidence, []);
+});
