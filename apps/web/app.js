@@ -81,7 +81,18 @@ function reviewQueue() {
 }
 
 function card(contribution) {
-  return `<article class="contribution-card"><div class="contribution-top"><span class="chip ${esc(contribution.status)}">${label(contribution.status)}</span><span class="muted">by ${esc(contribution.contributorName)}</span></div><h4>${esc(contribution.title)}</h4><p class="story-body">${esc(contribution.body).replace(/\n/g, "<br>")}</p><div class="source-ref"><span>Source</span><code>${esc(contribution.storyId)}</code><span>source v${contribution.sourceVersion} · permissions v${contribution.permissionVersion}</span></div>${contribution.decision ? `<div class="decision-note"><strong>Decision: ${esc(contribution.decision.outcome)}</strong><p>${esc(contribution.decision.reason)}</p></div>` : ""}${role === "creator" && contribution.status === "pending" ? `<div class="review-actions"><input data-reason="${esc(contribution.id)}" maxlength="300" placeholder="Decision note (optional)"><button class="primary small" data-review="approved" data-id="${esc(contribution.id)}">Approve</button><button class="secondary small" data-review="rejected" data-id="${esc(contribution.id)}">Reject</button></div>` : ""}</article>`;
+  const reviewerLabel = contribution.decision
+    ? contribution.decision.reviewerId === state.story?.creatorId
+      ? `Reviewed by ${esc(state.story.creatorName)}`
+      : "Reviewer identity recorded"
+    : "";
+  const reason = contribution.decision?.reason
+    ? `<p>${esc(contribution.decision.reason)}</p>`
+    : "";
+  const decision = contribution.decision
+    ? `<div class="decision-note"><strong>Decision: ${esc(contribution.decision.outcome)}</strong><p class="muted">${reviewerLabel}</p>${reason}</div>`
+    : "";
+  return `<article class="contribution-card"><div class="contribution-top"><span class="chip ${esc(contribution.status)}">${label(contribution.status)}</span><span class="muted">Submitted by ${esc(contribution.contributorName)}</span></div><h4>${esc(contribution.title)}</h4><p class="story-body">${esc(contribution.body).replace(/\n/g, "<br>")}</p><div class="source-ref"><span>Source</span><code>${esc(contribution.storyId)}</code><span>source v${contribution.sourceVersion} · permissions v${contribution.permissionVersion}</span></div>${decision}${role === "creator" && contribution.status === "pending" ? `<div class="review-actions"><input data-reason="${esc(contribution.id)}" maxlength="300" placeholder="Decision note (optional)"><button class="primary small" data-review="approved" data-id="${esc(contribution.id)}">Approve</button><button class="secondary small" data-review="rejected" data-id="${esc(contribution.id)}">Reject</button></div>` : ""}</article>`;
 }
 
 function fanForm() {
