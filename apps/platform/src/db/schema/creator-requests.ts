@@ -29,5 +29,5 @@ export const creatorAccessRequest = pgTable("creator_access_request", {
   index("creator_request_status_created_idx").on(table.status, table.createdAt),
   uniqueIndex("creator_request_one_pending_per_user")
     .on(table.userId)
-    .where(sql`\${table.status} = 'pending'`)
+    .where(sql`${table.status} = 'pending'`)
 ]);
