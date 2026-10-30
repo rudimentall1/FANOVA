@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   index,
   pgEnum,
@@ -25,5 +26,8 @@ export const creatorAccessRequest = pgTable("creator_access_request", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 }, (table) => [
   index("creator_request_user_status_idx").on(table.userId, table.status),
-  index("creator_request_status_created_idx").on(table.status, table.createdAt)
+  index("creator_request_status_created_idx").on(table.status, table.createdAt),
+  uniqueIndex("creator_request_one_pending_per_user")
+    .on(table.userId)
+    .where(sql`\${table.status} = 'pending'`)
 ]);
