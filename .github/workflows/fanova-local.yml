@@ -17,12 +17,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run domain tests
+      - name: Install browser and ABI test dependencies
         working-directory: apps/web
-        run: npm test
-      - name: Install browser-test dependency
+        run: npm install --no-save playwright ethers@6.15.0
+      - name: Run domain and ABI tests
         working-directory: apps/web
-        run: npm install --no-save playwright
+        run: |
+          npm test
+          node --test provenance-abi.test.js
       - name: Install Chromium
         run: npx --yes playwright install --with-deps chromium
       - name: Run browser end-to-end test
@@ -34,6 +36,8 @@ jobs:
           node --check app.js
           node --check onchain-proof.js
           node --check onchain-workflow.js
+          node --check provenance-abi.js
+          node --check provenance-abi.test.js
           node --check verify-evidence.js
           node --check domain.js
           node --check serve.mjs
