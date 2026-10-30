@@ -1,15 +1,8 @@
+import { PROVENANCE_ABI } from "./provenance-abi.js";
 const CONTRACT_ADDRESS = "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880";
 const RPC_URL = "https://rpc.soneium.org/";
 const CHAIN_ID = 1868n;
-const ABI = [
-  "function computeStoryId(address creator, bytes32 creatorSalt) view returns (bytes32)",
-  "function getStory(bytes32 storyId) view returns ((address creator,uint64 latestVersion,bytes32 creatorSalt,bool exists))",
-  "function getStoryVersion(bytes32 storyId,uint64 sourceVersion) view returns ((bytes32 sourceHash,bytes32 permissionHash,uint64 permissionVersion,bool exists))",
-  "function getContribution(bytes32 contributionId) view returns ((bytes32 storyId,bytes32 contributionHash,bytes32 permissionHash,address contributor,address reviewer,uint64 sourceVersion,uint64 permissionVersion,uint256 decidedAt,bool exists,bool decided,bool approved))",
-  "event StoryVersionRegistered(bytes32 indexed storyId, uint64 indexed sourceVersion, address indexed creator, bytes32 sourceHash, uint64 permissionVersion, bytes32 permissionHash)",
-  "event ContributionRegistered(bytes32 indexed contributionId, bytes32 indexed storyId, uint64 indexed sourceVersion, address contributor, bytes32 contributionHash, uint64 permissionVersion, bytes32 permissionHash, bool permissionAcknowledged)",
-  "event ContributionDecided(bytes32 indexed contributionId, bytes32 indexed storyId, uint64 indexed sourceVersion, address reviewer, bool approved, bytes32 reasonCode, uint256 decidedAt)"
-];
+const ABI = PROVENANCE_ABI;
 const fileInput = document.querySelector("#evidence-file");
 const verifyButton = document.querySelector("#verify-evidence");
 const status = document.querySelector("#evidence-verify-status");
