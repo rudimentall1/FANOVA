@@ -1,7 +1,11 @@
-import { and, eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { and, desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { userProfile, work, workVersion } from "@/db/schema";
+import { getCurrentActor } from "@/lib/server-auth";
+import { createWorkSchema } from "@/lib/work-validation";
+import { hashWorkPermissions, hashWorkSource } from "@/lib/work-hash";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
