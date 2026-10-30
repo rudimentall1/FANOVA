@@ -80,7 +80,7 @@ export function SignUpForm() {
   );
 }
 
-export function SignInForm() {
+export function SignInForm({ callbackURL = "/dashboard" }: { callbackURL?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -95,7 +95,7 @@ export function SignInForm() {
       const result = await authClient.signIn.email({
         email: email.trim(),
         password,
-        callbackURL: "/dashboard",
+        callbackURL,
         rememberMe: true
       });
       if (result.error) {
@@ -106,7 +106,7 @@ export function SignInForm() {
             : result.error.message ?? "Could not sign in."
         });
       } else {
-        router.push("/dashboard");
+        router.push(callbackURL);
         router.refresh();
       }
     } catch {
