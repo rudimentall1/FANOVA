@@ -75,12 +75,13 @@ async function verifyReceipt(receipt, eventName, match) {
   });
   if (!found) throw new Error("Transaction mined, but the expected contract event was not found. Check the receipt on Blockscout before retrying.");
 }
-async function sendAndVerify(tx, eventName, match) {
+async function sendAndVerify(tx, eventName, match, onSubmitted) {
   setStatus("WALLET CONFIRMATION", "Review the transaction and gas fee in your wallet. No transaction is sent until you approve it.");
   const txResponse = await tx;
-  setStatus("TRANSACTION PENDING", `Waiting for ${txResponse.hash} to be confirmed.`);
+  onSubmitted?.(txResponse.hash);
+  setStatus("TRANSACTION PENDING", `Transaction ${txResponse.hash} was submitted. Waiting for confirmation.`);
   const receipt = await txResponse.wait();
-  if (!receipt || receipt.status !== 1) throw new Error("Transaction failed onchain. Check the receipt before retrying.");
+  if (!receipt || receipt.status !== 1) throw new Error(`Transaction ${txResponse.hash} failed onchain. Inspect the receipt before retrying.`);
   await verifyReceipt(receipt, eventName, match);
   return { hash: txResponse.hash, blockNumber: receipt.blockNumber };
 }
@@ -129,17 +130,23 @@ async function registerStory() {
   const sourceHash = ethers.keccak256(ethers.toUtf8Bytes(canonicalSource(story)));
   const permissionHash = ethers.keccak256(ethers.toUtf8Bytes(story.permissions));
   const storyId = await contract.computeStoryId(address, record.creatorSalt);
+  Object.assign(record, { storyId, creatorAddress: address, sourceHash, permissionHash });
+  meta.stories[story.id] = record;
+  saveMeta(meta);
   const txResult = await sendAndVerify(
     contract.registerStoryVersion(storyId, record.creatorSalt, story.version, sourceHash, story.permissionVersion, permissionHash),
     "StoryVersionRegistered",
-    args => args.storyId.toLowerCase() === storyId.toLowerCase() && args.creator.toLowerCase() === address.toLowerCase() && args.sourceHash.toLowerCase() === sourceHash.toLowerCase()
+    args => args.storyId.toLowerCase() === storyId.toLowerCase() && args.creator.toLowerCase() === address.toLowerCase() && args.sourceHash.toLowerCase() === sourceHash.toLowerCase(),
+    hash => {
+      record.txHash = hash;
+      meta.stories[story.id] = record;
+      saveMeta(meta);
+    }
   );
-  record.storyId = storyId;
-  record.creatorAddress = address;
-  record.sourceHash = sourceHash;
-  record.permissionHash = permissionHash;
   record.txHash = txResult.hash;
   record.blockNumber = txResult.blockNumber;
+  meta.stories[story.id] = record;
+  saveMeta(meta);
   rememberTx(meta, "story-registration", txResult, { storyId, sourceHash, permissionHash, localStoryId: story.id });
   setStatus("STORY ANCHORED", `Story registration event verified in block ${txResult.blockNumber}. The story text remains offchain; export the evidence bundle to preserve the exact hash inputs.`);
 }
@@ -154,12 +161,30 @@ async function registerContribution() {
   if (existing?.txHash) throw new Error("This local contribution already has a recorded registration transaction. Inspect Blockscout before retrying.");
   const contributionId = existing?.contributionId || randomBytes32(ethers);
   const contributionHash = ethers.keccak256(ethers.toUtf8Bytes(canonicalContribution(contribution)));
+  const contributionRecord = {
+    ...(existing || {}),
+    contributionId,
+    storyId: storyRecord.storyId,
+    contributorAddress: address,
+    contributionHash,
+    localContributionId: contribution.id
+  };
+  meta.contributions[contribution.id] = contributionRecord;
+  saveMeta(meta);
   const txResult = await sendAndVerify(
     contract.registerContribution(contributionId, storyRecord.storyId, contribution.sourceVersion, contribution.permissionVersion, storyRecord.permissionHash, contributionHash, contribution.permissionAcknowledged === true),
     "ContributionRegistered",
-    args => args.contributionId.toLowerCase() === contributionId.toLowerCase() && args.storyId.toLowerCase() === storyRecord.storyId.toLowerCase() && args.contributor.toLowerCase() === address.toLowerCase() && args.contributionHash.toLowerCase() === contributionHash.toLowerCase()
+    args => args.contributionId.toLowerCase() === contributionId.toLowerCase() && args.storyId.toLowerCase() === storyRecord.storyId.toLowerCase() && args.contributor.toLowerCase() === address.toLowerCase() && args.contributionHash.toLowerCase() === contributionHash.toLowerCase(),
+    hash => {
+      contributionRecord.txHash = hash;
+      meta.contributions[contribution.id] = contributionRecord;
+      saveMeta(meta);
+    }
   );
-  meta.contributions[contribution.id] = { contributionId, storyId: storyRecord.storyId, contributorAddress: address, contributionHash, txHash: txResult.hash, blockNumber: txResult.blockNumber, localContributionId: contribution.id };
+  contributionRecord.txHash = txResult.hash;
+  contributionRecord.blockNumber = txResult.blockNumber;
+  meta.contributions[contribution.id] = contributionRecord;
+  saveMeta(meta);
   rememberTx(meta, "contribution-registration", txResult, { contributionId, storyId: storyRecord.storyId, contributionHash, localContributionId: contribution.id });
   setStatus("CONTRIBUTION ANCHORED", `Contribution event verified in block ${txResult.blockNumber}. The fan wallet is recorded onchain; content remains offchain.`);
 }
@@ -177,16 +202,21 @@ async function decideContribution() {
   const reason = (reasonInput?.value || "").trim();
   const outcomeLabel = contribution.status === "approved" ? "APPROVED" : "REJECTED";
   const reasonCode = ethers.keccak256(ethers.toUtf8Bytes(reason || outcomeLabel));
-  const txResult = await sendAndVerify(
-    contract.decideContribution(contributionRecord.contributionId, contribution.status === "approved", reasonCode),
-    "ContributionDecided",
-    args => args.contributionId.toLowerCase() === contributionRecord.contributionId.toLowerCase() && args.storyId.toLowerCase() === storyRecord.storyId.toLowerCase() && args.reviewer.toLowerCase() === address.toLowerCase() && args.approved === (contribution.status === "approved") && args.reasonCode.toLowerCase() === reasonCode.toLowerCase()
-  );
-  contributionRecord.decisionTxHash = txResult.hash;
-  contributionRecord.decisionBlockNumber = txResult.blockNumber;
   contributionRecord.outcome = contribution.status;
   contributionRecord.reason = reason;
   contributionRecord.reasonCode = reasonCode;
+  saveMeta(meta);
+  const txResult = await sendAndVerify(
+    contract.decideContribution(contributionRecord.contributionId, contribution.status === "approved", reasonCode),
+    "ContributionDecided",
+    args => args.contributionId.toLowerCase() === contributionRecord.contributionId.toLowerCase() && args.storyId.toLowerCase() === storyRecord.storyId.toLowerCase() && args.reviewer.toLowerCase() === address.toLowerCase() && args.approved === (contribution.status === "approved") && args.reasonCode.toLowerCase() === reasonCode.toLowerCase(),
+    hash => {
+      contributionRecord.decisionTxHash = hash;
+      saveMeta(meta);
+    }
+  );
+  contributionRecord.decisionTxHash = txResult.hash;
+  contributionRecord.decisionBlockNumber = txResult.blockNumber;
   saveMeta(meta);
   rememberTx(meta, "creator-decision", txResult, { contributionId: contributionRecord.contributionId, storyId: storyRecord.storyId, outcome: contribution.status, reasonCode, localContributionId: contribution.id });
   setStatus("DECISION ANCHORED", `Decision event verified in block ${txResult.blockNumber}. Open the receipt on Blockscout or export the evidence bundle.`);
