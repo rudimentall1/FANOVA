@@ -76,3 +76,47 @@ Mainnet is the target, but deployment is not automatic. Before requesting approv
 - Do not rely on UI-only checks for security-sensitive actions.
 - Test replay/duplicate IDs and stale source versions.
 - Handle chain mismatch, wallet disconnect, rejected wallet prompt, RPC errors, and failed transactions explicitly.
+
+## Multi-user web architecture target (ADR-017)
+
+The current `apps/web` implementation is a dependency-light browser prototype. Its localStorage state and simulated role switch are not production identity or persistence. The target architecture adds a server-side application boundary:
+
+```text
+Public browser pages / authenticated workspaces
+                    |
+                    v
+             Server application
+       authentication + session validation
+       role / ownership authorization
+       input validation + domain transitions
+                    |
+          +---------+----------+
+          |         |          |
+          v         v          v
+       Database  File store  Soneium adapter
+       users     story/media  wallet initiated
+       works     contribution writes only
+       versions               after user approval
+       submissions
+       decisions
+          |
+          v
+       Audit events
+```
+
+### Required boundaries
+- Browser code never connects directly to privileged database credentials or receives server secrets.
+- Every read/write involving private data is authorized server-side for the authenticated user and target resource.
+- Public catalogue queries return only published and public fields.
+- Story bodies, contribution content, drafts, email addresses, and profile-private fields remain offchain.
+- Authentication provider identity and wallet address are separate. Wallet linking requires a signed, nonce-protected challenge.
+- Existing contract calls remain user-initiated through the browser wallet. The backend must not custody keys or submit transactions as users.
+- Database migrations and access policies are version-controlled and reproducible.
+- The local prototype remains available for isolated domain tests, but localStorage is not production persistence.
+
+### Stack selection gate
+Before implementation, inspect the current hosting/deployment path and compare a maintained managed authentication + Postgres service against a self-hosted backend. The decision must account for free-tier limits, data retention/pausing, backups, email delivery, storage limits, secret management, region/privacy requirements, and migration portability. Do not put a production database on the existing resource-constrained bot/VPS host without a separate capacity and isolation review. Record the selected stack in a new ADR before credentials or deployment changes.
+
+### Migration approach
+Do not rewrite the provenance contract or discard the current domain logic. Extract/reuse its domain validation and onchain adapter behind server-backed work/contribution records. Replace the simulated role switch with authenticated roles, then migrate the public pages and workspaces incrementally. Keep the old local demo isolated until the server-backed flow passes the product acceptance criteria.
+
