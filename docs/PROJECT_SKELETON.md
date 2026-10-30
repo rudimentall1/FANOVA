@@ -83,3 +83,21 @@ FANOVA does not currently provide legal IP ownership verification, enforceable l
 Change this baseline only when a concrete requirement/blocker is identified, the trade-off is recorded in `docs/DECISIONS.md`, related architecture/roadmap text is updated, and the user explicitly approves.
 
 **Rule:** if a task does not advance P0–P4, it is not MVP work unless a plan change is explicitly approved.
+
+## 12. Multi-user product expansion (ADR-017)
+
+The original single-creator vertical slice remains the core workflow, but it is no longer the intended final web experience. The target MVP is a real multi-user web product with:
+- Public landing page, Discover catalogue, work detail pages, creator profiles, and provenance pages.
+- Email/password account registration and login through a maintained authentication solution, email verification, secure sessions, and account recovery.
+- Contributor dashboard and profile.
+- Creator Studio for work creation, drafts, publication, permission/version management, and contribution review.
+- Server-side persistence and server-enforced role/ownership permissions.
+- Signed wallet linking for onchain actions, kept separate from account authentication.
+- Existing Soneium provenance contract and read-only evidence verifier.
+
+The full site map, data model, security controls, user journeys, and MVP acceptance criteria are defined in [WEB_PRODUCT_SPEC.md](WEB_PRODUCT_SPEC.md). That specification is canonical for web product scope and supersedes the earlier assumption that the final MVP is only a one-story local browser prototype.
+
+The expansion does not authorize a broad social network, comments, messaging, payments, royalties, token, NFT marketplace, DAO, AI generation, multi-chain support, contract changes, or Mainnet transactions. The local browser prototype remains a development fallback until server-backed persistence and account authorization are implemented.
+
+**Final demo gate:** do not record the final demo until the multi-user MVP acceptance criteria in WEB_PRODUCT_SPEC.md pass, including cross-account authorization tests and a full contributor-to-creator-to-provenance journey.
+
