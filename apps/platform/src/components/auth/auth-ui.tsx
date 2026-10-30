@@ -32,7 +32,7 @@ function StatusMessage({ status }: { status: FormStatus }) {
   return <p className={status.kind === "error" ? "form-status error" : "form-status success"} role="status">{status.message}</p>;
 }
 
-export function SignUpForm() {
+export function SignUpForm({ callbackURL = "/dashboard" }: { callbackURL?: string }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,7 +48,7 @@ export function SignUpForm() {
         name: name.trim(),
         email: email.trim(),
         password,
-        callbackURL: "/dashboard"
+        callbackURL
       });
       if (result.error) {
         setStatus({ kind: "error", message: result.error.message ?? "Could not create the account." });
@@ -75,7 +75,7 @@ export function SignUpForm() {
         <button className="primary-button" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>
         <StatusMessage status={status} />
       </form>
-      <p className="auth-switch">Already registered? <Link href="/sign-in">Sign in</Link></p>
+      <p className="auth-switch">Already registered? <Link href={`/sign-in?callbackURL=${encodeURIComponent(callbackURL)}`}>Sign in</Link></p>
     </AuthShell>
   );
 }
@@ -125,7 +125,7 @@ export function SignInForm({ callbackURL = "/dashboard" }: { callbackURL?: strin
         <button className="primary-button" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
         <StatusMessage status={status} />
       </form>
-      <p className="auth-switch">New to FANOVA? <Link href="/sign-up">Create an account</Link></p>
+      <p className="auth-switch">New to FANOVA? <Link href={`/sign-up?callbackURL=${encodeURIComponent(callbackURL)}`}>Create an account</Link></p>
     </AuthShell>
   );
 }
