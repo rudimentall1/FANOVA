@@ -33,13 +33,13 @@ Slither 0.11.4 completed successfully in [run 40899723269](https://github.com/ru
 
 The contract source currently imports no third-party Solidity library. Foundry and the compiler are development dependencies, not contract runtime dependencies. This reduces dependency surface but does not replace static analysis, compiler review, or an independent audit.
 
-## Deployment blockers
+## Outstanding post-deployment proof gaps
 
-1. Obtain and review the completed Slither output; triage every finding rather than hiding it with blanket suppressions.
-2. The first read-only estimate is recorded in [run 40900185493](https://github.com/rudimentall1/FANOVA/actions/runs/40900185493): `eth_estimateGas` returned 998,201 gas at 13,000,000 wei per gas, implying 0.000012976613 ETH in execution fee at 2026-10-29 15:18 UTC. This is not a total-fee guarantee; the estimate explicitly excludes a separately measured OP Stack L1 data fee. Re-run before deployment and complete the L1 fee estimate.
-3. Add a deployment manifest containing chain ID, compiler version, optimizer settings, constructor arguments, artifact hashes, expected runtime bytecode, and independent verification commands.
-4. Complete the wallet/browser adapter and handle chain mismatch, disconnected wallet, rejected prompt, RPC failure, failed transaction, and transaction/event verification before a public end-to-end claim.
-5. Mainnet deployment has already occurred. Do not redeploy or initiate a transaction from the assistant; any real-value transaction must be initiated by the user through their wallet with clear intent and cost visibility.
+1. Blockscout reports a partial source match. CI found matching executable runtime bytecode after removing Solidity metadata, but full runtime metadata equivalence is not established. Do not describe the source as fully verified.
+2. The browser implements user-approved wallet writes for story registration, contribution registration, and creator decisions. The complete real Mainnet sequence has not yet been demonstrated.
+3. The independent evidence verifier must be exercised against an exported bundle from a real flow, with exact offchain story/contribution bytes retained so an outsider can recompute the hashes.
+4. The wallet path must be exercised with Rabby on Soneium Mainnet, including creator/fan account switching, chain mismatch, rejected prompts, pending/reverted transactions, and receipt/event checks. No transaction should be retried blindly after submission.
+5. Do not redeploy the contract. Any further Mainnet write must be initiated and approved by the user through Rabby; the wallet displays the transaction and fee before signing.
 
 ## Gas evidence
 
@@ -52,5 +52,6 @@ The same run's local Foundry gas report recorded test-context ranges: `registerS
 - Contract and 20 tests: **LOCAL**, CI-passing.
 - Slither 0.11.4: **PASS**, 100 detectors, zero results in [run 40899723269](https://github.com/rudimentall1/FANOVA/actions/runs/40899723269).
 - Mainnet deployment: **MAINNET**, deployed at `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`; full metadata equivalence is not established.
-- Browser wallet integration and end-to-end Mainnet transaction proof: **PLANNED**.
+- Browser wallet write integration: **LOCAL** (user-approved Rabby path implemented; pending live wallet exercise).
+- Complete Mainnet story → contribution → creator-decision proof: **NOT YET DEMONSTRATED**.
 - Independent security audit: **NOT PERFORMED**.
