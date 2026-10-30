@@ -73,3 +73,8 @@ An evidence bundle contains the offchain story and contribution text needed to r
 ## Truth labels
 
 Use `PLANNED`, `LOCAL`, `MAINNET`, and `INDEPENDENTLY VERIFIED` precisely. Do not call a feature live unless its transaction or behavior can be checked independently. A partial source match must not be described as full verification.
+
+## Multi-user product plan
+
+The intended product is a full multi-user web platform with public work discovery, creator profiles and Studio, contributor accounts and dashboards, secure authentication, server-side persistence, and public provenance pages. The current browser app is still a local prototype; production authentication and backend persistence are not implemented. See [Multi-user Web Product Specification](./docs/WEB_PRODUCT_SPEC.md) for the accepted scope, routes, data model, security requirements, and acceptance criteria. Final demo recording is deferred until those criteria pass.
+
