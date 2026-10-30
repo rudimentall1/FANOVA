@@ -12,6 +12,20 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: fanova
+          POSTGRES_USER: fanova
+          POSTGRES_PASSWORD: fanova_dev_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fanova -d fanova"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,3 +59,40 @@ jobs:
           node --check domain.js
           node --check serve.mjs
           node --check e2e.test.js
+
+      - name: Install platform dependencies
+        working-directory: apps/platform
+        run: npm install
+      - name: Check platform TypeScript
+        working-directory: apps/platform
+        run: npm run typecheck
+        env:
+          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+          BETTER_AUTH_URL: http://localhost:3000
+      - name: Run platform authorization tests
+        working-directory: apps/platform
+        run: npm test
+      - name: Generate and apply PostgreSQL migrations
+        working-directory: apps/platform
+        run: |
+          npm run db:generate
+          npm run db:migrate
+        env:
+          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+          BETTER_AUTH_URL: http://localhost:3000
+      - name: Validate Better Auth Drizzle schema
+        working-directory: apps/platform
+        run: npx auth@latest check schema --config ./src/lib/auth.ts
+        env:
+          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+          BETTER_AUTH_URL: http://localhost:3000
+      - name: Build platform application
+        working-directory: apps/platform
+        run: npm run build
+        env:
+          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+          BETTER_AUTH_URL: http://localhost:3000

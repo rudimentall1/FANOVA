@@ -1,0 +1,38 @@
+{
+  "name": "fanova-platform",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "auth:check": "npx auth@latest check schema --config ./src/lib/auth.ts",
+    "auth:generate": "npx auth@latest generate --output src/db/schema/auth.ts"
+  },
+  "dependencies": {
+    "better-auth": "^1.4.0",
+    "drizzle-orm": "^0.45.4",
+    "next": "^16.0.0",
+    "pg": "^8.16.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.1",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "drizzle-kit": "^0.31.4",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
