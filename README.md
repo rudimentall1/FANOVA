@@ -6,13 +6,25 @@ FANOVA is an onchain entertainment product concept for creators and fan communit
 
 ## Project status
 
-**Stage:** local application prototype plus one deployed Soneium Mainnet provenance contract. The deployment is visible on [Blockscout](https://soneium.blockscout.com/address/0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880). Blockscout reports **source code verified (partial match)**. A GitHub Actions comparison using Solidity 0.8.27, Cancun EVM target, optimizer enabled, and 200 runs found that the deployed runtime bytecode and the current repository build have the **same executable bytecode after removing Solidity metadata**. The full runtime bytecode differs in metadata, so Blockscout's partial-match status remains accurate. This is not an independent security audit.
+**Stage:** early-stage browser application prototype with one completed user-approved Soneium Mainnet Story registration, Contribution registration, and Creator decision workflow, plus the deployed provenance contract. The deployment is visible on [Blockscout](https://soneium.blockscout.com/address/0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880). Blockscout reports **source code verified (partial match)**. A GitHub Actions comparison using Solidity 0.8.27, Cancun EVM target, optimizer enabled, and 200 runs found that the deployed runtime bytecode and the current repository build have the **same executable bytecode after removing Solidity metadata**. The full runtime bytecode differs in metadata, so Blockscout's partial-match status remains accurate. This is not an independent security audit.
 
 Contract address: `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`
 
 Deployment transaction: [`0xb2086bd26326b428f4806e9a93a202631528ec8bffe4ff9f9f8f102cf9e34c`](https://soneium.blockscout.com/tx/0xb2086bd26326b428f4806e9a93a202631528ec8bffe4ff9f9f8f102cf9e34c)
 
-No ERC-20 token, production integration, verified users, or revenue is claimed. The contract records provenance hashes and creator decisions; it does not establish legal IP ownership or licensing.
+### Soneium Mainnet workflow evidence
+
+On 2026-10-30, three user-approved transactions completed successfully:
+
+| Step | Method | Block | Transaction |
+|---|---|---:|---|
+| Story registration | `registerStoryVersion` | `30105304` | [Blockscout](https://soneium.blockscout.com/tx/0xeabf1bbeffee5405c4e8b81586dde14f9bea2154fa798d5d76ce5ab8f2f07f55) |
+| Contribution registration | `registerContribution` | `30105412` | [Blockscout](https://soneium.blockscout.com/tx/0x46d61b5e9cb33bb961ee12623760d59e4f237b0b33389be51fa8bd1b84a1d4df) |
+| Creator decision | `decideContribution` | `30105502` | [Blockscout](https://soneium.blockscout.com/tx/0xf3b026b983f5e7c07a67ed71ff150d6262364cbc3d83cf2be29a2b80c1a1ab98) |
+
+The exported evidence bundle was checked with FANOVA's read-only verifier, which returned **`VERIFIED`** after recomputing content hashes and checking contract storage, transaction receipts, and expected events. This is the project's verifier result, not a third-party audit or external certification. The smoke test used placeholder content (`Story title`), so it demonstrates the technical workflow, not a creator pilot or production use. Keep the original exported JSON to reproduce the checks; it contains the offchain content and is not committed to this repository. See [Demo and Evidence](./docs/DEMO_AND_EVIDENCE.md) for full details.
+
+No ERC-20 token, production customer deployment, verified user base, or revenue is claimed. The contract records provenance hashes and creator decisions; it does not establish legal IP ownership or licensing.
 
 **Target:** Sony Onchain Entertainment Incubation Program.
 

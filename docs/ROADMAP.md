@@ -1,8 +1,8 @@
-# FANOVA Roadmap — 30-Day Delivery
+# FANOVA Roadmap - 30-Day Delivery
 
 Dates are relative to kickoff. Status changes only after evidence is checked.
 
-## P0 — Baseline and application mapping (Days 1–3)
+## P0 - Baseline and application mapping (Days 1–3)
 - [x] Map all 24 official application questions to evidence, answer owner, and status in `docs/APPLICATION_EVIDENCE_MAP.md`; founder-specific answers remain open.
 - [ ] Freeze core user story and one original-IP pilot scenario.
 - [x] Complete initial desk research on Soneium IP architecture and adjacent product categories in `docs/COMPETITIVE_LANDSCAPE.md`.
@@ -11,7 +11,7 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [x] Set Soneium Mainnet as target; Minato is optional, not a required milestone.
 **Exit gate:** clear MVP, target user, target network, and evidence requirements.
 
-## P1 — Local vertical slice (Days 4–12)
+## P1 - Local vertical slice (Days 4–12)
 **Status: COMPLETE for the local vertical slice.** Eleven domain tests, JavaScript syntax checks, and a Playwright Chromium end-to-end workflow pass in GitHub Actions on a clean checkout.
 - [x] Establish a dependency-free browser app and domain rules in `apps/web/`.
 - [x] Add permission-version linkage to contributions and reject stale permission versions in domain rules.
@@ -23,7 +23,7 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [x] Label the prototype as local and explicitly state that no chain writes occur; verify the full UI flow automatically in a real browser.
 **Exit gate:** fresh checkout runs app/tests and a full local demo works.
 
-## P2 — Mainnet provenance path (Days 13–19)
+## P2 - Mainnet provenance path (Days 13–19)
 - [x] Define the minimum externally verifiable provenance claim and evidence requirements in `docs/PROVENANCE_REQUIREMENTS.md`.
 - [x] Check the official Soneium contract directory and EAS deployment catalog; EAS/SchemaRegistry addresses are documented, but live bytecode/source/runtime behavior is not yet independently verified.
 - [x] Compare EAS-only attestations with a minimal workflow contract in docs/ONCHAIN_PROOF_DESIGN.md; EAS alone does not enforce creator authorization or one final decision.
@@ -41,20 +41,20 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [x] Deploy the workflow contract to Soneium Mainnet and record its address/transaction in the repository README. Deployment exists, but source metadata is not an exact full-runtime match.
 - [x] Add a read-only browser panel that checks Soneium chain ID and whether bytecode exists at the deployed address; it links to Blockscout and reports RPC failures.
 - [ ] Complete independent verification instructions and final security checklist, including a fresh gas and L1 data-fee estimate before further mainnet transactions.
-- [x] Implement browser wallet controls for story registration, contribution registration, and creator decision writes. The UI checks Soneium chain ID, handles rejected network/wallet requests, waits for receipts, and checks expected events. User must initiate and approve each wallet transaction. This is code-level implementation, not evidence that the full live flow has succeeded.
+- [x] Implement browser wallet controls for story registration, contribution registration, and creator decision writes. The UI checks Soneium chain ID, handles rejected network/wallet requests, waits for receipts, and checks expected events. User must initiate and approve each wallet transaction. A complete user-approved Mainnet sequence was subsequently executed; see `docs/DEMO_AND_EVIDENCE.md`.
 - [x] Add a read-only evidence-bundle verifier that recomputes story/permission/contribution hashes, checks creator-bound story IDs, reads matching contract storage, and verifies referenced transaction receipts/events. Missing registration or local-only decisions are reported as PARTIALLY VERIFIED, not VERIFIED.
 - [x] Persist story/contribution identifiers before wallet submission and save each returned transaction hash before waiting for its receipt. Unit tests cover successful confirmation, reverted receipts, and local metadata-save failure.
-- [ ] Demonstrate one complete real Mainnet story → contribution → decision flow with independently inspectable transactions/events and accessible offchain bytes for hash recomputation. The UI can export an evidence JSON bundle, but a real flow and independent verification are still outstanding.
-**Exit gate:** an outsider can verify a real story registration, contribution, and final decision from Mainnet transactions/events and can retrieve the exact referenced offchain bytes to recompute hashes. Contract deployment alone and a code-presence check do not satisfy this gate.
+- [x] Demonstrate one complete real Mainnet story registration, contribution registration, and creator decision flow. Three user-approved transactions succeeded, and the exported bundle was checked by FANOVA's read-only verifier, which returned `VERIFIED`. The exact bundle contains the offchain bytes needed for hash recomputation and must be retained/shared with an evaluator when appropriate. This is not a third-party audit or external certification; see `docs/DEMO_AND_EVIDENCE.md`.
+**Mainnet workflow demonstration gate:** MET for the recorded smoke-test bundle: all three Mainnet operations succeeded and the project verifier returned `VERIFIED` after recomputing hashes and checking contract storage/receipts/events. To reproduce as an outsider, provide the unchanged exported bundle through an appropriate access-controlled channel. This does not close the remaining P2 due-diligence and security-checklist items above, or the original-IP pilot work in P3.
 
-## P3 — Pilot and differentiation (Days 20–24)
+## P3 - Pilot and differentiation (Days 20–24)
 - [ ] Obtain permission for original pilot story/materials.
 - [ ] Run a small creator/fan test.
 - [ ] Record real observations and feedback; never invent metrics.
 - [ ] Revisit differentiation against competitors using evidence.
 **Exit gate:** honest pilot result, including negative or inconclusive findings.
 
-## P4 — Application and demo (Days 25–30)
+## P4 - Application and demo (Days 25–30)
 - [ ] Prepare answers mapped to every application question.
 - [ ] Record a concise demo showing success and meaningful failure.
 - [ ] Verify addresses, links, tests, and status claims.
