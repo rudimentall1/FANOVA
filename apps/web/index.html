@@ -46,9 +46,9 @@
         <p class="proof-limit">Only submit a story or contribution once. This UI checks the expected event in the transaction receipt. Export the evidence JSON and retain the original text for independent hash recomputation. Mainnet transactions cost ETH gas.</p>
       </section>
       <section class="onchain-actions evidence-verifier" aria-labelledby="evidence-verifier-title">
-        <p class="eyebrow">INDEPENDENT CHECK · READ ONLY</p>
+        <p class="eyebrow">READ-ONLY EVIDENCE CHECK</p>
         <h3 id="evidence-verifier-title">Verify an evidence bundle</h3>
-        <p class="muted">Select a JSON bundle exported by FANOVA. The verifier recomputes content hashes and checks recorded transaction receipts and expected contract events against Soneium Mainnet. It never requests wallet access or sends transactions.</p>
+        <p class="muted">Select a JSON bundle exported by FANOVA. The verifier recomputes content hashes and checks the records included in that bundle against contract storage and referenced Soneium Mainnet receipts/events. It never requests wallet access or sends transactions. It does not yet scan the full contract event history, so it cannot prove that the bundle contains every contribution for the story.</p>
         <label class="reason-field">Evidence JSON file<input id="evidence-file" type="file" accept="application/json,.json"></label>
         <button class="secondary" id="verify-evidence" type="button">Verify bundle</button>
         <p id="evidence-verify-detail" class="muted" role="status" aria-live="polite">No bundle selected.</p>
