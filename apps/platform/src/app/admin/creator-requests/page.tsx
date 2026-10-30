@@ -4,6 +4,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { creatorAccessRequest, user, userProfile } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
+import { canReviewCreatorRequests } from "@/lib/authz";
 import { CreatorRequestReview } from "@/components/creator-access/creator-access-ui";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminCreatorRequestsPage() {
   const actor = await getCurrentActor();
   if (!actor) redirect("/sign-in");
-  if (!actor.roles.includes("admin")) redirect("/dashboard");
+  if (!canReviewCreatorRequests(actor)) redirect("/dashboard");
 
   const requests = await db
     .select({
