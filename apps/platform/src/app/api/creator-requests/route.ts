@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { creatorAccessRequest } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
 import { creatorRequestSchema } from "@/lib/creator-request-validation";
+import { canRequestCreatorAccess } from "@/lib/authz";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const actor = await getCurrentActor();
   if (!actor) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  if (actor.roles.includes("creator")) {
+  if (!canRequestCreatorAccess(actor)) {
     return NextResponse.json({ error: "This account already has creator access." }, { status: 409 });
   }
 
