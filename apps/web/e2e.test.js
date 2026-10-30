@@ -36,6 +36,8 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await page.locator("#story-form button").click();
     await assertNotice(page, "Story published locally");
     assert.match(await page.locator(".permission-box").innerText(), /Permitted-use rules · v1/);
+    assert.match(await page.locator(".story-meta").innerText(), /Demo label: Demo Creator \\(simulated\\)/);
+    assert.match(await page.locator(".story-card .source-ref").innerText(), /Creator label is local and simulated/);
 
     await page.getByRole("button", { name: "Fan" }).click();
     await page.getByLabel("Contribution title").fill("The Midnight Map");
@@ -44,6 +46,7 @@ test("creator-to-fan workflow and unauthorized review failure work in a real bro
     await page.locator("#contribution-form button").click();
     await assertNotice(page, "Contribution saved locally");
     assert.match(await page.locator(".contribution-card .source-ref").first().innerText(), /source v1 · permissions v1/);
+    assert.match(await page.locator(".contribution-card .source-ref").first().innerText(), /Contributor label is local and simulated/);
     assert.match(await page.locator(".contribution-top").first().innerText(), /Demo label: Demo Fan \(simulated\)/);
 
     await page.getByRole("button", { name: "Try unauthorized approval" }).click();
