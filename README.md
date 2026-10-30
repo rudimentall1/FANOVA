@@ -49,6 +49,7 @@ Before implementation tasks, read [`AGENTS.md`](./AGENTS.md) and [`docs/PROJECT_
 - [Product manifesto and positioning](./docs/PRODUCT_MANIFEST.md)
 - [Canonical scope and acceptance criteria](./docs/PROJECT_SKELETON.md)
 - [Architecture and security boundaries](./docs/ARCHITECTURE.md)
+- [Multi-user application stack decision](./docs/STACK_DECISION.md)
 - [Roadmap and current gates](./docs/ROADMAP.md)
 - [Sony application evidence map](./docs/APPLICATION_EVIDENCE_MAP.md)
 - [Competitive landscape](./docs/COMPETITIVE_LANDSCAPE.md)
