@@ -28,6 +28,7 @@ export const contribution = pgTable("contribution", {
   sourceVersionId: text("source_version_id").notNull().references(() => workVersion.id, { onDelete: "restrict" }),
   contributorUserId: text("contributor_user_id").notNull().references(() => user.id, { onDelete: "restrict" }),
   type: contributionType("type").notNull(),
+  commercialIntent: boolean("commercial_intent").notNull().default(false),
   title: text("title").notNull(),
   content: text("content").notNull(),
   contentHash: text("content_hash").notNull(),
