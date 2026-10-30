@@ -90,11 +90,12 @@ async function verifyBundle(bundle) {
   checks.push(`Story content hashes, creator-bound ID, contract storage, and StoryVersionRegistered receipt verified (block ${storyReceipt.blockNumber}).`);
 
   let verifiedContributions = 0;
-  const unanchoredContributions = [];
+  const incompleteEvidence = [];
   for (const contribution of state.contributions) {
+    const contributionLabel = contribution.title || contribution.id;
     const record = meta.contributions[contribution.id];
     if (!record?.contributionId || !record?.txHash) {
-      unanchoredContributions.push(contribution.title || contribution.id);
+      incompleteEvidence.push(`"${contributionLabel}" has no verifiable onchain registration transaction reference`);
       continue;
     }
     const contributionHash = keccak256(toUtf8Bytes(canonicalContribution(contribution)));
@@ -121,6 +122,7 @@ async function verifyBundle(bundle) {
     checks.push(`Contribution "${contribution.title}" hash, contract storage, and registration event verified (block ${contributionReceipt.blockNumber}).`);
     if (record.decisionTxHash) {
       assert(["approved", "rejected"].includes(record.outcome), `Decision outcome is missing for ${contribution.id}.`);
+      assert(contribution.status === record.outcome && contribution.decision?.outcome === record.outcome, `Local decision outcome does not match the onchain evidence for ${contribution.id}.`);
       const reasonText = (record.reason || "").trim();
       const reasonInput = reasonText || (record.outcome === "approved" ? "APPROVED" : "REJECTED");
       const reasonCode = keccak256(toUtf8Bytes(reasonInput));
@@ -141,11 +143,14 @@ async function verifyBundle(bundle) {
       checks.push(`Creator decision event verified for "${contribution.title}" (block ${decisionReceipt.blockNumber}).`);
     } else {
       assert(chainContribution.decided === false, `Contribution ${contribution.id} is decided onchain but the bundle has no decision transaction.`);
+      if (["approved", "rejected"].includes(contribution.status) || contribution.decision) {
+        incompleteEvidence.push(`"${contributionLabel}" has a local creator decision but no verifiable onchain decision transaction reference`);
+      }
     }
     verifiedContributions++;
   }
   assert(verifiedContributions > 0, "No contribution records with onchain metadata were found in this bundle.");
-  return { checks, unanchoredContributions };
+  return { checks, incompleteEvidence };
 }
 
 verifyButton.addEventListener("click", async () => {
@@ -156,11 +161,10 @@ verifyButton.addEventListener("click", async () => {
   try {
     const bundle = JSON.parse(await file.text());
     const result = await verifyBundle(bundle);
-    if (result.unanchoredContributions.length > 0) {
-      const unanchored = result.unanchoredContributions.join(", ");
+    if (result.incompleteEvidence.length > 0) {
       report(
         "PARTIALLY VERIFIED",
-        `${result.checks.join(" ")} ${result.unanchoredContributions.length} local contribution(s) have no transaction reference in this bundle and were not verified: ${unanchored}.`,
+        `${result.checks.join(" ")} Incomplete evidence: ${result.incompleteEvidence.join("; ")}.`,
         "partial"
       );
     } else {
