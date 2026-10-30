@@ -157,3 +157,15 @@ This file is the append-only record of material project decisions. New decisions
 - **Alternatives:** Continue using VERIFIED without qualification; treat the bundle as complete based only on local export metadata; change the deployed contract.
 - **Consequences:** The code now has a defined completeness check without changing the deployed contract. CI covers comparison and chunking behavior; one live Mainnet run remains necessary to validate RPC behavior and the actual exported bundle.
 - **Explicit user approval:** Yes, in project conversation on 2026-10-30.
+
+## ADR-017 — Expand FANOVA into a multi-user creator and contributor platform
+- **Date:** 2026-10-30
+- **Status:** Accepted product direction; implementation not started
+- **Context:** The current browser app is a local prototype with simulated Creator/Fan labels and localStorage persistence. That is useful for proving the workflow and contract integration, but it is not a credible user-facing publishing product. The product needs public work discovery, creator and contributor accounts, persistent work records, profiles, and separate workspaces.
+- **Decision:** Expand the web product to include real account authentication, server-side persistence, public catalogue and work pages, creator profiles and Creator Studio, contributor profiles and dashboards, contribution review, version lifecycle, and public provenance pages. The exact routes, roles, data model, security requirements, journeys, and acceptance criteria are defined in `docs/WEB_PRODUCT_SPEC.md`.
+- **Scope boundary:** Keep the core product narrow: creator-controlled participation in story-based IP and verifiable provenance. Do not add a social network, comments, messaging, payments, royalties, token, NFT marketplace, DAO, AI generation suite, or multi-chain support to this MVP.
+- **Architecture constraints:** Keep creative content and personal data offchain. Use maintained authentication rather than custom password/session cryptography. Enforce role and ownership checks on the server and database. Link wallets using signed challenges. Preserve the existing deployed Soneium contract; no contract changes, redeployment, or Mainnet writes are authorized by this decision.
+- **Alternatives:** Keep the single-page local demo as the final product; build a broad fan social network; replace the existing provenance contract; add payment/token features before validating the core workflow.
+- **Consequences:** More engineering work is required, including backend, database, authentication, deployment, privacy, and authorization testing. The final demo is delayed until the multi-user acceptance criteria pass. The existing local prototype and provenance contract remain reusable foundations.
+- **Explicit user approval:** Yes, in project conversation on 2026-10-30. The user explicitly requested the full multi-page site with user/creator accounts, login/password, work pages, and catalogues, and approved proceeding with the product/site specification.
+
