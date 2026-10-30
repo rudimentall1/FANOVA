@@ -87,3 +87,13 @@ test("ignores a locally prepared contribution that has no submitted transaction"
   const result = compareEventCoverage(args);
   assert.deepEqual(result.incompleteEvidence, []);
 });
+
+test("rejects a gap in sequential story-version events", () => {
+  const { args } = fixture();
+  args.storyVersionEvents.push({
+    args: { storyId, sourceVersion: 3 },
+    transactionHash: "0x" + "88".repeat(32),
+    blockNumber: 15
+  });
+  assert.throws(() => compareEventCoverage(args), /missing or non-sequential/);
+});
