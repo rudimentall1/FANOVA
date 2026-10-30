@@ -52,6 +52,12 @@ The verifier does not request wallet access and does not send transactions. It c
 - For confirmed on-chain records, the wallet address in the contract event is the attribution source. The UI displays an address only after the corresponding transaction receipt and expected event have been confirmed.
 - A wallet address proves that the address submitted the transaction. It does not identify a natural person, establish beneficial ownership, or prove legal IP rights.
 
+### Version lifecycle
+
+Pending contributions are marked STALE when their source version or acknowledged permission version/text no longer matches the current story state. Stale contributions remain visible as historical records and are not offered for creator approval. A new contribution must be submitted against the current version.
+
+**Remaining limitation:** the current browser MVP has no creator-facing source-revision action and does not yet export a complete multi-version content history for on-chain verification. The UI state handling and rejection guard are implemented, but a full version-editing and historical evidence workflow remains open.
+
 ### Evidence retention and demo limitations
 
 - Retain the original exported `fanova-evidence-bundle.json`. It contains the offchain Story and Contribution text needed to recompute hashes. Do not edit the bundle after export.
