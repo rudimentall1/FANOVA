@@ -93,7 +93,7 @@ export function StoryProvenanceAction({ workVersionId, versionNumber, anchor: in
       if (chainId !== 1868) {
         await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x74c" }] });
         const switched = await provider.request({ method: "eth_chainId" });
-        chainId = typeof switched === "string' ? Number.parseInt(switched, 16) : Number.NaN;
+        chainId = typeof switched === "string" ? Number.parseInt(switched, 16) : Number.NaN;
       }
       if (chainId !== 1868) throw new Error("Switch Rabby to Soneium Mainnet (Chain ID 1868).");
 
