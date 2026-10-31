@@ -55,6 +55,7 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
       setKind("info");
       setMessage(result.error ?? "Transaction is not indexed yet. Retry verification with the same hash.");
       setTransactionHash(hash);
+      localStorage.setItem(`fanova:provenance:tx:${workVersionId}`, hash);
       return;
     }
     if (!response.ok || result.status !== "MAINNET" || !result.explorerUrl) {
@@ -64,7 +65,8 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
       ...current, status: "mainnet", transactionHash: hash,
       blockNumber: result.blockNumber ?? null, verifiedAt: new Date().toISOString()
     } : current);
-    localStorage.removeItem(`fanova:provenance:intent:${workVersionId}`);\n    localStorage.removeItem(`fanova:provenance:tx:${workVersionId}`);
+    localStorage.removeItem(`fanova:provenance:intent:${workVersionId}`);
+    localStorage.removeItem(`fanova:provenance:tx:${workVersionId}`);
     setKind("success");
     setMessage(`Verified on Soneium Mainnet in block ${result.blockNumber ?? "unknown"}.`);
   }
@@ -118,6 +120,12 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
       }
       const activeAnchor = intent.anchor;
       setAnchor(activeAnchor);
+      const pendingHash = localStorage.getItem(`fanova:provenance:tx:${workVersionId}`);
+      if (pendingHash && /^0x[0-9a-fA-F]{64}$/.test(pendingHash)) {
+        setTransactionHash(pendingHash);
+        await verifySubmitted(activeAnchor.id, pendingHash);
+        return;
+      }
       if (signer.toLowerCase() !== activeAnchor.expectedSignerAddress.toLowerCase()) {
         throw new Error("The connected Rabby account does not match the wallet linked to this FANOVA account.");
       }
@@ -141,6 +149,7 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
         throw new Error("Rabby did not return a valid transaction hash.");
       }
       setTransactionHash(sent);
+      localStorage.setItem(`fanova:provenance:tx:${workVersionId}`, sent);
       await verifySubmitted(activeAnchor.id, sent);
     } catch (error) {
       setKind("error");
