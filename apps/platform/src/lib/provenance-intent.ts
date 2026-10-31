@@ -24,3 +24,20 @@ export function asBytes32Hash(hash: string): Hex | null {
   if (!/^[0-9a-f]{64}$/i.test(hash)) return null;
   return `0x${hash}` as Hex;
 }
+
+/**
+ * Permission versions advance only when the permission hash changes.
+ * Returns null for invalid or exhausted prior versions.
+ */
+export function nextPermissionVersion(
+  currentPermissionHash: string,
+  previousPermissionHash: string,
+  previousPermissionVersion: number
+): number | null {
+  if (!Number.isSafeInteger(previousPermissionVersion) ||
+      previousPermissionVersion < 1 ||
+      previousPermissionVersion >= Number.MAX_SAFE_INTEGER) return null;
+  return currentPermissionHash.toLowerCase() === previousPermissionHash.toLowerCase()
+    ? previousPermissionVersion
+    : previousPermissionVersion + 1;
+}
