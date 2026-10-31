@@ -96,8 +96,8 @@ export default async function WorkVersionsPage({ params }: { params: Promise<{ s
                 <code>Source: {version.sourceHash}</code>
                 <code>Permissions: {version.permissionHash}</code>
               </div>
-              {isLive && version.versionNumber === 1 ? (
-                <StoryProvenanceAction workVersionId={version.id} anchor={anchor} />
+              {isLive ? (
+                <StoryProvenanceAction workVersionId={version.id} versionNumber={version.versionNumber} anchor={anchor} />
               ) : null}
             </article>
           );
