@@ -136,14 +136,14 @@ describe("server-side creator decision verification", () => {
     const event = {
       ...expectedDecision,
       storyId: `0x${"11".repeat(32)}` as Hex,
-      sourceVersion: 2n,
+      sourceVersion: BigInt(2),
       reviewer: creator,
-      decidedAt: 1n
+      decidedAt: BigInt(1)
     };
     const expected = { ...expectedDecision, storyId: event.storyId, sourceVersion: 2n, reviewer: creator };
     expect(matchesCreatorDecisionEvent(event, expected)).toBe(true);
     expect(matchesCreatorDecisionEvent({ ...event, reviewer: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address }, expected)).toBe(false);
     expect(matchesCreatorDecisionEvent({ ...event, approved: true }, expected)).toBe(false);
-    expect(matchesCreatorDecisionEvent({ ...event, decidedAt: 0n }, expected)).toBe(false);
+    expect(matchesCreatorDecisionEvent({ ...event, decidedAt: BigInt(0) }, expected)).toBe(false);
   });
 });
