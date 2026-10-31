@@ -4,7 +4,11 @@ import {
   matchesStoryRegistrationCall,
   matchesStoryVersionEvent,
   STORY_REGISTRATION_ABI,
-  type ExpectedStoryRegistration
+  type ExpectedStoryRegistration,
+  CONTRIBUTION_REGISTRATION_ABI,
+  matchesContributionRegisteredEvent,
+  matchesContributionRegistrationCall,
+  type ExpectedContributionRegistration
 } from "./provenance-submission";
 
 const expected: ExpectedStoryRegistration = {
@@ -44,12 +48,6 @@ describe("server-side story registration verification", () => {
   });
 });
 
-import {
-  CONTRIBUTION_REGISTRATION_ABI,
-  matchesContributionRegisteredEvent,
-  matchesContributionRegistrationCall,
-  type ExpectedContributionRegistration
-} from "./provenance-submission";
 
 const expectedContribution: ExpectedContributionRegistration = {
   contributionId: `0x${"55".repeat(32)}` as Hex,
@@ -83,7 +81,7 @@ describe("server-side contribution registration verification", () => {
     })).toBe(false);
     expect(matchesContributionRegistrationCall(input, {
       ...expectedContribution,
-      permissionAcknowledged: false as true
+      permissionAcknowledged: false as unknown as true
     })).toBe(false);
     expect(matchesContributionRegistrationCall("0x1234" as Hex, expectedContribution)).toBe(false);
   });
