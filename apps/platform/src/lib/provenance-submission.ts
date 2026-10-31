@@ -160,5 +160,5 @@ export function matchesCreatorDecisionEvent(args: {
     args.reviewer.toLowerCase() === expected.reviewer.toLowerCase() &&
     args.approved === expected.approved &&
     args.reasonCode.toLowerCase() === expected.reasonCode.toLowerCase() &&
-    args.decidedAt > 0n;
+    args.decidedAt > BigInt(0);
 }
