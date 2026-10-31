@@ -3,6 +3,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import {
   asBytes32Hash,
   deriveStoryIdentity,
+  deriveContributionIdentity,
   nextPermissionVersion,
   nextProvenanceVersion
 } from "./provenance-intent";
@@ -63,5 +64,14 @@ describe("provenance sequence progression", () => {
     expect(nextProvenanceVersion(-1)).toBeNull();
     expect(nextProvenanceVersion(1.5)).toBeNull();
     expect(nextProvenanceVersion(Number.MAX_SAFE_INTEGER)).toBeNull();
+  });
+});
+
+describe("contribution identity", () => {
+  it("derives a stable bytes32 identifier from the contribution record ID", async () => {
+    const first = deriveContributionIdentity("a1b2c3d4-1234-4abc-8def-1234567890ab");
+    expect(first).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(deriveContributionIdentity("a1b2c3d4-1234-4abc-8def-1234567890ab")).toBe(first);
+    expect(deriveContributionIdentity("b1b2c3d4-1234-4abc-8def-1234567890ab")).not.toBe(first);
   });
 });

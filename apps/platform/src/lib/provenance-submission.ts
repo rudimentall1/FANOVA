@@ -54,3 +54,62 @@ export function matchesStoryVersionEvent(args: {
     args.permissionVersion === expected.permissionVersion &&
     args.permissionHash.toLowerCase() === expected.permissionHash.toLowerCase();
 }
+
+export const CONTRIBUTION_REGISTRATION_ABI = parseAbi([
+  "function registerContribution(bytes32 contributionId, bytes32 storyId, uint64 sourceVersion, uint64 permissionVersion, bytes32 permissionHash, bytes32 contributionHash, bool permissionAcknowledged)",
+  "event ContributionRegistered(bytes32 indexed contributionId, bytes32 indexed storyId, uint64 indexed sourceVersion, address contributor, bytes32 contributionHash, uint64 permissionVersion, bytes32 permissionHash, bool permissionAcknowledged)"
+]);
+
+export type ExpectedContributionRegistration = {
+  contributionId: Hex;
+  storyId: Hex;
+  sourceVersion: bigint;
+  permissionVersion: bigint;
+  permissionHash: Hex;
+  contributionHash: Hex;
+  permissionAcknowledged: true;
+};
+
+export function matchesContributionRegistrationCall(
+  input: Hex,
+  expected: ExpectedContributionRegistration
+): boolean {
+  try {
+    const decoded = decodeFunctionData({ abi: CONTRIBUTION_REGISTRATION_ABI, data: input });
+    if (decoded.functionName !== "registerContribution") return false;
+    const [contributionId, storyId, sourceVersion, permissionVersion, permissionHash, contributionHash, permissionAcknowledged] = decoded.args;
+    return contributionId.toLowerCase() === expected.contributionId.toLowerCase() &&
+      storyId.toLowerCase() === expected.storyId.toLowerCase() &&
+      sourceVersion === expected.sourceVersion &&
+      permissionVersion === expected.permissionVersion &&
+      permissionHash.toLowerCase() === expected.permissionHash.toLowerCase() &&
+      contributionHash.toLowerCase() === expected.contributionHash.toLowerCase() &&
+      permissionAcknowledged === true;
+  } catch {
+    return false;
+  }
+}
+
+export type ExpectedContributionRegisteredEvent = ExpectedContributionRegistration & {
+  contributor: Address;
+};
+
+export function matchesContributionRegisteredEvent(args: {
+  contributionId: Hex;
+  storyId: Hex;
+  sourceVersion: bigint;
+  contributor: Address;
+  contributionHash: Hex;
+  permissionVersion: bigint;
+  permissionHash: Hex;
+  permissionAcknowledged: boolean;
+}, expected: ExpectedContributionRegisteredEvent): boolean {
+  return args.contributionId.toLowerCase() === expected.contributionId.toLowerCase() &&
+    args.storyId.toLowerCase() === expected.storyId.toLowerCase() &&
+    args.sourceVersion === expected.sourceVersion &&
+    args.contributor.toLowerCase() === expected.contributor.toLowerCase() &&
+    args.contributionHash.toLowerCase() === expected.contributionHash.toLowerCase() &&
+    args.permissionVersion === expected.permissionVersion &&
+    args.permissionHash.toLowerCase() === expected.permissionHash.toLowerCase() &&
+    args.permissionAcknowledged === true;
+}
