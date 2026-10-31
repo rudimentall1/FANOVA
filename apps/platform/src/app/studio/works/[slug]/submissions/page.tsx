@@ -36,6 +36,27 @@ export default async function WorkSubmissionsPage({ params }: { params: Promise<
     .orderBy(asc(contribution.createdAt))
     .limit(100);
 
+  const decisionAnchors = rows.length ? await db.select({
+    contributionId: provenanceAnchor.contributionId,
+    id: provenanceAnchor.id,
+    status: provenanceAnchor.status,
+    expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
+    contractAddress: provenanceAnchor.contractAddress,
+    transactionHash: provenanceAnchor.transactionHash,
+    blockNumber: provenanceAnchor.blockNumber
+  }).from(provenanceAnchor).where(and(
+    inArray(provenanceAnchor.contributionId, rows.map((row) => row.id)),
+    eq(provenanceAnchor.operationType, "creator_decision")
+  )) : [];
+  const decisionAnchorByContribution = new Map(decisionAnchors.map((anchor) => [anchor.contributionId, {
+    id: anchor.id,
+    status: anchor.status,
+    expectedSignerAddress: anchor.expectedSignerAddress,
+    contractAddress: anchor.contractAddress,
+    transactionHash: anchor.transactionHash,
+    blockNumber: anchor.blockNumber?.toString() ?? null
+  }]));
+
   return (
     <main className="shell dashboard-shell">
       <header className="topbar"><Link className="brand" href="/">FANOVA</Link><Link className="text-link" href="/studio/works">Your works</Link></header>
@@ -60,6 +81,7 @@ export default async function WorkSubmissionsPage({ params }: { params: Promise<
               createdAt={row.createdAt}
               status={row.status}
               feedback={row.feedback}
+              decisionAnchor={decisionAnchorByContribution.get(row.id) ?? null}
             />
           ))}
         </section>
