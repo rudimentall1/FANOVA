@@ -107,7 +107,6 @@ export async function POST(request: Request) {
       .limit(1);
     if (prior) return { kind: "already_exists" as const };
 
-    const identity = deriveStoryIdentity(version.workId, wallet.address as Address);
     const now = new Date();
     const [anchor] = await tx.insert(provenanceAnchor).values({
       id: randomUUID(),
@@ -157,7 +156,7 @@ export async function POST(request: Request) {
     idempotent: result.kind === "existing",
     transaction: {
       functionName: "registerStoryVersion",
-      args: [result.storyId, result.creatorSalt, BigInt(result.sourceVersion), result.sourceHash, 1n, result.permissionHash].map((value) => typeof value === "bigint" ? value.toString() : value),
+      args: [result.storyId, result.creatorSalt, BigInt(result.sourceVersion), result.sourceHash, BigInt(1), result.permissionHash].map((value) => typeof value === "bigint" ? value.toString() : value),
       chainId: FANOVA_CHAIN_ID,
       requiresUserSignature: true,
       submitted: false
