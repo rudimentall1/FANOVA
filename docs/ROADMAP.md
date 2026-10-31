@@ -51,7 +51,7 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 **Post-deployment hardening still open:**
 - [x] Implement bounded event enumeration from the deployment block through a fixed verification block and reconcile story-version, contribution, and decision events against the exported bundle. Add unit tests for chunking and missing/extra records; CI passes.
 - [ ] Validate the new full-history scan against the existing Soneium Mainnet evidence bundle and record its verification block. The scan uses the public RPC's latest block snapshot; finality/reorg handling remains a documented limitation.
-- [ ] Make historical pending contributions visibly `STALE` in the UI when a newer source version exists; retain read-only verification of their historical records.
+- [x] Make historical pending contributions visibly `STALE` in the UI when a newer source version exists; retain their read-only historical display. The multi-user review UI disables review actions for stale records and explains the required resubmission path ([PR #35](https://github.com/rudimentall1/FANOVA/pull/35), merged; CI run [41186040120](https://github.com/rudimentall1/FANOVA/actions/runs/41186040120) passed).
 - [ ] Add explicit UI/export tests showing that demo display names are simulated and wallet addresses are the source of truth for onchain attribution.
 
 ## P3 - Pilot and differentiation (Days 20–24)

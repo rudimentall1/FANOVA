@@ -140,3 +140,11 @@ Do not use `INDEPENDENTLY VERIFIED` merely because a team member opened the expl
 - Unlabelled test tokens or testnet ETH described as revenue.
 - Unlicensed entertainment IP.
 - Claims of Sony partnership, endorsement, or selection without official evidence.
+
+## P2 hardening status update (2026-10-31)
+
+- Historical pending contributions now have an explicit `STALE · REVIEW DISABLED` state in the multi-user review UI. The UI explains that the record is retained for history but cannot be approved or rejected, and asks the contributor to submit against the current story and permission version. This UI change was merged in [PR #35](https://github.com/rudimentall1/FANOVA/pull/35); its pull-request CI run [41186040120](https://github.com/rudimentall1/FANOVA/actions/runs/41186040120) passed. The server-side decision guard remains the enforcement boundary.
+- The read-only verifier now scans `StoryVersionRegistered`, `ContributionRegistered`, and `ContributionDecided` events from the deployment block through a single captured verification block, in ranges of at most 1,000 blocks. It reconciles the discovered story history and transaction references against the selected evidence bundle. Automated tests cover bounded chunking, missing/extra contribution and decision records, historical story versions, duplicate/gapped story-version events, and unmatched bundle references.
+- **Live-bundle validation of this exact current scanner remains OPEN.** The repository records an earlier bundle/event reconciliation through block `30113277` and a separate scanner probe through block `30112330`, but the historical notes do not establish that the current `verify-evidence.js` implementation was run against the unchanged original bundle. The original exported JSON is not committed to the repository, so this update does not claim a fresh end-to-end `HISTORY VERIFIED` result. Re-run the current verifier with the retained original bundle and record its returned verification block before closing that roadmap gate.
+
+No wallet access, transaction submission, contract change, or Mainnet write was performed for this hardening work.
