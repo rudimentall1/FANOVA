@@ -52,8 +52,6 @@ export type ProvenanceVerificationSnapshot = {
   decisionApproved?: boolean;
   decisionReasonCode?: string;
   notes?: string[];
-  decisionApproved?: boolean;
-  decisionReasonCode?: string;
 };
 
 export const provenanceAnchor = pgTable("provenance_anchor", {
