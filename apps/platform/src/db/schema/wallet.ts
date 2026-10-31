@@ -6,11 +6,12 @@ import {
   timestamp,
   uniqueIndex
 } from "drizzle-orm/pg-core";
-import { user } from "./auth";
+import { session, user } from "./auth";
 
 export const walletChallenge = pgTable("wallet_challenge", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  sessionId: text("session_id").notNull().references(() => session.id, { onDelete: "cascade" }),
   nonce: text("nonce").notNull(),
   message: text("message").notNull(),
   chainId: integer("chain_id").notNull(),
