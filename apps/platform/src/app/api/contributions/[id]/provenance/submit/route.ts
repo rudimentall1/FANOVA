@@ -83,7 +83,7 @@ export async function POST(request: Request, context: RouteContext) {
     .innerJoin(contribution, eq(provenanceAnchor.contributionId, contribution.id))
     .innerJoin(workVersion, eq(contribution.sourceVersionId, workVersion.id))
     .where(and(
-      eq(provenanceAnchor.id, id),
+      eq(provenanceAnchor.contributionId, id),
       eq(provenanceAnchor.actorUserId, actor.userId),
       eq(contribution.contributorUserId, actor.userId)
     ))
@@ -106,13 +106,13 @@ export async function POST(request: Request, context: RouteContext) {
       submittedAt: now,
       updatedAt: now
     }).where(and(
-      eq(provenanceAnchor.id, id),
+      eq(provenanceAnchor.id, row.anchor.id),
       eq(provenanceAnchor.actorUserId, actor.userId),
       isNull(provenanceAnchor.transactionHash)
     ));
     const [bound] = await db.select({ transactionHash: provenanceAnchor.transactionHash })
       .from(provenanceAnchor)
-      .where(and(eq(provenanceAnchor.id, id), eq(provenanceAnchor.actorUserId, actor.userId)))
+      .where(and(eq(provenanceAnchor.id, row.anchor.id), eq(provenanceAnchor.actorUserId, actor.userId)))
       .limit(1);
     if (!bound || !bound.transactionHash || !sameHex(bound.transactionHash, transactionHash)) {
       return NextResponse.json({ error: "A different transaction hash was concurrently bound to this contribution intent." }, { status: 409 });
@@ -123,7 +123,7 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     networkChainId = await publicClient.getChainId();
   } catch {
-    return NextResponse.json({ anchorId: id, transactionHash, status: "PENDING", error: "Soneium RPC is temporarily unavailable; retry verification with the same transaction hash." }, { status: 202 });
+    return NextResponse.json({ anchorId: row.anchor.id, transactionHash, status: "PENDING", error: "Soneium RPC is temporarily unavailable; retry verification with the same transaction hash." }, { status: 202 });
   }
   if (networkChainId !== FANOVA_CHAIN_ID) {
     return NextResponse.json({ error: "Configured RPC did not report Soneium Mainnet chain ID 1868." }, { status: 503 });
@@ -152,8 +152,8 @@ export async function POST(request: Request, context: RouteContext) {
         failureCode
       },
       updatedAt: new Date()
-    }).where(and(eq(provenanceAnchor.id, id), eq(provenanceAnchor.actorUserId, actor.userId)));
-    return NextResponse.json({ anchorId: id, transactionHash, status: "FAILED", error: message }, { status: 422 });
+    }).where(and(eq(provenanceAnchor.id, row.anchor.id), eq(provenanceAnchor.actorUserId, actor.userId)));
+    return NextResponse.json({ anchorId: row.anchor.id, transactionHash, status: "FAILED", error: message }, { status: 422 });
   };
 
   if (receipt.status !== "success") return fail("TRANSACTION_REVERTED", "The submitted contribution registration reverted on Soneium.");
@@ -283,7 +283,7 @@ export async function POST(request: Request, context: RouteContext) {
   }).where(and(eq(provenanceAnchor.id, id), eq(provenanceAnchor.actorUserId, actor.userId)));
 
   return NextResponse.json({
-    anchorId: id,
+    anchorId: row.anchor.id,
     status: "MAINNET",
     verified: true,
     transactionHash,
