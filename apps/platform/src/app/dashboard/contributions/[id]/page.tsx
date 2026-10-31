@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { contribution, work, workVersion } from "@/db/schema";
+import { contribution, provenanceAnchor, work, workVersion } from "@/db/schema";
+import { ContributionProvenanceAction } from "@/components/contributions/contribution-provenance-action";
 import { getCurrentActor } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +27,10 @@ export default async function MyContributionDetailPage({ params }: { params: Pro
       createdAt: contribution.createdAt,
       workSlug: work.slug,
       workTitle: workVersion.title,
-      sourceVersion: workVersion.versionNumber
+      sourceVersion: workVersion.versionNumber,
+      sourceVersionId: workVersion.id,
+      currentVersionId: work.currentVersionId,
+      workStatus: work.status
     })
     .from(contribution)
     .innerJoin(work, eq(contribution.workId, work.id))
@@ -35,6 +39,33 @@ export default async function MyContributionDetailPage({ params }: { params: Pro
     .limit(1);
 
   if (!entry) notFound();
+
+  const [savedAnchor] = await db.select({
+    id: provenanceAnchor.id,
+    status: provenanceAnchor.status,
+    contractAddress: provenanceAnchor.contractAddress,
+    expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
+    transactionHash: provenanceAnchor.transactionHash,
+    blockNumber: provenanceAnchor.blockNumber,
+    verificationSnapshot: provenanceAnchor.verificationSnapshot
+  }).from(provenanceAnchor)
+    .where(and(
+      eq(provenanceAnchor.contributionId, entry.id),
+      eq(provenanceAnchor.operationType, "contribution")
+    ))
+    .orderBy(desc(provenanceAnchor.createdAt))
+    .limit(1);
+
+  const anchor = savedAnchor ? {
+    id: savedAnchor.id,
+    status: savedAnchor.status,
+    contractAddress: savedAnchor.contractAddress,
+    expectedSignerAddress: savedAnchor.expectedSignerAddress,
+    transactionHash: savedAnchor.transactionHash,
+    blockNumber: savedAnchor.blockNumber?.toString() ?? null,
+    storyProvenanceVersion: savedAnchor.verificationSnapshot?.sourceVersion?.toString() ?? null
+  } : null;
+  const isCurrentSource = entry.workStatus === "published" && entry.currentVersionId === entry.sourceVersionId;
 
   return (
     <main className="shell dashboard-shell">
@@ -50,7 +81,14 @@ export default async function MyContributionDetailPage({ params }: { params: Pro
           <p>Permission version acknowledged at submission time.</p>
           <code>Content SHA-256: {entry.contentHash}</code>
           <code>Permission SHA-256: {entry.acknowledgedPermissionHash}</code>
-          <p>{entry.isPublic ? "This approved contribution is public." : "This contribution is private."} It has not been anchored on Soneium.</p>
+          <p>{entry.isPublic ? "This approved contribution is public." : "This contribution is private."}</p>
+          {anchor ? (
+            <ContributionProvenanceAction contributionId={entry.id} sourceVersionNumber={entry.sourceVersion} anchor={anchor} />
+          ) : entry.status !== "stale" && isCurrentSource ? (
+            <ContributionProvenanceAction contributionId={entry.id} sourceVersionNumber={entry.sourceVersion} anchor={null} />
+          ) : (
+            <p className="field-note">This contribution is stale and cannot be registered against the current story version.</p>
+          )}
         </section>
       </article>
     </main>
