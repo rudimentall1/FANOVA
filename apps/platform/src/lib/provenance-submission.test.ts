@@ -140,7 +140,7 @@ describe("server-side creator decision verification", () => {
       reviewer: creator,
       decidedAt: BigInt(1)
     };
-    const expected = { ...expectedDecision, storyId: event.storyId, sourceVersion: 2n, reviewer: creator };
+    const expected = { ...expectedDecision, storyId: event.storyId, sourceVersion: BigInt(2), reviewer: creator };
     expect(matchesCreatorDecisionEvent(event, expected)).toBe(true);
     expect(matchesCreatorDecisionEvent({ ...event, reviewer: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address }, expected)).toBe(false);
     expect(matchesCreatorDecisionEvent({ ...event, approved: true }, expected)).toBe(false);
