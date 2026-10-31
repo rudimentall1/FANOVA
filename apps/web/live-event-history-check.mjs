@@ -18,28 +18,14 @@ const RPC_URLS = [
   "https://soneium.drpc.org"
 ];
 
-async function connectReadOnly() {
-  const failures = [];
-  for (const url of RPC_URLS) {
-    const provider = new JsonRpcProvider(url);
-    try {
-      const network = await provider.getNetwork();
-      if (network.chainId !== CHAIN_ID) throw new Error(`Unexpected chain ID ${network.chainId}`);
-      const blockNumber = await provider.getBlockNumber();
-      const code = await provider.getCode(CONTRACT);
-      if (code === "0x" || /^0x0*$/.test(code)) throw new Error("FANOVA contract bytecode is missing");
-      return { provider, url, blockNumber };
-    } catch (error) {
-      failures.push(`${url}: ${error?.message || error}`);
-      await provider.destroy();
-    }
-  }
-  throw new Error("No Soneium read-only RPC endpoint passed preflight. " + failures.join(" | "));
-}
-
-async function main() {
-  const { provider, url } = await connectReadOnly();
+async function verifyWithRpc(url) {
+  const provider = new JsonRpcProvider(url);
   try {
+    const network = await provider.getNetwork();
+    if (network.chainId !== CHAIN_ID) throw new Error(`Unexpected chain ID ${network.chainId}`);
+    const code = await provider.getCode(CONTRACT);
+    if (code === "0x" || /^0x0*$/.test(code)) throw new Error("FANOVA contract bytecode is missing");
+
     const deploymentReceipt = await provider.getTransactionReceipt(DEPLOYMENT_TX);
     if (!deploymentReceipt || deploymentReceipt.status !== 1) {
       throw new Error("FANOVA deployment receipt is unavailable or failed.");
@@ -92,7 +78,7 @@ async function main() {
       throw new Error("Live event history is not fully reconciled: " + coverage.incompleteEvidence.join("; "));
     }
 
-    const result = {
+    return {
       status: "LIVE_EVENT_HISTORY_RECONCILED",
       network: "Soneium Mainnet",
       chainId: Number(CHAIN_ID),
@@ -113,10 +99,23 @@ async function main() {
       },
       scope: "Read-only live event-history scan and bundle-reference reconciliation. This is not the browser verifier's full content-hash, storage, and receipt verification, and is not an independent audit."
     };
-    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   } finally {
     await provider.destroy();
   }
+}
+
+async function main() {
+  const failures = [];
+  for (const url of RPC_URLS) {
+    try {
+      const result = await verifyWithRpc(url);
+      process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+      return;
+    } catch (error) {
+      failures.push(`${url}: ${error?.message || error}`);
+    }
+  }
+  throw new Error("No Soneium read-only RPC endpoint completed the full event-history reconciliation. " + failures.join(" | "));
 }
 
 main().catch(error => {
