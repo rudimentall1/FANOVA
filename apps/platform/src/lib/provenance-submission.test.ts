@@ -79,10 +79,20 @@ describe("server-side contribution registration verification", () => {
       ...expectedContribution,
       contributionHash: `0x${"77".repeat(32)}` as Hex
     })).toBe(false);
-    expect(matchesContributionRegistrationCall(input, {
-      ...expectedContribution,
-      permissionAcknowledged: false as unknown as true
-    })).toBe(false);
+    const unacknowledgedInput = encodeFunctionData({
+      abi: CONTRIBUTION_REGISTRATION_ABI,
+      functionName: "registerContribution",
+      args: [
+        expectedContribution.contributionId,
+        expectedContribution.storyId,
+        expectedContribution.sourceVersion,
+        expectedContribution.permissionVersion,
+        expectedContribution.permissionHash,
+        expectedContribution.contributionHash,
+        false
+      ]
+    });
+    expect(matchesContributionRegistrationCall(unacknowledgedInput, expectedContribution)).toBe(false);
     expect(matchesContributionRegistrationCall("0x1234" as Hex, expectedContribution)).toBe(false);
   });
 
