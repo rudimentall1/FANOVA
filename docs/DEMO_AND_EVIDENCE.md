@@ -148,3 +148,16 @@ Do not use `INDEPENDENTLY VERIFIED` merely because a team member opened the expl
 - **Live-bundle validation of this exact current scanner remains OPEN.** The repository records an earlier bundle/event reconciliation through block `30113277` and a separate scanner probe through block `30112330`, but the historical notes do not establish that the current `verify-evidence.js` implementation was run against the unchanged original bundle. The original exported JSON is not committed to the repository, so this update does not claim a fresh end-to-end `HISTORY VERIFIED` result. Re-run the current verifier with the retained original bundle and record its returned verification block before closing that roadmap gate.
 
 No wallet access, transaction submission, contract change, or Mainnet write was performed for this hardening work.
+
+### Original bundle preflight (2026-10-31)
+
+The unchanged original export `fanova-evidence-bundle.json` was supplied for validation. Against the current `main` implementations of `inspectLocalBundle` and `verifyLocalContentCommitments`:
+
+- Bundle format, Soneium chain ID, contract address, story/contribution linkage, source and permission versions, permission acknowledgement, and local decision consistency passed structural validation.
+- Creation-time SHA-256 checksums for the story source, permission text, and contribution content matched the exported values.
+- The verifier correctly retains its limitation warning: local checksums are not signed or externally anchored and do not establish authorship.
+- The bundle references the existing Story registration, Contribution registration, and Creator decision transactions at blocks `30105304`, `30105412`, and `30105502`.
+
+**Status:** this is a local structural and checksum preflight, not a fresh live-RPC run of the current browser verifier. Full event-history scanning and bundle reconciliation against a newly captured Soneium verification block remain OPEN. Do not mark the current scanner gate complete until the unchanged bundle returns `HISTORY VERIFIED` through the current verifier, with the verification block recorded.
+
+No wallet access, transaction submission, contract change, or Mainnet write was performed for this preflight.
