@@ -3,10 +3,8 @@ import { NextResponse } from "next/server";
 import {
   createPublicClient,
   decodeEventLog,
-  decodeFunctionData,
   http,
   isAddress,
-  parseAbi,
   type Address,
   type Hex
 } from "viem";
@@ -14,14 +12,11 @@ import { db } from "@/db";
 import { provenanceAnchor, work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
 import { deriveStoryIdentity, FANOVA_CHAIN_ID, asBytes32Hash } from "@/lib/provenance-intent";
+import { STORY_REGISTRATION_ABI, matchesStoryRegistrationCall, matchesStoryVersionEvent } from "@/lib/provenance-submission";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CONTRACT_ABI = parseAbi([
-  "function registerStoryVersion(bytes32 storyId, bytes32 creatorSalt, uint64 sourceVersion, bytes32 sourceHash, uint64 permissionVersion, bytes32 permissionHash)",
-  "event StoryVersionRegistered(bytes32 indexed storyId, uint64 indexed sourceVersion, address indexed creator, bytes32 sourceHash, uint64 permissionVersion, bytes32 permissionHash)"
-]);
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
 const publicClient = createPublicClient({
   transport: http(process.env.SONEIUM_RPC_URL || "https://rpc.soneium.org/")
@@ -100,6 +95,13 @@ export async function POST(request: Request, context: RouteContext) {
       eq(provenanceAnchor.actorUserId, actor.userId),
       isNull(provenanceAnchor.transactionHash)
     ));
+    const [bound] = await db.select({ transactionHash: provenanceAnchor.transactionHash })
+      .from(provenanceAnchor)
+      .where(and(eq(provenanceAnchor.id, anchorId), eq(provenanceAnchor.actorUserId, actor.userId)))
+      .limit(1);
+    if (!bound || !bound.transactionHash || !sameHex(bound.transactionHash, transactionHash)) {
+      return NextResponse.json({ error: "A different transaction hash was concurrently bound to this provenance intent." }, { status: 409 });
+    }
   }
 
   let networkChainId: number;
@@ -150,37 +152,25 @@ export async function POST(request: Request, context: RouteContext) {
   if (!sourceHash || !permissionHash) return fail("STORED_HASH_INVALID", "Stored source or permission hash is invalid.");
 
   const identity = deriveStoryIdentity(row.workId, row.anchor.expectedSignerAddress as Address);
-  try {
-    const decoded = decodeFunctionData({ abi: CONTRACT_ABI, data: tx.input });
-    if (decoded.functionName !== "registerStoryVersion") {
-      return fail("FUNCTION_MISMATCH", "Transaction does not call registerStoryVersion.");
-    }
-    const [storyId, creatorSalt, sourceVersion, submittedSourceHash, permissionVersion, submittedPermissionHash] = decoded.args;
-    if (!sameHex(storyId, identity.storyId) ||
-        !sameHex(creatorSalt, identity.creatorSalt) ||
-        sourceVersion !== BigInt(row.versionNumber) ||
-        !sameHex(submittedSourceHash, sourceHash) ||
-        permissionVersion !== BigInt(1) ||
-        !sameHex(submittedPermissionHash, permissionHash)) {
-      return fail("CALLDATA_MISMATCH", "Transaction calldata does not match the stored story version, hashes, and creator identity.");
-    }
-  } catch {
-    return fail("CALLDATA_INVALID", "Transaction calldata could not be decoded as the expected provenance registration.");
+  const expected = {
+    storyId: identity.storyId,
+    creatorSalt: identity.creatorSalt,
+    sourceVersion: BigInt(row.versionNumber),
+    sourceHash,
+    permissionVersion: BigInt(1),
+    permissionHash
+  };
+  if (!matchesStoryRegistrationCall(tx.input, expected)) {
+    return fail("CALLDATA_MISMATCH", "Transaction calldata does not match the stored story version, hashes, and creator identity.");
   }
 
   let matchingLog: (typeof receipt.logs)[number] | undefined;
   for (const log of receipt.logs) {
     if (!sameHex(log.address, row.anchor.contractAddress)) continue;
     try {
-      const event = decodeEventLog({ abi: CONTRACT_ABI, data: log.data, topics: log.topics, strict: false });
+      const event = decodeEventLog({ abi: STORY_REGISTRATION_ABI, data: log.data, topics: log.topics, strict: false });
       if (event.eventName !== "StoryVersionRegistered") continue;
-      const args = event.args;
-      if (sameHex(args.storyId, identity.storyId) &&
-          args.sourceVersion === BigInt(row.versionNumber) &&
-          sameHex(args.creator, row.anchor.expectedSignerAddress) &&
-          sameHex(args.sourceHash, sourceHash) &&
-          args.permissionVersion === BigInt(1) &&
-          sameHex(args.permissionHash, permissionHash)) {
+      if (matchesStoryVersionEvent(event.args, { ...expected, creator: row.anchor.expectedSignerAddress as Address })) {
         matchingLog = log;
         break;
       }
