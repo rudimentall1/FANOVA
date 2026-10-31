@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { isAddress, type Address, type Hex } from "viem";
 import { bindWalletAddress, verifyWalletSignature } from "@/lib/wallet-signature";
+import { validateWalletChallenge } from "@/lib/wallet-challenge";
 import { db } from "@/db";
 import { linkedWallet, walletChallenge } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -56,12 +57,15 @@ export async function POST(request: Request) {
     .where(and(eq(walletChallenge.nonce, nonce), eq(walletChallenge.userId, session.user.id), eq(walletChallenge.sessionId, session.session.id)))
     .limit(1);
 
-  if (!challenge || challenge.chainId !== CHAIN_ID || challenge.expiresAt.getTime() <= Date.now() ||
-      challenge.consumedAt !== null || input.message !== bindWalletAddress(challenge.message, address)) {
+  if (!challenge) {
+    return NextResponse.json({ error: "Wallet challenge is invalid, expired, or already used." }, { status: 409 });
+  }
+  const verifiedAddress = validateWalletChallenge(input.message, challenge);
+  if (!verifiedAddress || verifiedAddress !== address || input.message !== bindWalletAddress(challenge.message, address)) {
     return NextResponse.json({ error: "Wallet challenge is invalid, expired, or already used." }, { status: 409 });
   }
 
-  const valid = await verifyWalletSignature(address, input.message, input.signature as Hex);
+  const valid = await verifyWalletSignature(verifiedAddress, input.message, input.signature as Hex);
   if (!valid) return NextResponse.json({ error: "Wallet signature verification failed." }, { status: 401 });
 
   const now = new Date();
