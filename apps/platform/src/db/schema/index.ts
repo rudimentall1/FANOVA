@@ -4,3 +4,4 @@ export * from "./content";
 export * from "./creator-requests";
 export * from "./contributions";
 export * from "./wallet";
+export * from "./provenance";
