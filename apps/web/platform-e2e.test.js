@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import { chromium } from "playwright";
+import { Wallet } from "ethers";
 
 const baseUrl = process.env.FANOVA_PLATFORM_URL ?? "http://127.0.0.1:3000";
 const logPath = process.env.FANOVA_PLATFORM_LOG ?? "/tmp/fanova-platform.log";
@@ -94,6 +95,44 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
   const adminContext = await browser.newContext();
   const creatorContext = await browser.newContext();
   const contributorContext = await browser.newContext();
+
+  const walletA = new Wallet("0x0123456789012345678901234567890123456789012345678901234567890123");
+  const walletB = new Wallet("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd");
+  const signWalletMessage = async (message, address) => {
+    const signer = address.toLowerCase() === walletA.address.toLowerCase() ? walletA :
+      address.toLowerCase() === walletB.address.toLowerCase() ? walletB : null;
+    if (!signer) throw new Error("Unknown test wallet address");
+    return signer.signMessage(message);
+  };
+  await adminContext.exposeFunction("fanovaSignMessage", signWalletMessage);
+  await contributorContext.exposeFunction("fanovaSignMessage", signWalletMessage);
+  await contributorContext.addInitScript(({ walletAAddress, walletBAddress }) => {
+    globalThis.__fanovaTestAccount = 0;
+    globalThis.ethereum = {
+      isRabby: true,
+      request: async ({ method, params = [] }) => {
+        const accounts = [walletAAddress, walletBAddress];
+        if (method === "eth_requestAccounts" || method === "eth_accounts") {
+          return [accounts[globalThis.__fanovaTestAccount]];
+        }
+        if (method === "eth_chainId") return "0x74c";
+        if (method === "wallet_switchEthereumChain") return null;
+        if (method === "personal_sign") {
+          const hex = String(params[0]);
+          const bytes = new Uint8Array((hex.length - 2) / 2);
+          for (let index = 0; index < bytes.length; index += 1) {
+            bytes[index] = Number.parseInt(hex.slice(2 + index * 2, 4 + index * 2), 16);
+          }
+          const message = new TextDecoder().decode(bytes);
+          const signature = await globalThis.fanovaSignMessage(message, String(params[1]));
+          globalThis.__fanovaLastSignedMessage = message;
+          globalThis.__fanovaLastSignature = signature;
+          return signature;
+        }
+        throw new Error(`Unsupported mocked Rabby method: ${method}`);
+      }
+    };
+  }, { walletAAddress: walletA.address, walletBAddress: walletB.address });
 
   const adminEmail = "admin@fanova.test";
   const creatorEmail = "creator@fanova.test";
@@ -192,6 +231,56 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
         `serverLog=${readLog().slice(-6000)}; cause=${error.message}`
       );
     }
+    // Link a wallet, reject cross-account reuse, then require that wallet's signature to unlink and replace it.
+    await contributorPage.goto(`${baseUrl}/settings/account`);
+    await contributorPage.getByRole("heading", { name: "Wallet identity" }).waitFor();
+    await contributorPage.getByRole("button", { name: "Connect Rabby" }).click();
+    await contributorPage.getByText("Wallet signature verified and linked to this FANOVA account.").waitFor({ timeout: 15_000 });
+    await contributorPage.getByText(walletA.address).waitFor();
+
+    const crossAccountLink = await adminPage.evaluate(async (address) => {
+      const challengeResponse = await fetch("/api/wallet/challenge", { method: "POST" });
+      const challenge = await challengeResponse.json();
+      const message = challenge.messageTemplate.replace("<wallet-address>", address);
+      const signature = await window.fanovaSignMessage(message, address);
+      const response = await fetch("/api/wallet/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, signature })
+      });
+      return { status: response.status, body: await response.json() };
+    }, walletA.address);
+    assert.equal(crossAccountLink.status, 409, `wallet A must not be linked to account B: ${JSON.stringify(crossAccountLink)}`);
+
+    await contributorPage.getByRole("button", { name: "Unlink wallet" }).click();
+    try {
+      await contributorPage.getByText("Wallet safely unlinked. You can now connect another Soneium wallet.").waitFor({ timeout: 15_000 });
+    } catch (error) {
+      const debug = await contributorPage.evaluate(async () => ({
+        status: document.querySelector(".form-status")?.textContent ?? null,
+        wallet: await fetch("/api/wallet").then((response) => response.json()),
+        signedMessage: globalThis.__fanovaLastSignedMessage ?? null
+      }));
+      throw new Error(`Wallet unlink did not complete. Debug=${JSON.stringify(debug)}; serverLog=${readLog().slice(-8000)}; cause=${error.message}`);
+    }
+    const replayStatus = await contributorPage.evaluate(async () => {
+      const response = await fetch("/api/wallet/unlink", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: globalThis.__fanovaLastSignedMessage,
+          signature: globalThis.__fanovaLastSignature
+        })
+      });
+      return response.status;
+    });
+    assert.equal(replayStatus, 409, "a consumed unlink challenge must not be replayable");
+
+    await contributorPage.evaluate(() => { globalThis.__fanovaTestAccount = 1; });
+    await contributorPage.getByRole("button", { name: "Connect Rabby" }).click();
+    await contributorPage.getByText("Wallet signature verified and linked to this FANOVA account.").waitFor({ timeout: 15_000 });
+    await contributorPage.getByText(walletB.address).waitFor();
+
     const contributionType = contributorPage.getByLabel("Contribution type");
     const availableTypes = await contributionType.locator("option").allTextContents();
     assert.deepEqual(

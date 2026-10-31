@@ -107,6 +107,8 @@ jobs:
           DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
           BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
           BETTER_AUTH_URL: http://127.0.0.1:3000
+          FANOVA_SIWE_DOMAIN: 127.0.0.1:3000
+          FANOVA_SIWE_URI: http://127.0.0.1:3000
       - name: Wait for platform and database
         run: |
           for attempt in $(seq 1 60); do
