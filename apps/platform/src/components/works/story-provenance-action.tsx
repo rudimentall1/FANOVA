@@ -55,6 +55,7 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
       setKind("info");
       setMessage(result.error ?? "Transaction is not indexed yet. Retry verification with the same hash.");
       setTransactionHash(hash);
+      setAnchor((current) => current ? { ...current, status: "pending", transactionHash: hash } : current);
       localStorage.setItem(`fanova:provenance:tx:${workVersionId}`, hash);
       return;
     }
