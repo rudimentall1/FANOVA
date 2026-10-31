@@ -90,6 +90,18 @@ export async function POST(request: Request) {
     const identity = deriveStoryIdentity(version.workId, wallet.address as Address);
     if (existingIntent) {
       if (existingIntent.workVersionId !== version.id) return { kind: "key_conflict" as const };
+      // An idempotent retry must reproduce the original signer and payload exactly.
+      // If the linked wallet, contract configuration, or source hashes changed,
+      // reject instead of returning calldata that no longer matches the stored anchor.
+      if (
+        existingIntent.expectedSignerAddress.toLowerCase() !== wallet.address.toLowerCase() ||
+        existingIntent.chainId !== FANOVA_CHAIN_ID ||
+        existingIntent.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
+        existingIntent.sourceHash !== version.sourceHash ||
+        existingIntent.permissionHash !== version.permissionHash
+      ) {
+        return { kind: "intent_mismatch" as const };
+      }
       return {
         kind: "existing" as const,
         anchor: existingIntent,
@@ -144,6 +156,7 @@ export async function POST(request: Request) {
   });
 
   if (result.kind === "key_conflict") return NextResponse.json({ error: "This idempotency key is already bound to another provenance request." }, { status: 409 });
+  if (result.kind === "intent_mismatch") return NextResponse.json({ error: "The original provenance intent no longer matches the linked wallet, contract configuration, or published hashes. Create a new intent after reviewing the change." }, { status: 409 });
   if (result.kind === "not_found") return NextResponse.json({ error: "Work version not found." }, { status: 404 });
   if (result.kind === "not_current") return NextResponse.json({ error: "Only the current published version can be anchored." }, { status: 409 });
   if (result.kind === "first_version_required") return NextResponse.json({ error: "The initial story version must be registered first. Later versions require a confirmed preceding anchor." }, { status: 409 });
