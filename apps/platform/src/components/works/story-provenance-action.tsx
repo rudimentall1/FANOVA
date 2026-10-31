@@ -20,16 +20,10 @@ type Provider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
 };
 
-declare global {
-  interface Window {
-    ethereum?: Provider;
-  }
-}
-
 type Props = { workVersionId: string; anchor: AnchorState };
 
 function rabbyProvider(): Provider | null {
-  const injected = window.ethereum;
+  const injected = (window as unknown as { ethereum?: Provider }).ethereum;
   if (!injected) return null;
   if (injected.providers?.length) return injected.providers.find((provider) => provider.isRabby) ?? null;
   return injected.isRabby ? injected : null;
