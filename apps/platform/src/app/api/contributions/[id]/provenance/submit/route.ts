@@ -9,7 +9,7 @@ import {
   type Hex
 } from "viem";
 import { db } from "@/db";
-import { contribution, linkedWallet, provenanceAnchor, work, workVersion } from "@/db/schema";
+import { contribution, provenanceAnchor, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
 import {
   asBytes32Hash,
@@ -76,16 +76,11 @@ export async function POST(request: Request, context: RouteContext) {
     content: contribution.content,
     contentHash: contribution.contentHash,
     acknowledgedPermissionHash: contribution.acknowledgedPermissionHash,
-    contributionStatus: contribution.status,
-    ownerUserId: work.ownerUserId,
-    workStatus: work.status,
-    currentVersionId: work.currentVersionId,
     versionNumber: workVersion.versionNumber,
     sourceHash: workVersion.sourceHash,
     permissionHash: workVersion.permissionHash
   }).from(provenanceAnchor)
     .innerJoin(contribution, eq(provenanceAnchor.contributionId, contribution.id))
-    .innerJoin(work, eq(contribution.workId, work.id))
     .innerJoin(workVersion, eq(contribution.sourceVersionId, workVersion.id))
     .where(and(
       eq(provenanceAnchor.id, id),
@@ -168,20 +163,6 @@ export async function POST(request: Request, context: RouteContext) {
     return fail("TRANSACTION_ENVELOPE_MISMATCH", "Transaction sender, destination, or chain does not match the stored contribution intent.");
   }
 
-  if (row.contributionStatus === "stale" || row.workStatus !== "published" || row.currentVersionId !== row.sourceVersionId) {
-    return fail("CONTRIBUTION_STALE", "The contribution is no longer pending against the current published story version.");
-  }
-
-  const [creatorWallet] = await db.select({
-    address: linkedWallet.address
-  }).from(linkedWallet).where(and(
-    eq(linkedWallet.userId, row.ownerUserId),
-    eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
-  )).limit(1);
-  if (!creatorWallet || !isAddress(creatorWallet.address)) {
-    return fail("CREATOR_WALLET_MISSING", "The creator's linked Soneium wallet is no longer available.");
-  }
-
   const storyAnchors = await db.select().from(provenanceAnchor)
     .where(and(
       eq(provenanceAnchor.workVersionId, row.sourceVersionId),
@@ -201,7 +182,7 @@ export async function POST(request: Request, context: RouteContext) {
     storyAnchor.status !== "mainnet" ||
     storyAnchor.chainId !== FANOVA_CHAIN_ID ||
     !sameHex(storyAnchor.contractAddress, row.anchor.contractAddress) ||
-    !sameHex(storyAnchor.expectedSignerAddress, creatorWallet.address) ||
+    !isAddress(storyAnchor.expectedSignerAddress) ||
     !storyAnchor.transactionHash ||
     storyAnchor.eventName !== "StoryVersionRegistered" ||
     !storyAnchor.verifiedAt ||
@@ -234,7 +215,7 @@ export async function POST(request: Request, context: RouteContext) {
     return fail("CONTRIBUTION_HASH_MISMATCH", "Stored contribution content or acknowledged permission hashes do not match the prepared intent.");
   }
 
-  const story = deriveStoryIdentity(row.workId, creatorWallet.address as Address);
+  const story = deriveStoryIdentity(row.workId, storyAnchor.expectedSignerAddress as Address);
   const contributionIdentity = deriveContributionIdentity(row.contributionId);
   const expected = {
     contributionId: contributionIdentity,
