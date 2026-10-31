@@ -5,7 +5,7 @@ import { isAddress, keccak256, toBytes, type Address } from "viem";
 import { db } from "@/db";
 import { contribution, linkedWallet, provenanceAnchor, work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
-import { asBytes32Hash, deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
+import { deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
