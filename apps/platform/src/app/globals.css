@@ -156,3 +156,9 @@ a { color: inherit; text-decoration: none; }
 .public-contribution-link:last-child { border-bottom: 0; }
 .public-contribution-link strong { color: #e3e6e1; font-size: 15px; }
 .public-contribution-link small { color: #8d9698; font-size: 11px; }
+
+.wallet-panel { margin-top: 18px; }
+.wallet-panel h2 { margin: 10px 0; font-size: 28px; letter-spacing: -.04em; }
+.wallet-address { display: block; overflow-wrap: anywhere; color: #e1e3df; font-size: 13px; font-weight: 500; }
+.wallet-connect { width: fit-content; min-width: 190px; }
+.form-status.info { border: 1px solid #46596b; color: #c2d9ed; background: #17212a; }
