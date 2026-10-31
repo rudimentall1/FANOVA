@@ -65,3 +65,13 @@ describe("provenance sequence progression", () => {
     expect(nextProvenanceVersion(Number.MAX_SAFE_INTEGER)).toBeNull();
   });
 });
+
+describe("contribution identity", () => {
+  it("derives a stable bytes32 identifier from the contribution record ID", async () => {
+    const { deriveContributionIdentity } = await import("./provenance-intent");
+    const first = deriveContributionIdentity("a1b2c3d4-1234-4abc-8def-1234567890ab");
+    expect(first).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(deriveContributionIdentity("a1b2c3d4-1234-4abc-8def-1234567890ab")).toBe(first);
+    expect(deriveContributionIdentity("b1b2c3d4-1234-4abc-8def-1234567890ab")).not.toBe(first);
+  });
+});
