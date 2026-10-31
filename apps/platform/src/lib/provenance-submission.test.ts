@@ -10,9 +10,9 @@ import {
 const expected: ExpectedStoryRegistration = {
   storyId: `0x${"11".repeat(32)}` as Hex,
   creatorSalt: `0x${"22".repeat(32)}` as Hex,
-  sourceVersion: 1n,
+  sourceVersion: BigInt(1),
   sourceHash: `0x${"33".repeat(32)}` as Hex,
-  permissionVersion: 1n,
+  permissionVersion: BigInt(1),
   permissionHash: `0x${"44".repeat(32)}` as Hex
 };
 const creator = "0x1234567890123456789012345678901234567890" as Address;
@@ -40,6 +40,6 @@ describe("server-side story registration verification", () => {
     };
     expect(matchesStoryVersionEvent(event, { ...expected, creator })).toBe(true);
     expect(matchesStoryVersionEvent({ ...event, creator: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address }, { ...expected, creator })).toBe(false);
-    expect(matchesStoryVersionEvent({ ...event, sourceVersion: 2n }, { ...expected, creator })).toBe(false);
+    expect(matchesStoryVersionEvent({ ...event, sourceVersion: BigInt(2) }, { ...expected, creator })).toBe(false);
   });
 });
