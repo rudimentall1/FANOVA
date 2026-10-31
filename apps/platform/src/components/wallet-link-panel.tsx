@@ -73,21 +73,22 @@ export function WalletLinkPanel() {
       }
 
       const challengeResponse = await fetch("/api/wallet/unlink/challenge", { method: "POST" });
-      const challenge = await challengeResponse.json() as { message?: string; error?: string };
-      if (!challengeResponse.ok || !challenge.message) {
+      const challenge = await challengeResponse.json() as { messageTemplate?: string; error?: string };
+      if (!challengeResponse.ok || !challenge.messageTemplate) {
         throw new Error(challenge.error ?? "Could not create a wallet unlink challenge.");
       }
 
+      const message = challenge.messageTemplate.replace("<wallet-address>", wallet.address);
       const signature = await provider.request({
         method: "personal_sign",
-        params: [stringToHex(challenge.message), wallet.address]
+        params: [stringToHex(message), wallet.address]
       });
       if (typeof signature !== "string") throw new Error("The wallet did not return a signature.");
 
       const unlinkResponse = await fetch("/api/wallet/unlink", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: challenge.message, signature })
+        body: JSON.stringify({ message, signature })
       });
       const result = await unlinkResponse.json() as { status?: string; error?: string };
       if (!unlinkResponse.ok || result.status !== "unlinked") {
