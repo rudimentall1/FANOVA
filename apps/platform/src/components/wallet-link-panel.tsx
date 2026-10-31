@@ -19,10 +19,8 @@ declare global {
 function getRabbyProvider(): Eip1193Provider | null {
   const injected = window.ethereum;
   if (!injected) return null;
-  if (injected.providers?.length) {
-    return injected.providers.find((provider) => provider.isRabby) ?? injected.providers[0];
-  }
-  return injected;
+  if (injected.providers?.length) return injected.providers.find((provider) => provider.isRabby) ?? null;
+  return injected.isRabby ? injected : null;
 }
 
 export function WalletLinkPanel() {
@@ -51,7 +49,7 @@ export function WalletLinkPanel() {
     setStatus({ kind: "info", message: "Connect your wallet. FANOVA will request a message signature only, never a transaction." });
     try {
       const provider = getRabbyProvider();
-      if (!provider) throw new Error("No injected wallet found. Install or enable Rabby, then reload this page.");
+      if (!provider) throw new Error("Rabby was not detected. Install or enable the Rabby browser extension, then reload this page.");
 
       const accounts = await provider.request({ method: "eth_requestAccounts" });
       if (!Array.isArray(accounts) || typeof accounts[0] !== "string") {
@@ -66,6 +64,10 @@ export function WalletLinkPanel() {
           await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x74c" }] });
         } catch {
           throw new Error("Switch Rabby to Soneium Mainnet (Chain ID 1868), then try again.");
+        }
+        const switchedChain = await provider.request({ method: "eth_chainId" });
+        if (typeof switchedChain !== "string" || Number.parseInt(switchedChain, 16) !== 1868) {
+          throw new Error("Rabby is not connected to Soneium Mainnet (Chain ID 1868).");
         }
       }
 
