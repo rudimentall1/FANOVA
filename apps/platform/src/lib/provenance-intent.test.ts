@@ -50,3 +50,17 @@ describe("permission version progression", () => {
     expect(nextPermissionVersion(hashA, hashA, 1.5)).toBeNull();
   });
 });
+
+describe("provenance sequence progression", () => {
+  it("increments the onchain sequence independently of application draft numbering", () => {
+    expect(nextProvenanceVersion(1)).toBe(2);
+    expect(nextProvenanceVersion(7)).toBe(8);
+  });
+
+  it("rejects invalid or exhausted provenance sequences", () => {
+    expect(nextProvenanceVersion(0)).toBeNull();
+    expect(nextProvenanceVersion(-1)).toBeNull();
+    expect(nextProvenanceVersion(1.5)).toBeNull();
+    expect(nextProvenanceVersion(Number.MAX_SAFE_INTEGER)).toBeNull();
+  });
+});
