@@ -129,7 +129,8 @@ export async function POST(request: Request) {
         !previous.verifiedAt ||
         previous.sourceHash !== previous.versionSourceHash ||
         previous.permissionHash !== previous.versionPermissionHash ||
-        previousSnapshot?.chainId !== FANOVA_CHAIN_ID ||
+        !previousSnapshot ||
+        previousSnapshot.chainId !== FANOVA_CHAIN_ID ||
         previousSnapshot.contractAddress.toLowerCase() !== contractAddress.toLowerCase()
       ) {
         return { kind: "previous_anchor_required" as const };
