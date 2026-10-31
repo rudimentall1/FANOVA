@@ -194,7 +194,8 @@ export async function POST(request: Request, context: RouteContext) {
       !previous.verifiedAt ||
       previous.sourceHash !== previous.versionSourceHash ||
       previous.permissionHash !== previous.versionPermissionHash ||
-      previousSnapshot?.chainId !== FANOVA_CHAIN_ID ||
+      !previousSnapshot ||
+      previousSnapshot.chainId !== FANOVA_CHAIN_ID ||
       !sameHex(previousSnapshot.contractAddress, row.anchor.contractAddress)
     ) {
       return fail("PREVIOUS_VERSION_NOT_VERIFIED", "The immediately preceding version is not verified under the same creator wallet and provenance contract.");
