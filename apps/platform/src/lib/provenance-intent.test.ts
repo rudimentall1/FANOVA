@@ -3,7 +3,8 @@ import { privateKeyToAccount } from "viem/accounts";
 import {
   asBytes32Hash,
   deriveStoryIdentity,
-  nextPermissionVersion
+  nextPermissionVersion,
+  nextProvenanceVersion
 } from "./provenance-intent";
 
 const creator = privateKeyToAccount("0x0123456789012345678901234567890123456789012345678901234567890123");
