@@ -168,7 +168,7 @@ export async function POST(request: Request, context: RouteContext) {
     return fail("TRANSACTION_ENVELOPE_MISMATCH", "Transaction sender, destination, or chain does not match the stored contribution intent.");
   }
 
-  if (row.contributionStatus !== "pending" || row.workStatus !== "published" || row.currentVersionId !== row.sourceVersionId) {
+  if (row.contributionStatus === "stale" || row.workStatus !== "published" || row.currentVersionId !== row.sourceVersionId) {
     return fail("CONTRIBUTION_STALE", "The contribution is no longer pending against the current published story version.");
   }
 
