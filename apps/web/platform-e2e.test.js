@@ -213,10 +213,35 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await creatorPage.goto(`${baseUrl}/studio/works/${slug}/submissions`);
     const firstReview = creatorPage.locator(".contribution-card").filter({ hasText: firstTitle });
     await firstReview.getByLabel("Make this approved contribution public").check();
+    const decisionResponse = creatorPage.waitForResponse((response) =>
+      response.url().includes(`/api/contributions/${firstId}/decision`) &&
+      response.request().method() === "POST"
+    );
     await firstReview.getByRole("button", { name: "Record decision" }).click();
+    const decision = await decisionResponse;
+    assert.equal(decision.status(), 200, `creator decision failed: ${decision.status()} ${await decision.text()}`);
+    const decisionBody = await decision.json();
+    assert.equal(decisionBody.contribution?.status, "approved", "creator decision must persist as approved");
     await firstReview.getByText("approved").waitFor({ timeout: 15_000 });
+
+    // Inspect the creator-authorized record after the decision before testing public rendering.
+    const reviewState = await creatorPage.evaluate(async (workSlug) => {
+      const response = await fetch(`/api/studio/works/${workSlug}/contributions`);
+      return { status: response.status, body: await response.json() };
+    }, slug);
+    assert.equal(reviewState.status, 200, `creator contribution API failed: ${JSON.stringify(reviewState)}`);
+    const approvedRecord = reviewState.body.contributions?.find((item) => item.id === firstId);
+    assert.ok(approvedRecord, `approved contribution missing from creator review API: ${JSON.stringify(reviewState.body)}`);
+    assert.equal(approvedRecord.status, "approved", `creator API returned unexpected status: ${JSON.stringify(approvedRecord)}`);
+    assert.equal(
+      approvedRecord.isPublic,
+      true,
+      `creator selected public visibility but persisted record is not public: ${JSON.stringify(approvedRecord)}`
+    );
+
     await creatorPage.goto(`${baseUrl}/works/${slug}`);
-    await creatorPage.getByRole("link", { name: firstTitle }).waitFor();
+    const publicContribution = creatorPage.locator(".public-contribution-link").filter({ hasText: firstTitle });
+    await publicContribution.waitFor({ state: "visible", timeout: 10_000 });
     await contributorPage.goto(`${baseUrl}/works/${slug}/contributions/${firstId}`);
     await contributorPage.getByRole("heading", { name: firstTitle }).waitFor();
 
