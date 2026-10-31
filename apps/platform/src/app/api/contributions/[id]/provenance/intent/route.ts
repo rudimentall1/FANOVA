@@ -95,7 +95,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       status: contribution.status
     }).from(contribution).where(eq(contribution.id, id)).for("update");
     if (!entry || entry.contributorUserId !== actor.userId) return { kind: "not_found" as const };
-    if (entry.status !== "pending") return { kind: "not_pending" as const };
+    if (entry.status === "stale") return { kind: "stale" as const };
     if (sourceWork.status !== "published" || sourceWork.currentVersionId !== entry.sourceVersionId) {
       return { kind: "stale" as const };
     }
@@ -238,8 +238,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (result.kind === "intent_mismatch") return NextResponse.json({ error: "The original contribution intent no longer matches the contributor wallet, contract, or stored hashes." }, { status: 409 });
   if (result.kind === "not_found") return NextResponse.json({ error: "Contribution not found." }, { status: 404 });
   if (result.kind === "own_work") return NextResponse.json({ error: "Creators cannot register a fan contribution to their own work." }, { status: 409 });
-  if (result.kind === "not_pending") return NextResponse.json({ error: "Only pending contributions can be registered onchain." }, { status: 409 });
-  if (result.kind === "stale") return NextResponse.json({ error: "This contribution references an older story version and cannot be registered." }, { status: 409 });
+    if (result.kind === "stale") return NextResponse.json({ error: "This contribution references an older story version and cannot be registered." }, { status: 409 });
   if (result.kind === "content_hash_mismatch") return NextResponse.json({ error: "The stored contribution content no longer matches its submission hash." }, { status: 409 });
   if (result.kind === "permission_hash_mismatch") return NextResponse.json({ error: "The contribution's acknowledged permissions do not match its source version." }, { status: 409 });
   if (result.kind === "invalid_hash") return NextResponse.json({ error: "A stored contribution or permission hash is not a bytes32 SHA-256 digest." }, { status: 422 });
