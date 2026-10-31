@@ -70,7 +70,7 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
       ...current, status: "mainnet", transactionHash: hash,
       blockNumber: result.blockNumber ?? null, verifiedAt: new Date().toISOString()
     } : current);
-    localStorage.removeItem(`fanova:provenance:intent:${workVersionId}`);
+    localStorage.removeItem(`fanova:provenance:intent:${workVersionId}`);\n    localStorage.removeItem(`fanova:provenance:tx:${workVersionId}`);
     setKind("success");
     setMessage(`Verified on Soneium Mainnet in block ${result.blockNumber ?? "unknown"}.`);
   }
