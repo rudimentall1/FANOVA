@@ -109,12 +109,25 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await creatorPage.getByRole("button", { name: "Submit creator application" }).click();
     await creatorPage.getByRole("heading", { name: "Application under review." }).waitFor();
 
-    const application = adminPage.locator(".request-card").filter({ hasText: creatorEmail });
     await adminPage.reload();
+    const application = adminPage.locator(".request-card").filter({ hasText: creatorEmail });
+    await application.waitFor({ state: "visible" });
+    const approvalResponse = adminPage.waitForResponse((response) =>
+      response.url().includes("/api/admin/creator-requests/") &&
+      response.request().method() === "POST"
+    );
     await application.getByRole("button", { name: "Approve creator" }).click();
-    await adminPage.waitForTimeout(300);
+    const approval = await approvalResponse;
+    assert.equal(approval.status(), 200, `creator approval failed: ${approval.status()} ${await approval.text()}`);
+
+    execFileSync("node", [adminBootstrap], {
+      cwd: platformDir,
+      env: { ...process.env, ADMIN_EMAIL: creatorEmail, ROLE_TO_CHECK: "creator" },
+      stdio: "pipe"
+    });
+
     await creatorPage.goto(`${baseUrl}/studio`);
-    await creatorPage.getByRole("heading", { name: /Your stories/ }).waitFor();
+    await creatorPage.getByRole("heading", { name: /Your stories/ }).waitFor({ timeout: 15_000 });
 
     // Creator publishes a work with fan art allowed, but translations and adaptations disabled.
     await creatorPage.goto(`${baseUrl}/studio/works/new`);
