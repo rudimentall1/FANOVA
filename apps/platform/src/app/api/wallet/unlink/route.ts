@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
@@ -60,8 +59,7 @@ export async function POST(request: Request) {
     .limit(1);
 
   if (!challenge || challenge.message !== input.message ||
-      !validateWalletUnlinkChallenge(input.message, challenge, address) ||
-      challenge.walletId.length === 0) {
+      !validateWalletUnlinkChallenge(input.message, challenge, address)) {
     return NextResponse.json({ error: "Wallet unlink challenge is invalid, expired, or already used." }, { status: 409 });
   }
 
