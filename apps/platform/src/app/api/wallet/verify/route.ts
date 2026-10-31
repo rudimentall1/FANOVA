@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { isAddress, verifyMessage, type Address, type Hex } from "viem";
 import { db } from "@/db";
 import { linkedWallet, walletChallenge } from "@/db/schema";
-import { getCurrentActor } from "@/lib/server-auth";
+import { auth } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,8 +14,8 @@ const CHAIN_ID = 1868;
 const MAX_BODY_BYTES = 12_000;
 
 export async function POST(request: Request) {
-  const actor = await getCurrentActor();
-  if (!actor) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   if (!request.headers.get("content-type")?.includes("application/json")) {
     return NextResponse.json({ error: "Content-Type must be application/json." }, { status: 415 });
   }
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
   }
 
   const [challenge] = await db.select().from(walletChallenge)
-    .where(and(eq(walletChallenge.nonce, nonce), eq(walletChallenge.userId, actor.userId)))
+    .where(and(eq(walletChallenge.nonce, nonce), eq(walletChallenge.userId, session.user.id), eq(walletChallenge.sessionId, session.session.id)))
     .limit(1);
 
   if (!challenge || challenge.chainId !== CHAIN_ID || challenge.expiresAt.getTime() <= Date.now() ||
@@ -78,7 +79,8 @@ export async function POST(request: Request) {
         .set({ consumedAt: now })
         .where(and(
           eq(walletChallenge.id, challenge.id),
-          eq(walletChallenge.userId, actor.userId),
+          eq(walletChallenge.userId, session.user.id),
+          eq(walletChallenge.sessionId, session.session.id),
           isNull(walletChallenge.consumedAt),
           gt(walletChallenge.expiresAt, now)
         ))
@@ -87,7 +89,7 @@ export async function POST(request: Request) {
 
       const [wallet] = await tx.insert(linkedWallet).values({
         id: randomUUID(),
-        userId: actor.userId,
+        userId: session.user.id,
         chainId: CHAIN_ID,
         address,
         addressLower: address.toLowerCase(),
