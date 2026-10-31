@@ -170,6 +170,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       if (
         existingIntent.operationType !== "contribution" ||
         existingIntent.contributionId !== entry.id ||
+        existingIntent.sourceHash !== sourceVersion.sourceHash ||
         existingIntent.contributionHash !== entry.contentHash ||
         existingIntent.permissionHash !== entry.acknowledgedPermissionHash ||
         existingIntent.expectedSignerAddress.toLowerCase() !== contributorWallet.address.toLowerCase() ||
