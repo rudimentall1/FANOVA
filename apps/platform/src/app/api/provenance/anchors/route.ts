@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, lt } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { isAddress, type Address } from "viem";
 import { db } from "@/db";
@@ -9,7 +9,8 @@ import {
   asBytes32Hash,
   deriveStoryIdentity,
   FANOVA_CHAIN_ID,
-  nextPermissionVersion
+  nextPermissionVersion,
+  nextProvenanceVersion
 } from "@/lib/provenance-intent";
 
 export const runtime = "nodejs";
@@ -91,33 +92,43 @@ export async function POST(request: Request) {
     const permissionHash = asBytes32Hash(version.permissionHash);
     if (!sourceHash || !permissionHash) return { kind: "invalid_hash" as const };
 
+    // The database version number also advances for private drafts. The contract
+    // sequence therefore follows the latest confirmed provenance anchor instead.
+    let sourceVersion = 1;
     let permissionVersion = 1;
-    if (version.versionNumber > 1) {
-      const previousRows = await tx.select({
-        status: provenanceAnchor.status,
-        chainId: provenanceAnchor.chainId,
-        contractAddress: provenanceAnchor.contractAddress,
-        expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-        sourceHash: provenanceAnchor.sourceHash,
-        permissionHash: provenanceAnchor.permissionHash,
-        transactionHash: provenanceAnchor.transactionHash,
-        eventName: provenanceAnchor.eventName,
-        verifiedAt: provenanceAnchor.verifiedAt,
-        verificationSnapshot: provenanceAnchor.verificationSnapshot,
-        versionSourceHash: workVersion.sourceHash,
-        versionPermissionHash: workVersion.permissionHash
-      }).from(workVersion)
-        .innerJoin(provenanceAnchor, eq(provenanceAnchor.workVersionId, workVersion.id))
-        .where(and(
-          eq(workVersion.workId, version.workId),
-          eq(workVersion.versionNumber, version.versionNumber - 1)
-        ));
+    const previousRows = await tx.select({
+      versionNumber: workVersion.versionNumber,
+      status: provenanceAnchor.status,
+      chainId: provenanceAnchor.chainId,
+      contractAddress: provenanceAnchor.contractAddress,
+      expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
+      sourceHash: provenanceAnchor.sourceHash,
+      permissionHash: provenanceAnchor.permissionHash,
+      transactionHash: provenanceAnchor.transactionHash,
+      eventName: provenanceAnchor.eventName,
+      verifiedAt: provenanceAnchor.verifiedAt,
+      verificationSnapshot: provenanceAnchor.verificationSnapshot,
+      versionSourceHash: workVersion.sourceHash,
+      versionPermissionHash: workVersion.permissionHash
+    }).from(workVersion)
+      .innerJoin(provenanceAnchor, eq(provenanceAnchor.workVersionId, workVersion.id))
+      .where(and(
+        eq(workVersion.workId, version.workId),
+        lt(workVersion.versionNumber, version.versionNumber)
+      ))
+      .orderBy(desc(workVersion.versionNumber))
+      .limit(2);
 
-      if (previousRows.length !== 1) return { kind: "previous_anchor_required" as const };
+    if (previousRows.length > 0) {
       const previous = previousRows[0];
+      if (previousRows[1]?.versionNumber === previous.versionNumber) {
+        return { kind: "previous_anchor_required" as const };
+      }
       const previousSnapshot = previous.verificationSnapshot;
+      const previousSourceVersion = previousSnapshot?.sourceVersion ??
+        (previous.versionNumber === 1 ? 1 : null);
       const previousPermissionVersion = previousSnapshot?.permissionVersion ??
-        (version.versionNumber - 1 === 1 ? 1 : null);
+        (previous.versionNumber === 1 ? 1 : null);
 
       if (
         previous.status !== "mainnet" ||
@@ -136,13 +147,17 @@ export async function POST(request: Request) {
         return { kind: "previous_anchor_required" as const };
       }
 
-      const next = nextPermissionVersion(
+      const nextSource = nextProvenanceVersion(previousSourceVersion ?? Number.NaN);
+      const nextPermission = nextPermissionVersion(
         version.permissionHash,
         previous.permissionHash ?? "",
         previousPermissionVersion ?? Number.NaN
       );
-      if (next === null) return { kind: "previous_anchor_required" as const };
-      permissionVersion = next;
+      if (nextSource === null || nextPermission === null) {
+        return { kind: "previous_anchor_required" as const };
+      }
+      sourceVersion = nextSource;
+      permissionVersion = nextPermission;
     }
 
     const identity = deriveStoryIdentity(version.workId, wallet.address as Address);
@@ -164,7 +179,7 @@ export async function POST(request: Request) {
         storyId: identity.storyId,
         sourceHash,
         permissionHash,
-        sourceVersion: version.versionNumber,
+        sourceVersion,
         permissionVersion
       };
     }
@@ -207,7 +222,7 @@ export async function POST(request: Request) {
       storyId: identity.storyId,
       sourceHash,
       permissionHash,
-      sourceVersion: version.versionNumber,
+      sourceVersion,
       permissionVersion
     };
   });
@@ -216,7 +231,7 @@ export async function POST(request: Request) {
   if (result.kind === "intent_mismatch") return NextResponse.json({ error: "The original provenance intent no longer matches the linked wallet, contract configuration, or published hashes. Create a new intent after reviewing the change." }, { status: 409 });
   if (result.kind === "not_found") return NextResponse.json({ error: "Work version not found." }, { status: 404 });
   if (result.kind === "not_current") return NextResponse.json({ error: "Only the current published version can be anchored." }, { status: 409 });
-  if (result.kind === "previous_anchor_required") return NextResponse.json({ error: "The immediately preceding story version must have one confirmed Mainnet anchor from the same creator wallet and contract before this version can be registered." }, { status: 409 });
+  if (result.kind === "previous_anchor_required") return NextResponse.json({ error: "The latest preceding provenance anchor must be confirmed on Mainnet under the same creator wallet and contract before this version can be registered." }, { status: 409 });
   if (result.kind === "invalid_hash") return NextResponse.json({ error: "Stored source or permission hash is not a bytes32 SHA-256 digest." }, { status: 422 });
   if (result.kind === "already_exists") return NextResponse.json({ error: "A provenance intent already exists for this work version." }, { status: 409 });
 
@@ -234,6 +249,8 @@ export async function POST(request: Request) {
         BigInt(result.permissionVersion),
         result.permissionHash
       ].map((value) => typeof value === "bigint" ? value.toString() : value),
+      sourceVersion: result.sourceVersion,
+      permissionVersion: result.permissionVersion,
       chainId: FANOVA_CHAIN_ID,
       requiresUserSignature: true,
       submitted: false
