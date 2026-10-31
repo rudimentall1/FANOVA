@@ -20,7 +20,7 @@ type Provider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
 };
 
-type Props = { workVersionId: string; anchor: AnchorState };
+type Props = { workVersionId: string; versionNumber: number; anchor: AnchorState };
 
 function rabbyProvider(): Provider | null {
   const injected = (window as unknown as { ethereum?: Provider }).ethereum;
@@ -33,7 +33,7 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "The wallet operation failed. Check Rabby and try again.";
 }
 
-export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: Props) {
+export function StoryProvenanceAction({ workVersionId, versionNumber, anchor: initialAnchor }: Props) {
   const [anchor, setAnchor] = useState<AnchorState>(initialAnchor);
   const [transactionHash, setTransactionHash] = useState(initialAnchor?.transactionHash ?? "");
   const [busy, setBusy] = useState(false);
@@ -93,7 +93,7 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
       if (chainId !== 1868) {
         await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x74c" }] });
         const switched = await provider.request({ method: "eth_chainId" });
-        chainId = typeof switched === "string" ? Number.parseInt(switched, 16) : Number.NaN;
+        chainId = typeof switched === "string' ? Number.parseInt(switched, 16) : Number.NaN;
       }
       if (chainId !== 1868) throw new Error("Switch Rabby to Soneium Mainnet (Chain ID 1868).");
 
@@ -182,7 +182,7 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
     return (
       <div className="provenance-action">
         <span className="work-status published">MAINNET VERIFIED</span>
-        <p className="field-note">Story version registered in Soneium block {anchor.blockNumber ?? "recorded"}.</p>
+        <p className="field-note">Story version {versionNumber} registered in Soneium block {anchor.blockNumber ?? "recorded"}.</p>
         <a className="text-link" href={`https://soneium.blockscout.com/tx/${anchor.transactionHash}`} target="_blank" rel="noreferrer">View transaction on Blockscout</a>
       </div>
     );
@@ -212,9 +212,9 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
       ) : (
         <>
           <span className="panel-label">SONEIUM PROVENANCE</span>
-          <p className="field-note">Register the first published story version on Soneium. Rabby will show the transaction for your approval. FANOVA never receives your private key.</p>
+          <p className="field-note">Register published story version {versionNumber} on Soneium. Rabby will show the transaction for your approval. FANOVA never receives your private key.</p>
           <button className="primary-button" type="button" onClick={registerStory} disabled={busy}>
-            {busy ? "Waiting for Rabby…" : "Register on Soneium"}
+            {busy ? "Waiting for Rabby…" : `Register version ${versionNumber} on Soneium`}
           </button>
         </>
       )}
