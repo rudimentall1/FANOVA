@@ -280,7 +280,7 @@ export async function POST(request: Request, context: RouteContext) {
     verificationSnapshot: snapshot,
     verifiedAt: new Date(),
     updatedAt: new Date()
-  }).where(and(eq(provenanceAnchor.id, id), eq(provenanceAnchor.actorUserId, actor.userId)));
+  }).where(and(eq(provenanceAnchor.id, row.anchor.id), eq(provenanceAnchor.actorUserId, actor.userId)));
 
   return NextResponse.json({
     anchorId: row.anchor.id,
