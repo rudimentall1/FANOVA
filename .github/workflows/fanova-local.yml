@@ -128,3 +128,4 @@ jobs:
           FANOVA_PLATFORM_LOG: /tmp/fanova-platform.log
           FANOVA_PLATFORM_DIR: ${{ github.workspace }}/apps/platform
           FANOVA_ADMIN_BOOTSTRAP_SCRIPT: ${{ github.workspace }}/apps/platform/scripts/bootstrap-e2e-admin.mjs
+          FANOVA_E2E_ADMIN_BOOTSTRAP: "true"
