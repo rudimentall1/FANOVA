@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS "wallet_challenge" (
   "id" text PRIMARY KEY NOT NULL,
   "user_id" text NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+  "session_id" text NOT NULL REFERENCES "session"("id") ON DELETE CASCADE,
   "nonce" text NOT NULL,
   "message" text NOT NULL,
   "chain_id" integer NOT NULL,
