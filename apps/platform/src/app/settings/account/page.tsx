@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { userProfile } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
 import { SignOutButton } from "@/components/auth/auth-ui";
+import { WalletLinkPanel } from "@/components/wallet-link-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ export default async function AccountSettingsPage() {
         <div><span className="panel-label">ACCESS</span><div className="role-list">{actor.roles.map((role) => <span className="role-chip" key={role}>{role}</span>)}</div></div>
         <p className="field-note">Profile editing is the next account milestone. This page currently displays server-stored account data only.</p>
       </section>
+      <WalletLinkPanel />
       <p className="auth-switch"><Link href="/dashboard">Back to workspace</Link></p>
     </main>
   );
