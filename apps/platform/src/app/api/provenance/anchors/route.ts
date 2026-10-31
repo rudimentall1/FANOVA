@@ -58,11 +58,11 @@ export async function POST(request: Request) {
 
   const result = await db.transaction(async (tx) => {
     const [existingIntent] = await tx.select().from(provenanceAnchor)
-      .where(and(
-        eq(provenanceAnchor.idempotencyKey, input.idempotencyKey as string),
-        eq(provenanceAnchor.actorUserId, actor.userId)
-      )).limit(1);
-    if (existingIntent) return { kind: "existing" as const, anchor: existingIntent };
+      .where(eq(provenanceAnchor.idempotencyKey, input.idempotencyKey as string))
+      .limit(1);
+    if (existingIntent && existingIntent.actorUserId !== actor.userId) {
+      return { kind: "key_conflict" as const };
+    }
 
     const [version] = await tx.select({
       id: workVersion.id,
@@ -86,6 +86,20 @@ export async function POST(request: Request) {
     const sourceHash = asBytes32Hash(version.sourceHash);
     const permissionHash = asBytes32Hash(version.permissionHash);
     if (!sourceHash || !permissionHash) return { kind: "invalid_hash" as const };
+
+    const identity = deriveStoryIdentity(version.workId, wallet.address as Address);
+    if (existingIntent) {
+      if (existingIntent.workVersionId !== version.id) return { kind: "key_conflict" as const };
+      return {
+        kind: "existing" as const,
+        anchor: existingIntent,
+        creatorSalt: identity.creatorSalt,
+        storyId: identity.storyId,
+        sourceHash,
+        permissionHash,
+        sourceVersion: version.versionNumber
+      };
+    }
 
     const [prior] = await tx.select({ id: provenanceAnchor.id })
       .from(provenanceAnchor)
@@ -130,20 +144,17 @@ export async function POST(request: Request) {
     };
   });
 
+  if (result.kind === "key_conflict") return NextResponse.json({ error: "This idempotency key is already bound to another provenance request." }, { status: 409 });
   if (result.kind === "not_found") return NextResponse.json({ error: "Work version not found." }, { status: 404 });
   if (result.kind === "not_current") return NextResponse.json({ error: "Only the current published version can be anchored." }, { status: 409 });
   if (result.kind === "first_version_required") return NextResponse.json({ error: "The initial story version must be registered first. Later versions require a confirmed preceding anchor." }, { status: 409 });
   if (result.kind === "invalid_hash") return NextResponse.json({ error: "Stored source or permission hash is not a bytes32 SHA-256 digest." }, { status: 422 });
   if (result.kind === "already_exists") return NextResponse.json({ error: "A provenance intent already exists for this work version." }, { status: 409 });
 
-  if (result.kind === "existing") {
-    return NextResponse.json({ anchor: result.anchor, status: "LOCAL", idempotent: true });
-  }
-
-  return NextResponse.json({
+  const response = {
     anchor: result.anchor,
     status: "LOCAL",
-    idempotent: false,
+    idempotent: result.kind === "existing",
     transaction: {
       functionName: "registerStoryVersion",
       args: [result.storyId, result.creatorSalt, BigInt(result.sourceVersion), result.sourceHash, 1n, result.permissionHash].map((value) => typeof value === "bigint" ? value.toString() : value),
@@ -151,5 +162,6 @@ export async function POST(request: Request) {
       requiresUserSignature: true,
       submitted: false
     }
-  }, { status: 201 });
+  };
+  return NextResponse.json(response, { status: result.kind === "existing" ? 200 : 201 });
 }
