@@ -154,7 +154,15 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       contributorEmail,
       `/works/${slug}/contribute`
     );
-    await contributorPage.getByRole("heading", { name: "E2E Story" }).waitFor();
+    try {
+      await contributorPage.getByRole("heading", { name: "E2E Story" }).waitFor({ timeout: 10_000 });
+    } catch (error) {
+      throw new Error(
+        `Contributor did not reach the published work page. URL=${contributorPage.url()}; ` +
+        `body=${(await contributorPage.locator("body").innerText()).slice(0, 2400)}; ` +
+        `serverLog=${readLog().slice(-6000)}; cause=${error.message}`
+      );
+    }
     const contributionType = contributorPage.getByLabel("Contribution type");
     const availableTypes = await contributionType.locator("option").allTextContents();
     assert.deepEqual(
