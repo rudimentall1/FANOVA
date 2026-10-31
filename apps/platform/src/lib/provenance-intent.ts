@@ -41,3 +41,13 @@ export function nextPermissionVersion(
     ? previousPermissionVersion
     : previousPermissionVersion + 1;
 }
+
+/**
+ * Contract story versions count successful provenance registrations, not saved drafts.
+ */
+export function nextProvenanceVersion(previousProvenanceVersion: number): number | null {
+  if (!Number.isSafeInteger(previousProvenanceVersion) ||
+      previousProvenanceVersion < 1 ||
+      previousProvenanceVersion >= Number.MAX_SAFE_INTEGER) return null;
+  return previousProvenanceVersion + 1;
+}

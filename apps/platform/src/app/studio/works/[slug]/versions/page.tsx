@@ -48,7 +48,8 @@ export default async function WorkVersionsPage({ params }: { params: Promise<{ s
         expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
         transactionHash: provenanceAnchor.transactionHash,
         blockNumber: provenanceAnchor.blockNumber,
-        verifiedAt: provenanceAnchor.verifiedAt
+        verifiedAt: provenanceAnchor.verifiedAt,
+        verificationSnapshot: provenanceAnchor.verificationSnapshot
       }).from(provenanceAnchor)
         .where(inArray(provenanceAnchor.workVersionId, versions.map((version) => version.id)))
         .orderBy(desc(provenanceAnchor.createdAt))
@@ -82,7 +83,8 @@ export default async function WorkVersionsPage({ params }: { params: Promise<{ s
             expectedSignerAddress: savedAnchor.expectedSignerAddress,
             transactionHash: savedAnchor.transactionHash,
             blockNumber: savedAnchor.blockNumber?.toString() ?? null,
-            verifiedAt: savedAnchor.verifiedAt?.toISOString() ?? null
+            verifiedAt: savedAnchor.verifiedAt?.toISOString() ?? null,
+            provenanceVersion: savedAnchor.verificationSnapshot?.sourceVersion?.toString() ?? (version.versionNumber === 1 ? "1" : null)
           } : null;
           return (
             <article className="version-row" key={version.id}>

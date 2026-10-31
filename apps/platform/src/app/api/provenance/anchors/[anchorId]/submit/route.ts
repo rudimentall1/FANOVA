@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, lt } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import {
   createPublicClient,
@@ -15,7 +15,8 @@ import {
   deriveStoryIdentity,
   FANOVA_CHAIN_ID,
   asBytes32Hash,
-  nextPermissionVersion
+  nextPermissionVersion,
+  nextProvenanceVersion
 } from "@/lib/provenance-intent";
 import { STORY_REGISTRATION_ABI, matchesStoryRegistrationCall, matchesStoryVersionEvent } from "@/lib/provenance-submission";
 
@@ -154,35 +155,45 @@ export async function POST(request: Request, context: RouteContext) {
   const permissionHash = asBytes32Hash(row.permissionHash);
   if (!sourceHash || !permissionHash) return fail("STORED_HASH_INVALID", "Stored source or permission hash is invalid.");
 
+  // Saved draft revisions increment workVersion.versionNumber but are not
+  // necessarily written to the contract. Continue from the latest confirmed
+  // provenance anchor, not from the application database's version counter.
+  let sourceVersion = 1;
   let permissionVersion = 1;
-  if (row.versionNumber > 1) {
-    const previousRows = await db.select({
-      status: provenanceAnchor.status,
-      chainId: provenanceAnchor.chainId,
-      contractAddress: provenanceAnchor.contractAddress,
-      expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-      sourceHash: provenanceAnchor.sourceHash,
-      permissionHash: provenanceAnchor.permissionHash,
-      transactionHash: provenanceAnchor.transactionHash,
-      eventName: provenanceAnchor.eventName,
-      verifiedAt: provenanceAnchor.verifiedAt,
-      verificationSnapshot: provenanceAnchor.verificationSnapshot,
-      versionSourceHash: workVersion.sourceHash,
-      versionPermissionHash: workVersion.permissionHash
-    }).from(workVersion)
-      .innerJoin(provenanceAnchor, eq(provenanceAnchor.workVersionId, workVersion.id))
-      .where(and(
-        eq(workVersion.workId, row.workId),
-        eq(workVersion.versionNumber, row.versionNumber - 1)
-      ));
+  const previousRows = await db.select({
+    versionNumber: workVersion.versionNumber,
+    status: provenanceAnchor.status,
+    chainId: provenanceAnchor.chainId,
+    contractAddress: provenanceAnchor.contractAddress,
+    expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
+    sourceHash: provenanceAnchor.sourceHash,
+    permissionHash: provenanceAnchor.permissionHash,
+    transactionHash: provenanceAnchor.transactionHash,
+    eventName: provenanceAnchor.eventName,
+    verifiedAt: provenanceAnchor.verifiedAt,
+    verificationSnapshot: provenanceAnchor.verificationSnapshot,
+    versionSourceHash: workVersion.sourceHash,
+    versionPermissionHash: workVersion.permissionHash
+  }).from(workVersion)
+    .innerJoin(provenanceAnchor, eq(provenanceAnchor.workVersionId, workVersion.id))
+    .where(and(
+      eq(workVersion.workId, row.workId),
+      lt(workVersion.versionNumber, row.versionNumber),
+      isNotNull(provenanceAnchor.transactionHash)
+    ))
+    .orderBy(desc(workVersion.versionNumber))
+    .limit(2);
 
-    if (previousRows.length !== 1) {
-      return fail("PREVIOUS_VERSION_NOT_VERIFIED", "The immediately preceding story version does not have exactly one confirmed Mainnet provenance anchor.");
-    }
+  if (previousRows.length > 0) {
     const previous = previousRows[0];
+    if (previousRows[1]?.versionNumber === previous.versionNumber) {
+      return fail("PREVIOUS_ANCHOR_AMBIGUOUS", "The latest preceding story version has multiple provenance anchors. Contact support before proceeding.");
+    }
     const previousSnapshot = previous.verificationSnapshot;
+    const previousSourceVersion = previousSnapshot?.sourceVersion ??
+      (previous.versionNumber === 1 ? 1 : null);
     const previousPermissionVersion = previousSnapshot?.permissionVersion ??
-      (row.versionNumber - 1 === 1 ? 1 : null);
+      (previous.versionNumber === 1 ? 1 : null);
 
     if (
       previous.status !== "mainnet" ||
@@ -198,31 +209,33 @@ export async function POST(request: Request, context: RouteContext) {
       previousSnapshot.chainId !== FANOVA_CHAIN_ID ||
       !sameHex(previousSnapshot.contractAddress, row.anchor.contractAddress)
     ) {
-      return fail("PREVIOUS_VERSION_NOT_VERIFIED", "The immediately preceding version is not verified under the same creator wallet and provenance contract.");
+      return fail("PREVIOUS_VERSION_NOT_VERIFIED", "The latest preceding provenance anchor is not confirmed under the same creator wallet and contract.");
     }
 
-    const next = nextPermissionVersion(
+    const nextSource = nextProvenanceVersion(previousSourceVersion ?? Number.NaN);
+    const nextPermission = nextPermissionVersion(
       row.permissionHash,
       previous.permissionHash ?? "",
       previousPermissionVersion ?? Number.NaN
     );
-    if (next === null) {
-      return fail("PREVIOUS_PERMISSION_VERSION_MISSING", "The previous version has no trustworthy permission-version record. Do not submit another transaction.");
+    if (nextSource === null || nextPermission === null) {
+      return fail("PREVIOUS_VERSION_METADATA_MISSING", "The previous anchor lacks a trustworthy provenance or permission version. Do not submit another transaction.");
     }
-    permissionVersion = next;
+    sourceVersion = nextSource;
+    permissionVersion = nextPermission;
   }
 
   const identity = deriveStoryIdentity(row.workId, row.anchor.expectedSignerAddress as Address);
   const expected = {
     storyId: identity.storyId,
     creatorSalt: identity.creatorSalt,
-    sourceVersion: BigInt(row.versionNumber),
+    sourceVersion: BigInt(sourceVersion),
     sourceHash,
     permissionVersion: BigInt(permissionVersion),
     permissionHash
   };
   if (!matchesStoryRegistrationCall(tx.input, expected)) {
-    return fail("CALLDATA_MISMATCH", "Transaction calldata does not match the stored story version, permission version, hashes, and creator identity.");
+    return fail("CALLDATA_MISMATCH", "Transaction calldata does not match the expected provenance sequence, permission version, hashes, and creator identity.");
   }
 
   let matchingLog: (typeof receipt.logs)[number] | undefined;
@@ -251,6 +264,7 @@ export async function POST(request: Request, context: RouteContext) {
     transactionIndex: receipt.transactionIndex,
     logIndex: matchingLog.logIndex,
     eventName: "StoryVersionRegistered",
+    sourceVersion,
     permissionVersion,
     expectedSigner: row.anchor.expectedSignerAddress,
     observedSigner: tx.from,
@@ -281,6 +295,7 @@ export async function POST(request: Request, context: RouteContext) {
     transactionIndex: receipt.transactionIndex,
     logIndex: matchingLog.logIndex,
     eventName: "StoryVersionRegistered",
+    sourceVersion,
     permissionVersion,
     explorerUrl: `https://soneium.blockscout.com/tx/${transactionHash}`
   });

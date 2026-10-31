@@ -3,7 +3,8 @@ import { privateKeyToAccount } from "viem/accounts";
 import {
   asBytes32Hash,
   deriveStoryIdentity,
-  nextPermissionVersion
+  nextPermissionVersion,
+  nextProvenanceVersion
 } from "./provenance-intent";
 
 const creator = privateKeyToAccount("0x0123456789012345678901234567890123456789012345678901234567890123");
@@ -48,5 +49,19 @@ describe("permission version progression", () => {
     expect(nextPermissionVersion(hashA, hashA, -1)).toBeNull();
     expect(nextPermissionVersion(hashA, hashA, Number.MAX_SAFE_INTEGER)).toBeNull();
     expect(nextPermissionVersion(hashA, hashA, 1.5)).toBeNull();
+  });
+});
+
+describe("provenance sequence progression", () => {
+  it("increments the onchain sequence independently of application draft numbering", () => {
+    expect(nextProvenanceVersion(1)).toBe(2);
+    expect(nextProvenanceVersion(7)).toBe(8);
+  });
+
+  it("rejects invalid or exhausted provenance sequences", () => {
+    expect(nextProvenanceVersion(0)).toBeNull();
+    expect(nextProvenanceVersion(-1)).toBeNull();
+    expect(nextProvenanceVersion(1.5)).toBeNull();
+    expect(nextProvenanceVersion(Number.MAX_SAFE_INTEGER)).toBeNull();
   });
 });
