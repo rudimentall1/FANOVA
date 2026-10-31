@@ -39,6 +39,7 @@ export type ProvenanceVerificationSnapshot = {
   transactionIndex?: number;
   logIndex?: number;
   eventName?: string;
+  sourceVersion?: number;
   permissionVersion?: number;
   expectedSigner?: string;
   observedSigner?: string;
