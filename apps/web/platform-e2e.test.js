@@ -51,18 +51,18 @@ async function submitContribution(page, slug, title, text) {
   await page.getByLabel("Your contribution").fill(text);
   await page.getByLabel("I have read and acknowledge the current permitted-use rules.").check();
   const submissionResponse = page.waitForResponse((response) =>
-    response.url().includes(\`/api/works/\${slug}/contributions\`) &&
+    response.url().includes(`/api/works/${slug}/contributions`) &&
     response.request().method() === "POST"
   );
   await page.getByRole("button", { name: "Submit contribution" }).click();
   const submitted = await submissionResponse;
-  assert.equal(submitted.status(), 201, \`contribution submission failed: \${submitted.status()} \${await submitted.text()}\`);
+  assert.equal(submitted.status(), 201, `contribution submission failed: ${submitted.status()} ${await submitted.text()}`);
   const result = await submitted.json();
   assert.ok(result.contribution?.id, "successful submission must return its persisted contribution ID");
   await page.waitForURL(/\/dashboard\/contributions$/, { timeout: 15_000 });
 
   // Confirm the saved record through a fresh server-rendered request, not only client navigation state.
-  await page.goto(\`\${baseUrl}/dashboard/contributions\`);
+  await page.goto(`${baseUrl}/dashboard/contributions`);
   const contributionLink = page.getByRole("link", { name: title });
   await contributionLink.waitFor({ state: "visible", timeout: 15_000 });
   await contributionLink.click();
