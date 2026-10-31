@@ -46,7 +46,7 @@ export async function POST() {
   const id = randomUUID();
   const message = [
     `${origin.domain} wants you to sign in with your Ethereum account:`,
-    wallet.address,
+    "<wallet-address>",
     "",
     "Unlink this wallet from your FANOVA account.",
     "",
@@ -70,5 +70,5 @@ export async function POST() {
     createdAt: now
   });
 
-  return NextResponse.json({ nonce, message, expiresAt: expiresAt.toISOString(), chainId: CHAIN_ID });
+  return NextResponse.json({ nonce, messageTemplate: message, expiresAt: expiresAt.toISOString(), chainId: CHAIN_ID });
 }
