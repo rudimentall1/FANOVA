@@ -157,8 +157,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       !storySnapshot ||
       storySnapshot.chainId !== FANOVA_CHAIN_ID ||
       storySnapshot.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
-      !Number.isSafeInteger(sourceVersionNumber) || !sourceVersionNumber ||
-      !Number.isSafeInteger(permissionVersion) || !permissionVersion
+      !Number.isSafeInteger(sourceVersionNumber) || !sourceVersionNumber || sourceVersionNumber < 1 ||
+      !Number.isSafeInteger(permissionVersion) || !permissionVersion || permissionVersion < 1
     ) {
       return { kind: "story_anchor_required" as const };
     }
