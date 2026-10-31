@@ -162,3 +162,20 @@ a { color: inherit; text-decoration: none; }
 .wallet-address { display: block; overflow-wrap: anywhere; color: #e1e3df; font-size: 13px; font-weight: 500; }
 .wallet-connect { width: fit-content; min-width: 190px; }
 .form-status.info { border: 1px solid #46596b; color: #c2d9ed; background: #17212a; }
+
+
+.version-list { display: grid; gap: 14px; margin: 0 0 90px; }
+.version-row { display: grid; gap: 18px; padding: 22px; border: 1px solid #34383b; background: #151719; }
+.version-row h2 { margin: 10px 0 7px; font-size: 21px; }
+.version-row p { color: #aeb3b5; line-height: 1.55; }
+.version-row small { color: #7e8588; font-size: 11px; }
+.version-hashes { display: grid; gap: 8px; }
+.version-hashes code { display: block; overflow-wrap: anywhere; color: #aeb8a0; font-size: 10px; line-height: 1.5; }
+.provenance-action { display: grid; justify-items: start; gap: 12px; padding-top: 16px; border-top: 1px solid #303437; }
+.provenance-action .field-note { max-width: 640px; margin: 0; }
+.provenance-action .form-status { max-width: 640px; overflow-wrap: anywhere; }
+.provenance-action code { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .version-row { padding: 18px 15px; }
+  .provenance-action .primary-button, .provenance-action .secondary-button { width: 100%; }
+}
