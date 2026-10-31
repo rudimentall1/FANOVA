@@ -82,12 +82,12 @@ export default async function MyContributionDetailPage({ params }: { params: Pro
           <code>Content SHA-256: {entry.contentHash}</code>
           <code>Permission SHA-256: {entry.acknowledgedPermissionHash}</code>
           <p>{entry.isPublic ? "This approved contribution is public." : "This contribution is private."}</p>
-          {anchor ? (
+          {anchor && (anchor.status === "mainnet" || Boolean(anchor.transactionHash) || (entry.status !== "stale" && isCurrentSource)) ? (
             <ContributionProvenanceAction contributionId={entry.id} sourceVersionNumber={entry.sourceVersion} anchor={anchor} />
           ) : entry.status !== "stale" && isCurrentSource ? (
             <ContributionProvenanceAction contributionId={entry.id} sourceVersionNumber={entry.sourceVersion} anchor={null} />
           ) : (
-            <p className="field-note">This contribution is stale and cannot be registered against the current story version.</p>
+            <p className="field-note">This contribution is stale and has no submitted Mainnet transaction to verify.</p>
           )}
         </section>
       </article>
