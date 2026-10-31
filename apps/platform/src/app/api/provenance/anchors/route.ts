@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, desc, eq, isNotNull, lt } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { isAddress, type Address } from "viem";
 import { db } from "@/db";
@@ -114,7 +114,8 @@ export async function POST(request: Request) {
       .innerJoin(provenanceAnchor, eq(provenanceAnchor.workVersionId, workVersion.id))
       .where(and(
         eq(workVersion.workId, version.workId),
-        lt(workVersion.versionNumber, version.versionNumber)
+        lt(workVersion.versionNumber, version.versionNumber),
+        isNotNull(provenanceAnchor.transactionHash)
       ))
       .orderBy(desc(workVersion.versionNumber))
       .limit(2);
