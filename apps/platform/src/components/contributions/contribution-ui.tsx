@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { WorkPermissions } from "@/db/schema/content";
+import { CreatorDecisionProvenanceAction } from "./creator-decision-provenance-action";
 
 export function SubmitContributionForm({
   slug,
@@ -87,7 +88,8 @@ export function ContributionReviewCard({
   contributorHandle,
   createdAt,
   status,
-  feedback
+  feedback,
+  decisionAnchor
 }: {
   contributionId: string;
   title: string;
@@ -98,6 +100,14 @@ export function ContributionReviewCard({
   createdAt: Date;
   status: "pending" | "approved" | "rejected" | "stale";
   feedback: string | null;
+  decisionAnchor: {
+    id: string;
+    status: string;
+    expectedSignerAddress: string;
+    contractAddress: string;
+    transactionHash: string | null;
+    blockNumber: string | null;
+  } | null;
 }) {
   const router = useRouter();
   const [decision, setDecision] = useState<"approve" | "reject">("approve");
@@ -144,6 +154,9 @@ export function ContributionReviewCard({
           <button className="primary-button" disabled={busy} onClick={submit}>{busy ? "Saving…" : "Record decision"}</button>
         </div>
       ) : feedback ? <p className="review-feedback">Creator feedback: {feedback}</p> : null}
+      {status === "approved" || status === "rejected" ? (
+        <CreatorDecisionProvenanceAction contributionId={contributionId} approved={status === "approved"} anchor={decisionAnchor} />
+      ) : null}
       {error ? <p className="form-status error" role="alert">{error}</p> : null}
     </article>
   );

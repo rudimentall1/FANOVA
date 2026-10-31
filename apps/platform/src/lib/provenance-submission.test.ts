@@ -8,7 +8,11 @@ import {
   CONTRIBUTION_REGISTRATION_ABI,
   matchesContributionRegisteredEvent,
   matchesContributionRegistrationCall,
-  type ExpectedContributionRegistration
+  type ExpectedContributionRegistration,
+  CREATOR_DECISION_ABI,
+  matchesCreatorDecisionCall,
+  matchesCreatorDecisionEvent,
+  type ExpectedCreatorDecision
 } from "./provenance-submission";
 
 const expected: ExpectedStoryRegistration = {
@@ -105,5 +109,41 @@ describe("server-side contribution registration verification", () => {
     expect(matchesContributionRegisteredEvent(event, { ...expectedContribution, contributor: creator })).toBe(true);
     expect(matchesContributionRegisteredEvent({ ...event, contributor: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address }, { ...expectedContribution, contributor: creator })).toBe(false);
     expect(matchesContributionRegisteredEvent({ ...event, permissionAcknowledged: false }, { ...expectedContribution, contributor: creator })).toBe(false);
+  });
+});
+
+
+const expectedDecision: ExpectedCreatorDecision = {
+  contributionId: `0x${"88".repeat(32)}` as Hex,
+  approved: false,
+  reasonCode: `0x${"99".repeat(32)}` as Hex
+};
+
+describe("server-side creator decision verification", () => {
+  it("accepts calldata only when contribution, decision, and reason hash match", () => {
+    const input = encodeFunctionData({
+      abi: CREATOR_DECISION_ABI,
+      functionName: "decideContribution",
+      args: [expectedDecision.contributionId, expectedDecision.approved, expectedDecision.reasonCode]
+    });
+    expect(matchesCreatorDecisionCall(input, expectedDecision)).toBe(true);
+    expect(matchesCreatorDecisionCall(input, { ...expectedDecision, approved: true })).toBe(false);
+    expect(matchesCreatorDecisionCall(input, { ...expectedDecision, reasonCode: `0x${"aa".repeat(32)}` as Hex })).toBe(false);
+    expect(matchesCreatorDecisionCall("0x1234" as Hex, expectedDecision)).toBe(false);
+  });
+
+  it("accepts only the exact expected ContributionDecided event", () => {
+    const event = {
+      ...expectedDecision,
+      storyId: `0x${"11".repeat(32)}` as Hex,
+      sourceVersion: BigInt(2),
+      reviewer: creator,
+      decidedAt: BigInt(1)
+    };
+    const expected = { ...expectedDecision, storyId: event.storyId, sourceVersion: BigInt(2), reviewer: creator };
+    expect(matchesCreatorDecisionEvent(event, expected)).toBe(true);
+    expect(matchesCreatorDecisionEvent({ ...event, reviewer: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address }, expected)).toBe(false);
+    expect(matchesCreatorDecisionEvent({ ...event, approved: true }, expected)).toBe(false);
+    expect(matchesCreatorDecisionEvent({ ...event, decidedAt: BigInt(0) }, expected)).toBe(false);
   });
 });

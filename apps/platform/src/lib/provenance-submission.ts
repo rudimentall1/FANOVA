@@ -113,3 +113,52 @@ export function matchesContributionRegisteredEvent(args: {
     args.permissionHash.toLowerCase() === expected.permissionHash.toLowerCase() &&
     args.permissionAcknowledged === true;
 }
+
+
+export const CREATOR_DECISION_ABI = parseAbi([
+  "function decideContribution(bytes32 contributionId, bool approved, bytes32 reasonCode)",
+  "event ContributionDecided(bytes32 indexed contributionId, bytes32 indexed storyId, uint64 indexed sourceVersion, address reviewer, bool approved, bytes32 reasonCode, uint256 decidedAt)"
+]);
+
+export type ExpectedCreatorDecision = {
+  contributionId: Hex;
+  approved: boolean;
+  reasonCode: Hex;
+};
+
+export function matchesCreatorDecisionCall(input: Hex, expected: ExpectedCreatorDecision): boolean {
+  try {
+    const decoded = decodeFunctionData({ abi: CREATOR_DECISION_ABI, data: input });
+    if (decoded.functionName !== "decideContribution") return false;
+    const [contributionId, approved, reasonCode] = decoded.args;
+    return contributionId.toLowerCase() === expected.contributionId.toLowerCase() &&
+      approved === expected.approved &&
+      reasonCode.toLowerCase() === expected.reasonCode.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+export type ExpectedCreatorDecisionEvent = ExpectedCreatorDecision & {
+  storyId: Hex;
+  sourceVersion: bigint;
+  reviewer: Address;
+};
+
+export function matchesCreatorDecisionEvent(args: {
+  contributionId: Hex;
+  storyId: Hex;
+  sourceVersion: bigint;
+  reviewer: Address;
+  approved: boolean;
+  reasonCode: Hex;
+  decidedAt: bigint;
+}, expected: ExpectedCreatorDecisionEvent): boolean {
+  return args.contributionId.toLowerCase() === expected.contributionId.toLowerCase() &&
+    args.storyId.toLowerCase() === expected.storyId.toLowerCase() &&
+    args.sourceVersion === expected.sourceVersion &&
+    args.reviewer.toLowerCase() === expected.reviewer.toLowerCase() &&
+    args.approved === expected.approved &&
+    args.reasonCode.toLowerCase() === expected.reasonCode.toLowerCase() &&
+    args.decidedAt > BigInt(0);
+}
