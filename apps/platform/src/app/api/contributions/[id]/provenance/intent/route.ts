@@ -181,7 +181,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
       return {
         kind: "existing" as const,
-        anchor: existingIntent,
+        anchor: {
+          id: existingIntent.id,
+          status: existingIntent.status,
+          expectedSignerAddress: existingIntent.expectedSignerAddress,
+          chainId: existingIntent.chainId,
+          contractAddress: existingIntent.contractAddress,
+          contributionId: existingIntent.contributionId,
+          createdAt: existingIntent.createdAt
+        },
         contributionIdentity,
         storyId: story.storyId,
         sourceVersion: sourceVersionNumber,
