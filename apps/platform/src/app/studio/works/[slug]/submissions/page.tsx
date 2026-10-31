@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { contribution, userProfile, work } from "@/db/schema";
+import { contribution, provenanceAnchor, userProfile, work } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
 import { canManageOwnWork } from "@/lib/authz";
 import { ContributionReviewCard } from "@/components/contributions/contribution-ui";
