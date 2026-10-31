@@ -59,6 +59,7 @@ jobs:
           node --check domain.js
           node --check serve.mjs
           node --check e2e.test.js
+          node --check platform-e2e.test.js
 
       - name: Install platform dependencies
         working-directory: apps/platform
@@ -96,3 +97,35 @@ jobs:
           DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
           BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
           BETTER_AUTH_URL: http://localhost:3000
+
+      - name: Start platform development server for end-to-end tests
+        working-directory: apps/platform
+        run: |
+          nohup npm run dev -- --hostname 127.0.0.1 > /tmp/fanova-platform.log 2>&1 &
+          echo $! > /tmp/fanova-platform.pid
+        env:
+          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+          BETTER_AUTH_URL: http://127.0.0.1:3000
+      - name: Wait for platform and database
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --connect-timeout 2 --max-time 5 --fail --silent http://127.0.0.1:3000/api/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/fanova-platform.log
+          exit 1
+      - name: Run multi-account platform browser tests
+        working-directory: apps/web
+        run: node --test platform-e2e.test.js
+        env:
+          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+          BETTER_AUTH_URL: http://127.0.0.1:3000
+          FANOVA_PLATFORM_URL: http://127.0.0.1:3000
+          FANOVA_PLATFORM_LOG: /tmp/fanova-platform.log
+          FANOVA_PLATFORM_DIR: ${{ github.workspace }}/apps/platform
+          FANOVA_ADMIN_BOOTSTRAP_SCRIPT: ${{ github.workspace }}/apps/platform/scripts/bootstrap-e2e-admin.mjs
+          FANOVA_E2E_ADMIN_BOOTSTRAP: "true"

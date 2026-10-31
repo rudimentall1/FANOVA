@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node serve.mjs",
     "test": "node --test domain.test.js evidence-validation.test.js content-integrity.test.js event-coverage.test.js event-history.test.js",
-    "test:e2e": "node --test e2e.test.js"
+    "test:e2e": "node --test e2e.test.js",
+    "test:e2e:platform": "node --test platform-e2e.test.js"
   }
 }
