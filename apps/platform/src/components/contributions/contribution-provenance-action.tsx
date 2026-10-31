@@ -9,8 +9,8 @@ type AnchorState = {
   status: string;
   contractAddress: string;
   expectedSignerAddress: string;
-  transactionHash: string | null;
-  blockNumber: string | null;
+  transactionHash?: string | null;
+  blockNumber?: string | null;
   storyProvenanceVersion?: string | null;
 } | null;
 
