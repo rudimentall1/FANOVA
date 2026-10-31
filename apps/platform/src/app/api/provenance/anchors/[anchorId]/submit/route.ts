@@ -168,7 +168,7 @@ export async function POST(request: Request, context: RouteContext) {
   for (const log of receipt.logs) {
     if (!sameHex(log.address, row.anchor.contractAddress)) continue;
     try {
-      const event = decodeEventLog({ abi: STORY_REGISTRATION_ABI, data: log.data, topics: log.topics, strict: false });
+      const event = decodeEventLog({ abi: STORY_REGISTRATION_ABI, data: log.data, topics: log.topics });
       if (event.eventName !== "StoryVersionRegistered") continue;
       if (matchesStoryVersionEvent(event.args, { ...expected, creator: row.anchor.expectedSignerAddress as Address })) {
         matchingLog = log;
