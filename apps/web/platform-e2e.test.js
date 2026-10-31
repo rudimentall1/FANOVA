@@ -141,7 +141,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     assert.equal(await creatorPage.getByLabel("Fan art").isChecked(), true, "fan art should remain enabled");
     assert.equal(await creatorPage.getByLabel("Translations").isChecked(), false, "translations should be disabled");
     await creatorPage.getByRole("button", { name: "Publish work" }).click();
-    await creatorPage.waitForURL(/\/works\/[^/]+$/, { timeout: 15_000 });
+    await creatorPage.waitForURL((url) => /^\/works\/[^/]+$/.test(url.pathname), { timeout: 15_000 });
     const slug = new URL(creatorPage.url()).pathname.split("/").pop();
     await creatorPage.getByRole("heading", { name: "E2E Story" }).waitFor();
     await creatorPage.getByText("Fan art allowed").waitFor();
