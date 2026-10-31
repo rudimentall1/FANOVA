@@ -63,8 +63,24 @@ async function submitContribution(page, slug, title, text) {
 
   // Confirm the saved record through a fresh server-rendered request, not only client navigation state.
   await page.goto(`${baseUrl}/dashboard/contributions`);
+  const listResult = await page.evaluate(async () => {
+    const response = await fetch("/api/contributions");
+    return { status: response.status, body: await response.json() };
+  });
+  assert.equal(listResult.status, 200, `contribution list API failed after fresh navigation: ${JSON.stringify(listResult)}`);
+  assert.ok(
+    listResult.body.contributions?.some((item) => item.id === result.contribution.id),
+    `persisted contribution missing from list API: expected ${result.contribution.id}; received ${JSON.stringify(listResult.body)}`
+  );
   const contributionLink = page.getByRole("link", { name: title });
-  await contributionLink.waitFor({ state: "visible", timeout: 15_000 });
+  try {
+    await contributionLink.waitFor({ state: "visible", timeout: 15_000 });
+  } catch (error) {
+    throw new Error(
+      `Contribution exists in list API but is not rendered in dashboard. URL=${page.url()}; ` +
+      `body=${(await page.locator("body").innerText()).slice(0, 3000)}; cause=${error.message}`
+    );
+  }
   await contributionLink.click();
   await page.waitForURL(/\/dashboard\/contributions\//, { timeout: 10_000 });
   return result.contribution.id;
