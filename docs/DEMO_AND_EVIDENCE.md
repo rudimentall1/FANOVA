@@ -145,7 +145,8 @@ Do not use `INDEPENDENTLY VERIFIED` merely because a team member opened the expl
 
 - Historical pending contributions now have an explicit `STALE · REVIEW DISABLED` state in the multi-user review UI. The UI explains that the record is retained for history but cannot be approved or rejected, and asks the contributor to submit against the current story and permission version. This UI change was merged in [PR #35](https://github.com/rudimentall1/FANOVA/pull/35); its pull-request CI run [41186040120](https://github.com/rudimentall1/FANOVA/actions/runs/41186040120) passed. The server-side decision guard remains the enforcement boundary.
 - The read-only verifier now scans `StoryVersionRegistered`, `ContributionRegistered`, and `ContributionDecided` events from the deployment block through a single captured verification block, in ranges of at most 1,000 blocks. It reconciles the discovered story history and transaction references against the selected evidence bundle. Automated tests cover bounded chunking, missing/extra contribution and decision records, historical story versions, duplicate/gapped story-version events, and unmatched bundle references.
-- **Live-bundle validation of this exact current scanner remains OPEN.** The repository records an earlier bundle/event reconciliation through block `30113277` and a separate scanner probe through block `30112330`, but the historical notes do not establish that the current `verify-evidence.js` implementation was run against the unchanged original bundle. The original exported JSON is not committed to the repository, so this update does not claim a fresh end-to-end `HISTORY VERIFIED` result. Re-run the current verifier with the retained original bundle and record its returned verification block before closing that roadmap gate.
+- The current bounded scanner has now completed a live Soneium Mainnet scan in GitHub Actions and reconciled the discovered event transaction references against the original bundle's recorded references. Run [41188393272](https://github.com/rudimentall1/FANOVA/actions/runs/41188393272) used the official `https://rpc.soneium.org/` endpoint and captured verification block `30151883`; it found 1 story-version event, 1 contribution event, and 1 creator-decision event. All three transaction hashes matched. The scanner's 1,000-block chunking and event-coverage reconciliation therefore have a fresh live-chain result.
+- **The full browser-verifier gate remains OPEN.** The CI check uses the transaction references recorded in the original bundle, but it does not load the unchanged JSON file and does not repeat the browser verifier's complete content-hash, contract-storage, and receipt checks. Do not claim `HISTORY VERIFIED` until the unchanged original bundle is run through `verify-evidence.js` and the fresh verification block is recorded.
 
 No wallet access, transaction submission, contract change, or Mainnet write was performed for this hardening work.
 
@@ -161,3 +162,25 @@ The unchanged original export `fanova-evidence-bundle.json` was supplied for val
 **Status:** this is a local structural and checksum preflight, not a fresh live-RPC run of the current browser verifier. Full event-history scanning and bundle reconciliation against a newly captured Soneium verification block remain OPEN. Do not mark the current scanner gate complete until the unchanged bundle returns `HISTORY VERIFIED` through the current verifier, with the verification block recorded.
 
 No wallet access, transaction submission, contract change, or Mainnet write was performed for this preflight.
+
+### Live event-history reconciliation (2026-10-31)
+
+A new read-only GitHub Actions workflow ran the current `scanStoryEventHistory` and `compareEventCoverage` modules against Soneium Mainnet. It tried the official Soneium RPC first and captured a single verification snapshot.
+
+| Item | Result |
+|---|---|
+| Workflow run | [41188393272](https://github.com/rudimentall1/FANOVA/actions/runs/41188393272) |
+| RPC used | `https://rpc.soneium.org/` |
+| Chain ID | `1868` |
+| Contract | `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880` |
+| Deployment block | `30077815` |
+| Verification block | `30151883` |
+| Story-version events | 1 |
+| Contribution events | 1 |
+| Creator-decision events | 1 |
+| Bundle-recorded transaction references | All three matched the live events |
+| Result | `LIVE_EVENT_HISTORY_RECONCILED` |
+
+The workflow performs read-only RPC calls and does not access a wallet or submit transactions. It reconciles the live event history against the three transaction references recorded in the supplied evidence bundle without committing the bundle or its story text. This is a fresh live validation of the current scanner and event-coverage comparison, but it is not the full browser verifier: it does not recompute the original content hashes or re-check all contract storage and receipt predicates. The full `HISTORY VERIFIED` gate therefore remains open.
+
+A repeat run initially hit the official RPC's request-rate limit during `eth_getLogs`. The workflow was updated so fallback applies to the entire scan, not only initial connectivity. Retest [41188505170](https://github.com/rudimentall1/FANOVA/actions/runs/41188505170) completed successfully using `https://soneium-mainnet.rpc.sentio.xyz` through verification block `30151933`, with the same 1/1/1 event counts and all three transaction references matched. This demonstrates the fallback path; it remains a single-provider result per run.

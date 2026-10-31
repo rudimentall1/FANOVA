@@ -1,0 +1,38 @@
+name: FANOVA Soneium live event-history check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/live-event-history-check.mjs'
+      - 'apps/web/event-history.js'
+      - 'apps/web/event-coverage.js'
+      - 'apps/web/provenance-abi.js'
+      - '.github/workflows/soneium-event-history.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web/live-event-history-check.mjs'
+      - 'apps/web/event-history.js'
+      - 'apps/web/event-coverage.js'
+      - 'apps/web/provenance-abi.js'
+      - '.github/workflows/soneium-event-history.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  live-event-history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install read-only verifier dependency
+        working-directory: apps/web
+        run: npm install --no-save ethers@6.15.0
+      - name: Scan FANOVA Mainnet event history and reconcile evidence references
+        working-directory: apps/web
+        run: node live-event-history-check.mjs
