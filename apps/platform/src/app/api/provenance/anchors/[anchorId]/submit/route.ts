@@ -178,7 +178,8 @@ export async function POST(request: Request, context: RouteContext) {
     .innerJoin(provenanceAnchor, eq(provenanceAnchor.workVersionId, workVersion.id))
     .where(and(
       eq(workVersion.workId, row.workId),
-      lt(workVersion.versionNumber, row.versionNumber)
+      lt(workVersion.versionNumber, row.versionNumber),
+      isNotNull(provenanceAnchor.transactionHash)
     ))
     .orderBy(desc(workVersion.versionNumber))
     .limit(2);
