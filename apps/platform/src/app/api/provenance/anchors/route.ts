@@ -5,7 +5,12 @@ import { isAddress, type Address } from "viem";
 import { db } from "@/db";
 import { linkedWallet, provenanceAnchor, work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
-import { asBytes32Hash, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
+import {
+  asBytes32Hash,
+  deriveStoryIdentity,
+  FANOVA_CHAIN_ID,
+  nextPermissionVersion
+} from "@/lib/provenance-intent";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -81,18 +86,67 @@ export async function POST(request: Request) {
 
     if (!version || version.ownerUserId !== actor.userId) return { kind: "not_found" as const };
     if (version.status !== "published" || version.currentVersionId !== version.id) return { kind: "not_current" as const };
-    if (version.versionNumber !== 1) return { kind: "first_version_required" as const };
 
     const sourceHash = asBytes32Hash(version.sourceHash);
     const permissionHash = asBytes32Hash(version.permissionHash);
     if (!sourceHash || !permissionHash) return { kind: "invalid_hash" as const };
 
+    let permissionVersion = 1;
+    if (version.versionNumber > 1) {
+      const previousRows = await tx.select({
+        status: provenanceAnchor.status,
+        chainId: provenanceAnchor.chainId,
+        contractAddress: provenanceAnchor.contractAddress,
+        expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
+        sourceHash: provenanceAnchor.sourceHash,
+        permissionHash: provenanceAnchor.permissionHash,
+        transactionHash: provenanceAnchor.transactionHash,
+        eventName: provenanceAnchor.eventName,
+        verifiedAt: provenanceAnchor.verifiedAt,
+        verificationSnapshot: provenanceAnchor.verificationSnapshot,
+        versionSourceHash: workVersion.sourceHash,
+        versionPermissionHash: workVersion.permissionHash
+      }).from(workVersion)
+        .innerJoin(provenanceAnchor, eq(provenanceAnchor.workVersionId, workVersion.id))
+        .where(and(
+          eq(workVersion.workId, version.workId),
+          eq(workVersion.versionNumber, version.versionNumber - 1)
+        ));
+
+      if (previousRows.length !== 1) return { kind: "previous_anchor_required" as const };
+      const previous = previousRows[0];
+      const previousSnapshot = previous.verificationSnapshot;
+      const previousPermissionVersion = previousSnapshot?.permissionVersion ??
+        (version.versionNumber - 1 === 1 ? 1 : null);
+
+      if (
+        previous.status !== "mainnet" ||
+        previous.chainId !== FANOVA_CHAIN_ID ||
+        previous.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
+        previous.expectedSignerAddress.toLowerCase() !== wallet.address.toLowerCase() ||
+        !previous.transactionHash ||
+        previous.eventName !== "StoryVersionRegistered" ||
+        !previous.verifiedAt ||
+        previous.sourceHash !== previous.versionSourceHash ||
+        previous.permissionHash !== previous.versionPermissionHash ||
+        previousSnapshot?.chainId !== FANOVA_CHAIN_ID ||
+        previousSnapshot.contractAddress.toLowerCase() !== contractAddress.toLowerCase()
+      ) {
+        return { kind: "previous_anchor_required" as const };
+      }
+
+      const next = nextPermissionVersion(
+        version.permissionHash,
+        previous.permissionHash ?? "",
+        previousPermissionVersion ?? Number.NaN
+      );
+      if (next === null) return { kind: "previous_anchor_required" as const };
+      permissionVersion = next;
+    }
+
     const identity = deriveStoryIdentity(version.workId, wallet.address as Address);
     if (existingIntent) {
       if (existingIntent.workVersionId !== version.id) return { kind: "key_conflict" as const };
-      // An idempotent retry must reproduce the original signer and payload exactly.
-      // If the linked wallet, contract configuration, or source hashes changed,
-      // reject instead of returning calldata that no longer matches the stored anchor.
       if (
         existingIntent.expectedSignerAddress.toLowerCase() !== wallet.address.toLowerCase() ||
         existingIntent.chainId !== FANOVA_CHAIN_ID ||
@@ -109,7 +163,8 @@ export async function POST(request: Request) {
         storyId: identity.storyId,
         sourceHash,
         permissionHash,
-        sourceVersion: version.versionNumber
+        sourceVersion: version.versionNumber,
+        permissionVersion
       };
     }
 
@@ -151,7 +206,8 @@ export async function POST(request: Request) {
       storyId: identity.storyId,
       sourceHash,
       permissionHash,
-      sourceVersion: version.versionNumber
+      sourceVersion: version.versionNumber,
+      permissionVersion
     };
   });
 
@@ -159,7 +215,7 @@ export async function POST(request: Request) {
   if (result.kind === "intent_mismatch") return NextResponse.json({ error: "The original provenance intent no longer matches the linked wallet, contract configuration, or published hashes. Create a new intent after reviewing the change." }, { status: 409 });
   if (result.kind === "not_found") return NextResponse.json({ error: "Work version not found." }, { status: 404 });
   if (result.kind === "not_current") return NextResponse.json({ error: "Only the current published version can be anchored." }, { status: 409 });
-  if (result.kind === "first_version_required") return NextResponse.json({ error: "The initial story version must be registered first. Later versions require a confirmed preceding anchor." }, { status: 409 });
+  if (result.kind === "previous_anchor_required") return NextResponse.json({ error: "The immediately preceding story version must have one confirmed Mainnet anchor from the same creator wallet and contract before this version can be registered." }, { status: 409 });
   if (result.kind === "invalid_hash") return NextResponse.json({ error: "Stored source or permission hash is not a bytes32 SHA-256 digest." }, { status: 422 });
   if (result.kind === "already_exists") return NextResponse.json({ error: "A provenance intent already exists for this work version." }, { status: 409 });
 
@@ -169,7 +225,14 @@ export async function POST(request: Request) {
     idempotent: result.kind === "existing",
     transaction: {
       functionName: "registerStoryVersion",
-      args: [result.storyId, result.creatorSalt, BigInt(result.sourceVersion), result.sourceHash, BigInt(1), result.permissionHash].map((value) => typeof value === "bigint" ? value.toString() : value),
+      args: [
+        result.storyId,
+        result.creatorSalt,
+        BigInt(result.sourceVersion),
+        result.sourceHash,
+        BigInt(result.permissionVersion),
+        result.permissionHash
+      ].map((value) => typeof value === "bigint" ? value.toString() : value),
       chainId: FANOVA_CHAIN_ID,
       requiresUserSignature: true,
       submitted: false
