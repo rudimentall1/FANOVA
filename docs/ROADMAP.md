@@ -80,7 +80,7 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 
 ## P1.5 — Multi-user web product foundation (new priority after product expansion)
 
-**Status: account, creator, and contribution workflows merged; published-work versioning and automatic stale-submission handling implemented on the current branch.**
+**Status: core account, creator, and contribution workflows implemented and covered by a passing multi-account browser acceptance test. PR #20 was merged to `main` as `dc392a2`; GitHub Actions run [41173158990](https://github.com/rudimentall1/FANOVA/actions/runs/41173158990) passed all 18 steps against an ephemeral PostgreSQL database. The full P1.5 exit gate remains open because wallet linking/provenance integration, public profile editing, production deployment, and other acceptance criteria are not complete.**
 
 - [x] Confirm that FANOVA's final product is a multi-user creator/contributor platform, not a single-page local demo.
 - [x] Define public pages, account flows, creator workspace, contributor dashboard, roles, core entities, security boundaries, and acceptance criteria in [WEB_PRODUCT_SPEC.md](WEB_PRODUCT_SPEC.md).
@@ -91,15 +91,15 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 - [x] Implement PostgreSQL-backed work records, append-only draft version snapshots, explicit permitted-use rules, SHA-256 content/permission hashes, creator-gated creation/edit APIs, public Discover catalogue/search, and published work detail in [PR #16](https://github.com/rudimentall1/FANOVA/pull/16).
 - [x] Implement creator-access applications, one-pending-request-per-account database constraint, administrator review, and server-side creator role assignment. First admin provisioning is documented in [ADMIN_BOOTSTRAP.md](ADMIN_BOOTSTRAP.md) ([PR #17](https://github.com/rudimentall1/FANOVA/pull/17)).
 - [x] Implement version-bound contribution submission, explicit permission acknowledgement, permission-type enforcement, contributor dashboard/detail, creator review queue, approve/reject feedback, and opt-in public contribution pages ([PR #18](https://github.com/rudimentall1/FANOVA/pull/18)).
-- [ ] Run registration, verification, login, logout, and recovery end-to-end against local PostgreSQL with two independent accounts.
+- [x] Run registration, email verification, login, logout, and password recovery end-to-end against an isolated PostgreSQL database with three independent accounts (admin, creator, contributor); verified in [PR #20](https://github.com/rudimentall1/FANOVA/pull/20), CI run [41173158990](https://github.com/rudimentall1/FANOVA/actions/runs/41173158990).
 - [x] Add creator-access request and admin review process; creator role is server-assigned and cannot be self-selected.
 - [x] Implement private revisions for published works, explicit publish action, version history, and automatic stale marking for pending contributions when a new source version is published.
 - [ ] Implement public creator profiles and richer work discovery filters.
-- [ ] Integrate existing wallet and provenance flow with authenticated accounts; no contract changes or Mainnet writes without separate approval.
-- [ ] Add cross-account/cross-role API tests, persistent-storage tests, and browser E2E coverage.
+- [ ] Integrate existing wallet and provenance flow with authenticated accounts; tracked in [issue #21](https://github.com/rudimentall1/FANOVA/issues/21). No contract changes, redeployment, or Mainnet writes without separate approval.
+- [x] Add cross-account/cross-role browser acceptance coverage for reader publish denial, creator/admin boundary, private contribution ownership, creator review, opt-in public visibility, stale submissions, and password recovery in [PR #20](https://github.com/rudimentall1/FANOVA/pull/20). The test confirms persisted records after fresh navigation; process-restart durability and broader API fuzzing remain unverified.
 - [ ] Deploy and verify the complete user journey from a clean browser and a second independent account.
 
-**Exit gate:** the acceptance criteria in WEB_PRODUCT_SPEC.md pass. Only then move to final demo recording and application polish.
+**Exit gate: NOT MET.** The account/creator/contributor slice now passes CI, but the complete WEB_PRODUCT_SPEC.md acceptance criteria still require wallet linking and authenticated provenance, public profile editing, production persistence/deployment verification, and final outsider review. Do not record the final Sony demo yet.
 
 **Demo policy:** no final video while the product is still a localStorage prototype or uses simulated user identities. Interim screen recordings may be used privately for debugging, but must not be presented as the final Sony product demo.
 
