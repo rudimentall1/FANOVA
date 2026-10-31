@@ -190,7 +190,7 @@ export function WalletLinkPanel() {
       </button>}
       {wallet && <div>
         <p className="field-note">To replace this wallet, first unlink it by signing a fresh message with this same address. Then connect the replacement wallet.</p>
-        <button className="secondary-button wallet-unlink" onClick={unlinkWallet} disabled={busy || loading}>
+        <button className="primary-button wallet-unlink" onClick={unlinkWallet} disabled={busy || loading}>
           {busy ? "Waiting for wallet…" : "Unlink wallet"}
         </button>
       </div>}
