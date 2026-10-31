@@ -135,7 +135,7 @@ export async function POST(request: Request, context: RouteContext) {
     tx = await publicClient.getTransaction({ hash: transactionHash });
     receipt = await publicClient.getTransactionReceipt({ hash: transactionHash });
   } catch {
-    return NextResponse.json({ anchorId: id, transactionHash, status: "PENDING", error: "Transaction is not yet available or mined. Retry with the same transaction hash." }, { status: 202 });
+    return NextResponse.json({ anchorId: row.anchor.id, transactionHash, status: "PENDING", error: "Transaction is not yet available or mined. Retry with the same transaction hash." }, { status: 202 });
   }
 
   const fail = async (failureCode: string, message: string) => {
