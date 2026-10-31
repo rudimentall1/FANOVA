@@ -50,11 +50,24 @@ async function submitContribution(page, slug, title, text) {
   await page.getByLabel("Title").fill(title);
   await page.getByLabel("Your contribution").fill(text);
   await page.getByLabel("I have read and acknowledge the current permitted-use rules.").check();
+  const submissionResponse = page.waitForResponse((response) =>
+    response.url().includes(\`/api/works/\${slug}/contributions\`) &&
+    response.request().method() === "POST"
+  );
   await page.getByRole("button", { name: "Submit contribution" }).click();
+  const submitted = await submissionResponse;
+  assert.equal(submitted.status(), 201, \`contribution submission failed: \${submitted.status()} \${await submitted.text()}\`);
+  const result = await submitted.json();
+  assert.ok(result.contribution?.id, "successful submission must return its persisted contribution ID");
   await page.waitForURL(/\/dashboard\/contributions$/, { timeout: 15_000 });
-  await page.getByRole("link", { name: title }).click();
+
+  // Confirm the saved record through a fresh server-rendered request, not only client navigation state.
+  await page.goto(\`\${baseUrl}/dashboard/contributions\`);
+  const contributionLink = page.getByRole("link", { name: title });
+  await contributionLink.waitFor({ state: "visible", timeout: 15_000 });
+  await contributionLink.click();
   await page.waitForURL(/\/dashboard\/contributions\//, { timeout: 10_000 });
-  return new URL(page.url()).pathname.split("/").pop();
+  return result.contribution.id;
 }
 
 test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }, async () => {
