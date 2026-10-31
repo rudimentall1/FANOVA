@@ -10,6 +10,17 @@ if (!email || !connectionString) {
   throw new Error("ADMIN_EMAIL and DATABASE_URL are required.");
 }
 
+const databaseUrl = new URL(connectionString);
+const isLocalE2eDatabase =
+  process.env.GITHUB_ACTIONS === "true" &&
+  process.env.FANOVA_E2E_ADMIN_BOOTSTRAP === "true" &&
+  ["localhost", "127.0.0.1"].includes(databaseUrl.hostname) &&
+  databaseUrl.pathname === "/fanova";
+
+if (!isLocalE2eDatabase) {
+  throw new Error("Admin bootstrap is restricted to the isolated FANOVA GitHub Actions test database.");
+}
+
 const pool = new Pool({ connectionString });
 
 try {
