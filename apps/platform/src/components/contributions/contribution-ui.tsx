@@ -142,10 +142,11 @@ export function ContributionReviewCard({
   return (
     <article className="contribution-card">
       <div className="contribution-card-head">
-        <div><span className={`work-status ${status === "approved" ? "published" : ""}`}>{status}</span><h2>{title}</h2><p>By {contributorName ?? "Contributor"} · @{contributorHandle ?? "member"} · {type.replace("_", " ")}</p></div>
+        <div><span className={`work-status ${status === "approved" ? "published" : status === "stale" ? "stale" : ""}`}>{status === "stale" ? "STALE · REVIEW DISABLED" : status}</span><h2>{title}</h2><p>By {contributorName ?? "Contributor"} · @{contributorHandle ?? "member"} · {type.replace("_", " ")}</p></div>
         <small>{createdAt.toLocaleDateString()}</small>
       </div>
       <div className="contribution-content">{content}</div>
+      {status === "stale" ? <p className="stale-notice" role="status">This submission references an older story or permission version. It remains available as a historical record, but cannot be approved or rejected. Submit a new contribution against the current version.</p> : null}
       {status === "pending" ? (
         <div className="review-editor">
           <label>Decision<select value={decision} onChange={(e) => setDecision(e.target.value as "approve" | "reject")}><option value="approve">Approve</option><option value="reject">Reject</option></select></label>
