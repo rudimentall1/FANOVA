@@ -54,7 +54,7 @@ export async function POST(request: Request, context: RouteContext) {
       !TX_HASH_RE.test((payload as Record<string, string>).transactionHash)) {
     return NextResponse.json({ error: "A valid transactionHash is required." }, { status: 422 });
   }
-  const transactionHash = (payload as { transactionHash: Hex }).transactionHash;
+  const transactionHash = (payload as { transactionHash: Hex }).transactionHash.toLowerCase() as Hex;
 
   const [row] = await db.select({
     anchor: provenanceAnchor,
