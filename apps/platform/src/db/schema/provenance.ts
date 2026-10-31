@@ -65,7 +65,7 @@ export const provenanceAnchor = pgTable("provenance_anchor", {
   permissionHash: text("permission_hash"),
   contributionHash: text("contribution_hash"),
   transactionHash: text("transaction_hash"),
-  blockNumber: bigint("block_number", { mode: "string" }),
+  blockNumber: bigint("block_number", { mode: "bigint" }),
   transactionIndex: integer("transaction_index"),
   logIndex: integer("log_index"),
   eventName: text("event_name"),
