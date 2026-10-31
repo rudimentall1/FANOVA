@@ -138,10 +138,19 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       "The story is intentionally synthetic and exists only in the isolated CI database. ".repeat(2)
     );
     await creatorPage.getByLabel("Translations").uncheck();
+    assert.equal(await creatorPage.getByLabel("Fan art").isChecked(), true, "fan art should remain enabled");
+    assert.equal(await creatorPage.getByLabel("Translations").isChecked(), false, "translations should be disabled");
     await creatorPage.getByRole("button", { name: "Publish work" }).click();
     await creatorPage.waitForURL(/\/works\/[^/]+$/, { timeout: 15_000 });
     const slug = new URL(creatorPage.url()).pathname.split("/").pop();
     await creatorPage.getByRole("heading", { name: "E2E Story" }).waitFor();
+    const publishedWork = await creatorPage.evaluate(async (workSlug) => {
+      const response = await fetch(`/api/works/${workSlug}`);
+      return { status: response.status, payload: await response.json() };
+    }, slug);
+    assert.equal(publishedWork.status, 200, "published work API must be readable");
+    assert.equal(publishedWork.payload.work.permissions.fanArt, true, "published work must preserve fan art permission");
+    assert.equal(publishedWork.payload.work.permissions.translations, false, "published work must preserve disabled translations");
 
     // A separate reader signs up, verifies email, and returns directly to the contribution form.
     const contributorPage = await registerAndVerify(
@@ -150,9 +159,14 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       contributorEmail,
       `/works/${slug}/contribute`
     );
+    await contributorPage.getByRole("heading", { name: "E2E Story" }).waitFor();
     const contributionType = contributorPage.getByLabel("Contribution type");
     const availableTypes = await contributionType.locator("option").allTextContents();
-    assert.deepEqual(availableTypes, ["Fan art"], "the form must reflect the creator's permission rules");
+    assert.deepEqual(
+      availableTypes,
+      ["Fan art"],
+      `the form must reflect the creator's permission rules; URL=${contributorPage.url()}; page=${(await contributorPage.locator("body").innerText()).slice(0, 1800)}`
+    );
 
     const firstTitle = "E2E Fan Art Submission";
     const firstId = await submitContribution(
