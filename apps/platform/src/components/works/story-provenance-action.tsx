@@ -12,6 +12,7 @@ type AnchorState = {
   transactionHash: string | null;
   blockNumber: string | null;
   verifiedAt: string | null;
+  provenanceVersion: string | null;
 } | null;
 
 type Provider = {
@@ -182,7 +183,7 @@ export function StoryProvenanceAction({ workVersionId, versionNumber, anchor: in
     return (
       <div className="provenance-action">
         <span className="work-status published">MAINNET VERIFIED</span>
-        <p className="field-note">Story version {versionNumber} registered in Soneium block {anchor.blockNumber ?? "recorded"}.</p>
+        <p className="field-note">App version {versionNumber} registered as provenance sequence {anchor.provenanceVersion ?? "recorded"} in Soneium block {anchor.blockNumber ?? "recorded"}.</p>
         <a className="text-link" href={`https://soneium.blockscout.com/tx/${anchor.transactionHash}`} target="_blank" rel="noreferrer">View transaction on Blockscout</a>
       </div>
     );
