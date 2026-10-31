@@ -1,8 +1,9 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { db } from "@/db";
 import { walletChallenge } from "@/db/schema";
-import { getCurrentActor } from "@/lib/server-auth";
+import { auth } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,8 +26,8 @@ function configuredOrigin() {
 }
 
 export async function POST() {
-  const actor = await getCurrentActor();
-  if (!actor) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
   const origin = configuredOrigin();
   if (!origin) {
@@ -56,7 +57,8 @@ export async function POST() {
 
   await db.insert(walletChallenge).values({
     id,
-    userId: actor.userId,
+    userId: session.user.id,
+    sessionId: session.session.id,
     nonce,
     message,
     chainId: CHAIN_ID,
