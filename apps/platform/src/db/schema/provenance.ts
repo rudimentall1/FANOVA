@@ -49,6 +49,8 @@ export type ProvenanceVerificationSnapshot = {
   observedHashes?: Record<string, string>;
   confirmations?: number;
   failureCode?: string;
+  decisionApproved?: boolean;
+  decisionReasonCode?: string;
   notes?: string[];
   decisionApproved?: boolean;
   decisionReasonCode?: string;
