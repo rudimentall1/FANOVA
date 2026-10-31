@@ -253,7 +253,16 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     assert.equal(crossAccountLink.status, 409, `wallet A must not be linked to account B: ${JSON.stringify(crossAccountLink)}`);
 
     await contributorPage.getByRole("button", { name: "Unlink wallet" }).click();
-    await contributorPage.getByText("Wallet safely unlinked. You can now connect another Soneium wallet.").waitFor({ timeout: 15_000 });
+    try {
+      await contributorPage.getByText("Wallet safely unlinked. You can now connect another Soneium wallet.").waitFor({ timeout: 15_000 });
+    } catch (error) {
+      const debug = await contributorPage.evaluate(async () => ({
+        status: document.querySelector(".form-status")?.textContent ?? null,
+        wallet: await fetch("/api/wallet").then((response) => response.json()),
+        signedMessage: globalThis.__fanovaLastSignedMessage ?? null
+      }));
+      throw new Error(`Wallet unlink did not complete. Debug=${JSON.stringify(debug)}; serverLog=${readLog().slice(-8000)}; cause=${error.message}`);
+    }
     const replayStatus = await contributorPage.evaluate(async () => {
       const response = await fetch("/api/wallet/unlink", {
         method: "POST",
