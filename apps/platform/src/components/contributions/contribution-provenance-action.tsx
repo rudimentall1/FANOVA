@@ -46,7 +46,7 @@ export function ContributionProvenanceAction({
   const [message, setMessage] = useState("");
   const [kind, setKind] = useState<"info" | "success" | "error">("info");
 
-  async function verifySubmitted(anchorId: string, hash: string) {
+  async function verifySubmitted(hash: string) {
     setKind("info");
     setMessage("Transaction submitted. FANOVA is checking the contribution event and source permissions.");
     const response = await fetch(`/api/contributions/${contributionId}/provenance/submit`, {
@@ -108,7 +108,7 @@ export function ContributionProvenanceAction({
         if (signer.toLowerCase() !== anchor.expectedSignerAddress.toLowerCase()) {
           throw new Error("The connected Rabby account does not match the wallet linked to this FANOVA account.");
         }
-        await verifySubmitted(anchor.id, anchor.transactionHash);
+        await verifySubmitted(anchor.transactionHash);
         return;
       }
 
@@ -140,7 +140,7 @@ export function ContributionProvenanceAction({
       const pendingHash = localStorage.getItem(`fanova:contribution:tx:${contributionId}`);
       if (pendingHash && /^0x[0-9a-fA-F]{64}$/.test(pendingHash)) {
         setTransactionHash(pendingHash);
-        await verifySubmitted(activeAnchor.id, pendingHash);
+        await verifySubmitted(pendingHash);
         return;
       }
 
@@ -170,7 +170,7 @@ export function ContributionProvenanceAction({
       }
       setTransactionHash(sent);
       localStorage.setItem(`fanova:contribution:tx:${contributionId}`, sent);
-      await verifySubmitted(activeAnchor.id, sent);
+      await verifySubmitted(sent);
     } catch (error) {
       setKind("error");
       setMessage(errorMessage(error));
@@ -183,7 +183,7 @@ export function ContributionProvenanceAction({
     if (!anchor?.id || !transactionHash) return;
     setBusy(true);
     try {
-      await verifySubmitted(anchor.id, transactionHash);
+      await verifySubmitted(transactionHash);
     } catch (error) {
       setKind("error");
       setMessage(errorMessage(error));
