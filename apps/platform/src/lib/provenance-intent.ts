@@ -51,3 +51,7 @@ export function nextProvenanceVersion(previousProvenanceVersion: number): number
       previousProvenanceVersion >= Number.MAX_SAFE_INTEGER) return null;
   return previousProvenanceVersion + 1;
 }
+
+export function deriveContributionIdentity(contributionId: string): Hex {
+  return keccak256(toBytes(`fanova:contribution:${contributionId}`));
+}
