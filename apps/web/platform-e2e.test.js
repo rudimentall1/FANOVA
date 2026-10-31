@@ -144,13 +144,8 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await creatorPage.waitForURL(/\/works\/[^/]+$/, { timeout: 15_000 });
     const slug = new URL(creatorPage.url()).pathname.split("/").pop();
     await creatorPage.getByRole("heading", { name: "E2E Story" }).waitFor();
-    const publishedWork = await creatorPage.evaluate(async (workSlug) => {
-      const response = await fetch(`/api/works/${workSlug}`);
-      return { status: response.status, payload: await response.json() };
-    }, slug);
-    assert.equal(publishedWork.status, 200, "published work API must be readable");
-    assert.equal(publishedWork.payload.work.permissions.fanArt, true, "published work must preserve fan art permission");
-    assert.equal(publishedWork.payload.work.permissions.translations, false, "published work must preserve disabled translations");
+    await creatorPage.getByText("Fan art allowed").waitFor();
+    await creatorPage.getByText("Translations not permitted").waitFor();
 
     // A separate reader signs up, verifies email, and returns directly to the contribution form.
     const contributorPage = await registerAndVerify(
