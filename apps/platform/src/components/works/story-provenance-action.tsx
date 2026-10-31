@@ -12,7 +12,7 @@ type AnchorState = {
   transactionHash: string | null;
   blockNumber: string | null;
   verifiedAt: string | null;
-  provenanceVersion: string | null;
+  provenanceVersion?: string | null;
 } | null;
 
 type Provider = {
@@ -50,7 +50,7 @@ export function StoryProvenanceAction({ workVersionId, versionNumber, anchor: in
       body: JSON.stringify({ transactionHash: hash })
     });
     const result = await response.json() as {
-      status?: string; error?: string; blockNumber?: string; explorerUrl?: string;
+      status?: string; error?: string; blockNumber?: string; sourceVersion?: number; explorerUrl?: string;
     };
     if (response.status === 202) {
       setKind("info");
@@ -70,7 +70,7 @@ export function StoryProvenanceAction({ workVersionId, versionNumber, anchor: in
     }
     setAnchor((current) => current ? {
       ...current, status: "mainnet", transactionHash: hash,
-      blockNumber: result.blockNumber ?? null, verifiedAt: new Date().toISOString()
+      blockNumber: result.blockNumber ?? null, provenanceVersion: result.sourceVersion?.toString() ?? current.provenanceVersion ?? null, verifiedAt: new Date().toISOString()
     } : current);
     localStorage.removeItem(`fanova:provenance:intent:${workVersionId}`);
     localStorage.removeItem(`fanova:provenance:tx:${workVersionId}`);
