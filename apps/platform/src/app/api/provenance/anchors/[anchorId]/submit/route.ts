@@ -11,7 +11,12 @@ import {
 import { db } from "@/db";
 import { provenanceAnchor, work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
-import { deriveStoryIdentity, FANOVA_CHAIN_ID, asBytes32Hash } from "@/lib/provenance-intent";
+import {
+  deriveStoryIdentity,
+  FANOVA_CHAIN_ID,
+  asBytes32Hash,
+  nextPermissionVersion
+} from "@/lib/provenance-intent";
 import { STORY_REGISTRATION_ABI, matchesStoryRegistrationCall, matchesStoryVersionEvent } from "@/lib/provenance-submission";
 
 export const runtime = "nodejs";
@@ -63,9 +68,7 @@ export async function POST(request: Request, context: RouteContext) {
     versionNumber: workVersion.versionNumber,
     sourceHash: workVersion.sourceHash,
     permissionHash: workVersion.permissionHash,
-    ownerUserId: work.ownerUserId,
-    workStatus: work.status,
-    currentVersionId: work.currentVersionId
+    ownerUserId: work.ownerUserId
   }).from(provenanceAnchor)
     .innerJoin(workVersion, eq(provenanceAnchor.workVersionId, workVersion.id))
     .innerJoin(work, eq(workVersion.workId, work.id))
@@ -151,17 +154,74 @@ export async function POST(request: Request, context: RouteContext) {
   const permissionHash = asBytes32Hash(row.permissionHash);
   if (!sourceHash || !permissionHash) return fail("STORED_HASH_INVALID", "Stored source or permission hash is invalid.");
 
+  let permissionVersion = 1;
+  if (row.versionNumber > 1) {
+    const previousRows = await db.select({
+      status: provenanceAnchor.status,
+      chainId: provenanceAnchor.chainId,
+      contractAddress: provenanceAnchor.contractAddress,
+      expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
+      sourceHash: provenanceAnchor.sourceHash,
+      permissionHash: provenanceAnchor.permissionHash,
+      transactionHash: provenanceAnchor.transactionHash,
+      eventName: provenanceAnchor.eventName,
+      verifiedAt: provenanceAnchor.verifiedAt,
+      verificationSnapshot: provenanceAnchor.verificationSnapshot,
+      versionSourceHash: workVersion.sourceHash,
+      versionPermissionHash: workVersion.permissionHash
+    }).from(workVersion)
+      .innerJoin(provenanceAnchor, eq(provenanceAnchor.workVersionId, workVersion.id))
+      .where(and(
+        eq(workVersion.workId, row.workId),
+        eq(workVersion.versionNumber, row.versionNumber - 1)
+      ));
+
+    if (previousRows.length !== 1) {
+      return fail("PREVIOUS_VERSION_NOT_VERIFIED", "The immediately preceding story version does not have exactly one confirmed Mainnet provenance anchor.");
+    }
+    const previous = previousRows[0];
+    const previousSnapshot = previous.verificationSnapshot;
+    const previousPermissionVersion = previousSnapshot?.permissionVersion ??
+      (row.versionNumber - 1 === 1 ? 1 : null);
+
+    if (
+      previous.status !== "mainnet" ||
+      previous.chainId !== FANOVA_CHAIN_ID ||
+      !sameHex(previous.contractAddress, row.anchor.contractAddress) ||
+      !sameHex(previous.expectedSignerAddress, row.anchor.expectedSignerAddress) ||
+      !previous.transactionHash ||
+      previous.eventName !== "StoryVersionRegistered" ||
+      !previous.verifiedAt ||
+      previous.sourceHash !== previous.versionSourceHash ||
+      previous.permissionHash !== previous.versionPermissionHash ||
+      previousSnapshot?.chainId !== FANOVA_CHAIN_ID ||
+      !sameHex(previousSnapshot.contractAddress, row.anchor.contractAddress)
+    ) {
+      return fail("PREVIOUS_VERSION_NOT_VERIFIED", "The immediately preceding version is not verified under the same creator wallet and provenance contract.");
+    }
+
+    const next = nextPermissionVersion(
+      row.permissionHash,
+      previous.permissionHash ?? "",
+      previousPermissionVersion ?? Number.NaN
+    );
+    if (next === null) {
+      return fail("PREVIOUS_PERMISSION_VERSION_MISSING", "The previous version has no trustworthy permission-version record. Do not submit another transaction.");
+    }
+    permissionVersion = next;
+  }
+
   const identity = deriveStoryIdentity(row.workId, row.anchor.expectedSignerAddress as Address);
   const expected = {
     storyId: identity.storyId,
     creatorSalt: identity.creatorSalt,
     sourceVersion: BigInt(row.versionNumber),
     sourceHash,
-    permissionVersion: BigInt(1),
+    permissionVersion: BigInt(permissionVersion),
     permissionHash
   };
   if (!matchesStoryRegistrationCall(tx.input, expected)) {
-    return fail("CALLDATA_MISMATCH", "Transaction calldata does not match the stored story version, hashes, and creator identity.");
+    return fail("CALLDATA_MISMATCH", "Transaction calldata does not match the stored story version, permission version, hashes, and creator identity.");
   }
 
   let matchingLog: (typeof receipt.logs)[number] | undefined;
@@ -190,6 +250,7 @@ export async function POST(request: Request, context: RouteContext) {
     transactionIndex: receipt.transactionIndex,
     logIndex: matchingLog.logIndex,
     eventName: "StoryVersionRegistered",
+    permissionVersion,
     expectedSigner: row.anchor.expectedSignerAddress,
     observedSigner: tx.from,
     expectedEntityId: identity.storyId,
@@ -219,6 +280,7 @@ export async function POST(request: Request, context: RouteContext) {
     transactionIndex: receipt.transactionIndex,
     logIndex: matchingLog.logIndex,
     eventName: "StoryVersionRegistered",
+    permissionVersion,
     explorerUrl: `https://soneium.blockscout.com/tx/${transactionHash}`
   });
 }
