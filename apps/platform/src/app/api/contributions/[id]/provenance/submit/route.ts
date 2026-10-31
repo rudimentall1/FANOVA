@@ -191,8 +191,8 @@ export async function POST(request: Request, context: RouteContext) {
     !storySnapshot ||
     storySnapshot.chainId !== FANOVA_CHAIN_ID ||
     !sameHex(storySnapshot.contractAddress, row.anchor.contractAddress) ||
-    !Number.isSafeInteger(sourceVersion) || !sourceVersion ||
-    !Number.isSafeInteger(permissionVersion) || !permissionVersion
+    !Number.isSafeInteger(sourceVersion) || !sourceVersion || sourceVersion < 1 ||
+    !Number.isSafeInteger(permissionVersion) || !permissionVersion || permissionVersion < 1
   ) {
     return fail("STORY_ANCHOR_INVALID", "The source story version is not confirmed under the creator's linked wallet and the expected provenance contract.");
   }
