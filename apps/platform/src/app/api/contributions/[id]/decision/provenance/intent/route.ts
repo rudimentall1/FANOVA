@@ -193,7 +193,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   if (result.kind === "key_conflict") return NextResponse.json({ error: "This idempotency key is already bound to another provenance request." }, { status: 409 });
   if (result.kind === "intent_mismatch") return NextResponse.json({ error: "The original creator decision intent no longer matches the stored decision or creator wallet." }, { status: 409 });
-  if (result.kind === "already_exists") return NextResponse.json({ error: "A creator decision provenance intent already exists for this contribution." }, { status: 409 });
   if (result.kind === "not_found") return NextResponse.json({ error: "Contribution not found." }, { status: 404 });
   if (result.kind === "not_decided") return NextResponse.json({ error: "The contribution must be approved or rejected before recording its onchain decision." }, { status: 409 });
   if (result.kind === "stale") return NextResponse.json({ error: "The contribution references an older story version." }, { status: 409 });
