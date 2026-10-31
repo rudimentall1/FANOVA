@@ -56,7 +56,7 @@ export async function POST() {
     `Nonce: ${nonce}`,
     `Issued At: ${now.toISOString()}`,
     `Expiration Time: ${expiresAt.toISOString()}`
-  ].join("\\n");
+  ].join("\n");
 
   await db.insert(walletUnlinkChallenge).values({
     id,
