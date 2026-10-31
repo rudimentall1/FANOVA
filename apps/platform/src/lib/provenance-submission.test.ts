@@ -43,3 +43,59 @@ describe("server-side story registration verification", () => {
     expect(matchesStoryVersionEvent({ ...event, sourceVersion: BigInt(2) }, { ...expected, creator })).toBe(false);
   });
 });
+
+import {
+  CONTRIBUTION_REGISTRATION_ABI,
+  matchesContributionRegisteredEvent,
+  matchesContributionRegistrationCall,
+  type ExpectedContributionRegistration
+} from "./provenance-submission";
+
+const expectedContribution: ExpectedContributionRegistration = {
+  contributionId: `0x${"55".repeat(32)}` as Hex,
+  storyId: `0x${"11".repeat(32)}` as Hex,
+  sourceVersion: BigInt(2),
+  permissionVersion: BigInt(1),
+  permissionHash: `0x${"44".repeat(32)}` as Hex,
+  contributionHash: `0x${"66".repeat(32)}` as Hex,
+  permissionAcknowledged: true
+};
+
+describe("server-side contribution registration verification", () => {
+  it("accepts calldata only when every contribution and permission field matches", () => {
+    const input = encodeFunctionData({
+      abi: CONTRIBUTION_REGISTRATION_ABI,
+      functionName: "registerContribution",
+      args: [
+        expectedContribution.contributionId,
+        expectedContribution.storyId,
+        expectedContribution.sourceVersion,
+        expectedContribution.permissionVersion,
+        expectedContribution.permissionHash,
+        expectedContribution.contributionHash,
+        true
+      ]
+    });
+    expect(matchesContributionRegistrationCall(input, expectedContribution)).toBe(true);
+    expect(matchesContributionRegistrationCall(input, {
+      ...expectedContribution,
+      contributionHash: `0x${"77".repeat(32)}` as Hex
+    })).toBe(false);
+    expect(matchesContributionRegistrationCall(input, {
+      ...expectedContribution,
+      permissionAcknowledged: false as true
+    })).toBe(false);
+    expect(matchesContributionRegistrationCall("0x1234" as Hex, expectedContribution)).toBe(false);
+  });
+
+  it("accepts only the exact expected ContributionRegistered event", () => {
+    const event = {
+      ...expectedContribution,
+      contributor: creator,
+      permissionAcknowledged: true
+    };
+    expect(matchesContributionRegisteredEvent(event, { ...expectedContribution, contributor: creator })).toBe(true);
+    expect(matchesContributionRegisteredEvent({ ...event, contributor: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address }, { ...expectedContribution, contributor: creator })).toBe(false);
+    expect(matchesContributionRegisteredEvent({ ...event, permissionAcknowledged: false }, { ...expectedContribution, contributor: creator })).toBe(false);
+  });
+});
