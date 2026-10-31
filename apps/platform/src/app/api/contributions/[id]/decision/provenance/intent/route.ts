@@ -157,7 +157,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       eq(provenanceAnchor.contributionId, entry.id),
       eq(provenanceAnchor.operationType, "creator_decision")
     )).limit(1);
-    if (prior) return { kind: "already_exists" as const };
+    if (prior) {
+      const snapshot = prior.verificationSnapshot;
+      if (prior.actorUserId !== actor.userId ||
+          prior.expectedSignerAddress.toLowerCase() !== creatorWallet.address.toLowerCase() ||
+          prior.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
+          prior.chainId !== FANOVA_CHAIN_ID ||
+          snapshot?.decisionApproved !== decisionApproved ||
+          snapshot?.decisionReasonCode?.toLowerCase() !== reasonCode.toLowerCase()) {
+        return { kind: "intent_mismatch" as const };
+      }
+      return { kind: "existing" as const, anchor: prior, contributionIdentity, decisionApproved, reasonCode };
+    }
 
     const now = new Date();
     const [anchor] = await tx.insert(provenanceAnchor).values({
