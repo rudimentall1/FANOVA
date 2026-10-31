@@ -26,10 +26,7 @@ declare global {
   }
 }
 
-type Props = {
-  workVersionId: string;
-  anchor: AnchorState;
-};
+type Props = { workVersionId: string; anchor: AnchorState };
 
 function rabbyProvider(): Provider | null {
   const injected = window.ethereum;
@@ -39,8 +36,7 @@ function rabbyProvider(): Provider | null {
 }
 
 function errorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return "The wallet operation failed. Check Rabby and try again.";
+  return error instanceof Error ? error.message : "The wallet operation failed. Check Rabby and try again.";
 }
 
 export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: Props) {
@@ -52,37 +48,29 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
 
   async function verifySubmitted(anchorId: string, hash: string) {
     setKind("info");
-    setMessage("The transaction was submitted. FANOVA is checking its receipt and provenance event.");
+    setMessage("Transaction submitted. FANOVA is checking its receipt and provenance event.");
     const response = await fetch(`/api/provenance/anchors/${anchorId}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ transactionHash: hash })
     });
     const result = await response.json() as {
-      status?: string;
-      error?: string;
-      blockNumber?: string;
-      explorerUrl?: string;
-      transactionHash?: string;
+      status?: string; error?: string; blockNumber?: string; explorerUrl?: string;
     };
-
     if (response.status === 202) {
       setKind("info");
-      setMessage(result.error ?? "Transaction is not indexed yet. Retry verification with the same transaction hash.");
+      setMessage(result.error ?? "Transaction is not indexed yet. Retry verification with the same hash.");
       setTransactionHash(hash);
       return;
     }
     if (!response.ok || result.status !== "MAINNET" || !result.explorerUrl) {
       throw new Error(result.error ?? "The server could not verify this transaction.");
     }
-
     setAnchor((current) => current ? {
-      ...current,
-      status: "mainnet",
-      transactionHash: hash,
-      blockNumber: result.blockNumber ?? null,
-      verifiedAt: new Date().toISOString()
+      ...current, status: "mainnet", transactionHash: hash,
+      blockNumber: result.blockNumber ?? null, verifiedAt: new Date().toISOString()
     } : current);
+    localStorage.removeItem(`fanova:provenance:intent:${workVersionId}`);
     setKind("success");
     setMessage(`Verified on Soneium Mainnet in block ${result.blockNumber ?? "unknown"}.`);
   }
@@ -93,13 +81,11 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
     try {
       const provider = rabbyProvider();
       if (!provider) throw new Error("Rabby was not detected. Install or enable Rabby, then reload this page.");
-
       const accounts = await provider.request({ method: "eth_requestAccounts" });
       if (!Array.isArray(accounts) || typeof accounts[0] !== "string") {
         throw new Error("Rabby did not return an account.");
       }
       const signer = accounts[0] as Address;
-
       const chainHex = await provider.request({ method: "eth_chainId" });
       let chainId = typeof chainHex === "string" ? Number.parseInt(chainHex, 16) : Number.NaN;
       if (chainId !== 1868) {
@@ -109,67 +95,59 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
       }
       if (chainId !== 1868) throw new Error("Switch Rabby to Soneium Mainnet (Chain ID 1868).");
 
-      let activeAnchor = anchor;
-      if (!activeAnchor) {
-        const intentResponse = await fetch("/api/provenance/anchors", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ workVersionId, idempotencyKey: crypto.randomUUID() })
-        });
-        const intent = await intentResponse.json() as {
-          anchor?: NonNullable<AnchorState>;
-          transaction?: { args?: unknown[] };
-          error?: string;
-        };
-        if (!intentResponse.ok || !intent.anchor || !Array.isArray(intent.transaction?.args)) {
-          throw new Error(intent.error ?? "Could not prepare the provenance transaction.");
-        }
-        activeAnchor = intent.anchor;
-        setAnchor(activeAnchor);
-        const args = intent.transaction.args;
-        if (args.length !== 6 || args.some((value) => typeof value !== "string")) {
-          throw new Error("The server returned an invalid story registration payload.");
-        }
-        if (signer.toLowerCase() !== activeAnchor.expectedSignerAddress.toLowerCase()) {
+      if (anchor?.transactionHash) {
+        if (signer.toLowerCase() !== anchor.expectedSignerAddress.toLowerCase()) {
           throw new Error("The connected Rabby account does not match the wallet linked to this FANOVA account.");
         }
-
-        const data = encodeFunctionData({
-          abi: STORY_REGISTRATION_ABI,
-          functionName: "registerStoryVersion",
-          args: [
-            args[0] as Hex,
-            args[1] as Hex,
-            BigInt(args[2] as string),
-            args[3] as Hex,
-            BigInt(args[4] as string),
-            args[5] as Hex
-          ]
-        });
-        const sent = await provider.request({
-          method: "eth_sendTransaction",
-          params: [{
-            from: signer,
-            to: activeAnchor.contractAddress as Address,
-            data,
-            value: "0x0"
-          }]
-        });
-        if (typeof sent !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(sent)) {
-          throw new Error("Rabby did not return a valid transaction hash.");
-        }
-        setTransactionHash(sent);
-        await verifySubmitted(activeAnchor.id, sent);
+        await verifySubmitted(anchor.id, anchor.transactionHash);
         return;
       }
 
-      if (!activeAnchor.transactionHash) {
-        throw new Error("A provenance intent already exists without a submitted transaction. Refresh the page and contact support before creating another transaction.");
+      const storageKey = `fanova:provenance:intent:${workVersionId}`;
+      let idempotencyKey = localStorage.getItem(storageKey);
+      if (!idempotencyKey) {
+        idempotencyKey = crypto.randomUUID();
+        localStorage.setItem(storageKey, idempotencyKey);
       }
+      const intentResponse = await fetch("/api/provenance/anchors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workVersionId, idempotencyKey })
+      });
+      const intent = await intentResponse.json() as {
+        anchor?: NonNullable<AnchorState>;
+        transaction?: { args?: unknown[] };
+        error?: string;
+      };
+      if (!intentResponse.ok || !intent.anchor || !Array.isArray(intent.transaction?.args)) {
+        throw new Error(intent.error ?? "Could not prepare the provenance transaction.");
+      }
+      const activeAnchor = intent.anchor;
+      setAnchor(activeAnchor);
       if (signer.toLowerCase() !== activeAnchor.expectedSignerAddress.toLowerCase()) {
         throw new Error("The connected Rabby account does not match the wallet linked to this FANOVA account.");
       }
-      await verifySubmitted(activeAnchor.id, activeAnchor.transactionHash);
+      const args = intent.transaction.args;
+      if (args.length !== 6 || args.some((value) => typeof value !== "string")) {
+        throw new Error("The server returned an invalid story registration payload.");
+      }
+      const data = encodeFunctionData({
+        abi: STORY_REGISTRATION_ABI,
+        functionName: "registerStoryVersion",
+        args: [
+          args[0] as Hex, args[1] as Hex, BigInt(args[2] as string),
+          args[3] as Hex, BigInt(args[4] as string), args[5] as Hex
+        ]
+      });
+      const sent = await provider.request({
+        method: "eth_sendTransaction",
+        params: [{ from: signer, to: activeAnchor.contractAddress as Address, data, value: "0x0" }]
+      });
+      if (typeof sent !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(sent)) {
+        throw new Error("Rabby did not return a valid transaction hash.");
+      }
+      setTransactionHash(sent);
+      await verifySubmitted(activeAnchor.id, sent);
     } catch (error) {
       setKind("error");
       setMessage(errorMessage(error));
