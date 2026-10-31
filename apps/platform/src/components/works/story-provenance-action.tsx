@@ -59,6 +59,11 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
       localStorage.setItem(`fanova:provenance:tx:${workVersionId}`, hash);
       return;
     }
+    if (result.status === "FAILED") {
+      setTransactionHash(hash);
+      setAnchor((current) => current ? { ...current, status: "failed", transactionHash: hash } : current);
+      throw new Error(result.error ?? "The server rejected this transaction. Do not submit another transaction for this version; contact support.");
+    }
     if (!response.ok || result.status !== "MAINNET" || !result.explorerUrl) {
       throw new Error(result.error ?? "The server could not verify this transaction.");
     }
@@ -179,6 +184,17 @@ export function StoryProvenanceAction({ workVersionId, anchor: initialAnchor }: 
         <span className="work-status published">MAINNET VERIFIED</span>
         <p className="field-note">Story version registered in Soneium block {anchor.blockNumber ?? "recorded"}.</p>
         <a className="text-link" href={`https://soneium.blockscout.com/tx/${anchor.transactionHash}`} target="_blank" rel="noreferrer">View transaction on Blockscout</a>
+      </div>
+    );
+  }
+
+  if (anchor?.status === "failed" && anchor.transactionHash) {
+    return (
+      <div className="provenance-action">
+        <span className="work-status">PROVENANCE FAILED</span>
+        <p className="field-note">The server rejected this transaction. Do not send another transaction for this version. Contact support before proceeding.</p>
+        <p className="field-note">Transaction hash: <code>{anchor.transactionHash}</code></p>
+        <a className="text-link" href={`https://soneium.blockscout.com/tx/${anchor.transactionHash}`} target="_blank" rel="noreferrer">Inspect failed transaction on Blockscout</a>
       </div>
     );
   }
