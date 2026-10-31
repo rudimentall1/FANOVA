@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     ))
     .limit(1);
 
-  if (!challenge || challenge.message !== input.message ||
+  if (!challenge ||
       !validateWalletUnlinkChallenge(input.message, challenge, address)) {
     return NextResponse.json({ error: "Wallet unlink challenge is invalid, expired, or already used." }, { status: 409 });
   }
