@@ -3,6 +3,8 @@
 **Status:** not started; no creator interviews or pilot commitments are claimed.  
 **Purpose:** validate whether FANOVA solves a costly, recurring creator problem before investing in tokenomics or broader infrastructure.
 
+A separate fictional UI fixture is documented in [`docs/DEMO_SCENARIO.md`](./DEMO_SCENARIO.md). It is only for demonstrating the product flow and does not count as a creator interview, creator permission, pilot commitment, or observed user test.
+
 ## Target first partner
 
 Prefer one independent webtoon/comic author or original-fiction creator who:

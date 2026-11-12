@@ -56,6 +56,7 @@ Dates are relative to kickoff. Status changes only after evidence is checked.
 - [ ] Add explicit UI/export tests showing that demo display names are simulated and wallet addresses are the source of truth for onchain attribution.
 
 ## P3 - Pilot and differentiation (Days 20–24)
+- [x] Prepare a fictional local demo fixture with source story, bounded permission text, sample fan continuation, and operator steps in `docs/DEMO_SCENARIO.md`. This is demo content only, not creator permission or pilot evidence.
 - [ ] Obtain permission for original pilot story/materials.
 - [ ] Run a small creator/fan test.
 - [ ] Record real observations and feedback; never invent metrics.
