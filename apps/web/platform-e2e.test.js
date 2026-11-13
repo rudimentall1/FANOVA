@@ -249,7 +249,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await contributorPage.goto(`${baseUrl}/works/${slug}/contributions/${firstId}`);
     await contributorPage.getByRole("heading", { name: firstTitle }).waitFor();
     await contributorPage.getByText("PROVENANCE EVIDENCE").waitFor();
-    await contributorPage.getByText("Contribution").waitFor();
+    await contributorPage.getByText("Contribution", { exact: true }).waitFor();
     await contributorPage.getByText("Creator decision").waitFor();
 
     // A second pending submission becomes stale when the creator publishes a new source version.
