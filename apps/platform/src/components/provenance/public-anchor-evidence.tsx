@@ -36,6 +36,7 @@ export function PublicAnchorEvidence({
   const verified = Boolean(
     anchor &&
     anchor.status === "mainnet" &&
+    anchor.chainId === 1868 &&
     anchor.transactionHash &&
     anchor.blockNumber &&
     anchor.verifiedAt &&
