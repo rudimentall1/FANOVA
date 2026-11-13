@@ -47,6 +47,14 @@ Complete the public, inspectable Story → Contribution → Creator Decision pro
 - Exact failure: Playwright strict-mode violation at `apps/web/platform-e2e.test.js:252`; `getByText("Contribution")` matched two elements because the page also contained the `APPROVED COMMUNITY` eyebrow.
 - The locator was changed to `getByText("Contribution", { exact: true })` on branch `feat/public-provenance-proof`. This is a targeted test-only correction. The resulting commit and a fresh CI run must still be checked; do not call CI green based on this edit.
 
+## Follow-up review after run #396
+
+- Run #396 completed SUCCESS on PR #40 head \`9f1e318c84f1c72fb23370f8e5e498c2e11db9f4\`; the workflow's single \`test\` job passed.
+- Manual source review confirmed the three verification submit handlers persist snapshots with chain ID, contract, transaction, block, event, observed signer, entity ID, and expected/observed hashes for their respective operations.
+- The public component originally required chain ID 1868 only inside the snapshot. It now also requires the persisted anchor row's \`chainId === 1868\` before rendering \`MAINNET · VERIFIED\`. This is an additional fail-closed check.
+- The chain-ID hardening commit is \`4a32ee5d5f8ee0a88ef3258ca336017e167edcf2\`; a fresh CI run for this new head is still required.
+- Live persisted anchor rendering has not been verified. The CI E2E fixture currently exercises LOCAL / NOT ANCHORED public rendering, not a true positive Mainnet anchor case.
+
 ## Next actions — execute in order
 
 1. Confirm the new commit on `feat/public-provenance-proof` and obtain the workflow run associated with that exact head SHA.
@@ -64,8 +72,8 @@ Complete the public, inspectable Story → Contribution → Creator Decision pro
 |---|---|
 | Soneium Mainnet contract and recorded smoke-test sequence | MAINNET evidence recorded; not independently audited |
 | PR #39 wallet unlink/replace | OPEN · DRAFT; prior CI PASS |
-| PR #40 public provenance evidence | OPEN · DRAFT; CI run #394 FAILED on one Playwright locator |
-| Locator correction | Applied on PR #40 branch; fresh CI pending |
+| PR #40 public provenance evidence | OPEN · DRAFT; run #396 PASS on head 9f1e318; follow-up chain-ID hardening commit 4a32ee5 pending CI |
+| Playwright locator correction | Applied; CI run #396 PASS |
 | Full P1.6 acceptance | OPEN |
 | Public rendering of real persisted Mainnet anchors | NOT YET CONFIRMED |
 | Original creator/fan pilot | NOT DONE |
