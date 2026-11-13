@@ -281,6 +281,10 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await contributorPage.getByText("Wallet signature verified and linked to this FANOVA account.").waitFor({ timeout: 15_000 });
     await contributorPage.getByText(walletB.address).waitFor();
 
+    // Wallet settings are a separate route; return to the contribution form before checking its options.
+    await contributorPage.goto(`${baseUrl}/works/${slug}/contribute`);
+    await contributorPage.getByRole("heading", { name: "E2E Story" }).waitFor();
+
     const contributionType = contributorPage.getByLabel("Contribution type");
     const availableTypes = await contributionType.locator("option").allTextContents();
     assert.deepEqual(
