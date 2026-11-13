@@ -58,9 +58,9 @@ export function PublicAnchorEvidence({
   let state = "LOCAL · NOT ANCHORED";
   if (anchor) {
     if (verified) state = "MAINNET · VERIFIED";
-    else if (anchor.status === "pending" || (anchor.transactionHash && !anchor.verifiedAt)) state = "PENDING · NOT VERIFIED";
     else if (anchor.status === "failed") state = "FAILED";
     else if (anchor.status === "stale") state = "STALE";
+    else if (anchor.status === "pending" || (anchor.transactionHash && !anchor.verifiedAt)) state = "PENDING · NOT VERIFIED";
     else if (anchor.status === "partially_verified" || anchor.status === "mainnet") state = "PARTIALLY VERIFIED";
     else if (anchor.status === "local") state = "LOCAL";
   }
