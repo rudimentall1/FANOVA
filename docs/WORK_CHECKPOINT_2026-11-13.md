@@ -1,0 +1,80 @@
+# FANOVA Work Checkpoint — 2026-11-13
+
+This checkpoint records the repository state after the public provenance work and the first CI run for PR #40. It is a handoff document; it does not claim that open acceptance gates are complete.
+
+## Current objective
+
+Complete the public, inspectable Story → Contribution → Creator Decision provenance path in the multi-user FANOVA platform, then close the P1.6 acceptance gate only after the relevant PRs are reviewed and the complete journey is verified.
+
+## Work completed
+
+### Existing Mainnet provenance foundation
+
+- FANOVA targets Soneium Mainnet (chain ID 1868).
+- Existing deployed contract: `FanovaProvenance` at `0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880`.
+- The repository's `docs/DEMO_AND_EVIDENCE.md` records a user-approved Mainnet Story registration, Contribution registration, and Creator decision sequence, with the three transaction references and a project-run evidence-bundle verification.
+- The recorded verification is not an independent audit or third-party certification. The original test content is placeholder material; do not present it as a real creator pilot.
+- Existing server-side provenance anchor persistence and submission/verification paths are the source records now being exposed publicly.
+
+### PR #39 — safe wallet unlink and replacement
+
+- PR: https://github.com/rudimentall1/FANOVA/pull/39
+- Branch: `feat/p1-6-safe-wallet-unlink`
+- Head at checkpoint: `3c4f920a59f6720394fa6b4f17af3cf90f58fe95`
+- State: OPEN, DRAFT, not merged.
+- CI run #391 previously passed, including multi-account browser E2E.
+- Implementation binds a short-lived unlink challenge to authenticated user, session, and exact linked wallet; requires a fresh signature from that wallet; consumes the challenge and deletes the wallet atomically; exposes unlink/replace in account settings.
+- No transaction is sent for unlinking; no contract change, redeployment, private-key custody, or Mainnet write.
+- This PR is not independently reviewed or accepted as complete merely because CI passed.
+
+### PR #40 — public provenance evidence
+
+- PR: https://github.com/rudimentall1/FANOVA/pull/40
+- Branch: `feat/public-provenance-proof`
+- Head before the CI locator fix: `945ac4bdceedc592352e1ed3318d2a254d14f7ca`
+- State: OPEN, DRAFT, not merged.
+- Changes expose Story version, Contribution, and Creator decision anchors on public Story and Contribution pages.
+- `MAINNET · VERIFIED` is gated on persisted verified status and matching transaction, block, verification timestamp, event, chain ID, contract, signer, entity ID, and expected/observed hashes.
+- Unanchored records remain `LOCAL · NOT ANCHORED`; pending, partial, stale, and failed states are not represented as verified.
+- No contract changes, Mainnet writes, private-key custody, or automated transaction submission.
+
+## Latest CI evidence and failure
+
+- PR #40 workflow run #394: https://github.com/rudimentall1/FANOVA/actions/runs/43415340852
+- Run #394 completed with FAILURE.
+- Passing steps included domain/ABI/transaction tests, Chromium installation, browser E2E, JavaScript syntax, platform TypeScript, authorization tests, PostgreSQL migrations, Better Auth schema validation, and production build.
+- The only failing step was `Run multi-account platform browser tests`.
+- Exact failure: Playwright strict-mode violation at `apps/web/platform-e2e.test.js:252`; `getByText("Contribution")` matched two elements because the page also contained the `APPROVED COMMUNITY` eyebrow.
+- The locator was changed to `getByText("Contribution", { exact: true })` on branch `feat/public-provenance-proof`. This is a targeted test-only correction. The resulting commit and a fresh CI run must still be checked; do not call CI green based on this edit.
+
+## Next actions — execute in order
+
+1. Confirm the new commit on `feat/public-provenance-proof` and obtain the workflow run associated with that exact head SHA.
+2. If CI fails again, inspect the failing job log and fix only the demonstrated defect; rerun CI on the new head.
+3. Once the multi-account test passes, review the public evidence component and database query mappings against the actual persisted `provenanceAnchor` schema and stored verification snapshots. Confirm the event names and operation types for Story version, Contribution, and Creator decision.
+4. Run a read-only check of existing persisted Mainnet anchors where access is available. Confirm that real records render with accurate labels and explorer links; never fabricate records to make the UI show green.
+5. Review PR #39 and PR #40 together for security, data access, public disclosure, and acceptance coverage. Keep both Draft until review is complete.
+6. Complete the end-to-end acceptance path: authenticated creator publishes Story → separate contributor submits → creator records decision → public Story and Contribution pages show correct evidence states.
+7. Update Issue #21 and the roadmap with actual results. Close P1.6 only when all required checks pass and the changes are reviewed; do not merge without explicit authorization.
+8. After the technical gate, return to the Sony application work: freeze an original-IP pilot scenario, obtain permission for pilot material, conduct creator/fan interviews or a small pilot, and produce a concise evidence-backed demo/application. No token, marketplace, royalties, AI generation, or unrelated feature expansion without a documented decision.
+
+## Current status summary
+
+| Area | Status |
+|---|---|
+| Soneium Mainnet contract and recorded smoke-test sequence | MAINNET evidence recorded; not independently audited |
+| PR #39 wallet unlink/replace | OPEN · DRAFT; prior CI PASS |
+| PR #40 public provenance evidence | OPEN · DRAFT; CI run #394 FAILED on one Playwright locator |
+| Locator correction | Applied on PR #40 branch; fresh CI pending |
+| Full P1.6 acceptance | OPEN |
+| Public rendering of real persisted Mainnet anchors | NOT YET CONFIRMED |
+| Original creator/fan pilot | NOT DONE |
+| Sony application/demo finalization | NOT DONE |
+
+## Working rules
+
+- Proof before features; one vertical slice at a time.
+- Distinguish source-only, local, CI-tested, live Mainnet, and independently verified evidence.
+- A successful build or CI run does not prove live Mainnet rendering.
+- Never label an anchor `MAINNET · VERIFIED` without all required persisted evidence checks.
+- No Mainnet write, contract deployment, PR merge, or scope expansion without explicit approval.
