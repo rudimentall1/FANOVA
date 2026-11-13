@@ -13,6 +13,11 @@ type AnchorEvidence = {
     eventName?: string;
     observedSigner?: string;
     observedEntityId?: string;
+    expectedEntityId?: string;
+    expectedHashes?: Record<string, string>;
+    observedHashes?: Record<string, string>;
+    transactionHash?: string;
+    blockNumber?: string;
   } | null;
 } | null;
 
@@ -38,7 +43,16 @@ export function PublicAnchorEvidence({
     snapshot?.chainId === 1868 &&
     snapshot?.contractAddress?.toLowerCase() === anchor.contractAddress.toLowerCase() &&
     snapshot?.eventName === expectedEvent &&
-    snapshot?.observedSigner?.toLowerCase() === anchor.expectedSignerAddress.toLowerCase()
+    snapshot?.transactionHash?.toLowerCase() === anchor.transactionHash?.toLowerCase() &&
+    snapshot?.blockNumber === anchor.blockNumber &&
+    snapshot?.observedSigner?.toLowerCase() === anchor.expectedSignerAddress.toLowerCase() &&
+    Boolean(snapshot?.expectedEntityId) &&
+    snapshot?.observedEntityId?.toLowerCase() === snapshot?.expectedEntityId?.toLowerCase() &&
+    Boolean(snapshot?.expectedHashes && snapshot?.observedHashes) &&
+    Object.keys(snapshot?.expectedHashes ?? {}).length > 0 &&
+    Object.entries(snapshot?.expectedHashes ?? {}).every(([key, value]) =>
+      snapshot?.observedHashes?.[key]?.toLowerCase() === value.toLowerCase()
+    )
   );
 
   let state = "LOCAL · NOT ANCHORED";
