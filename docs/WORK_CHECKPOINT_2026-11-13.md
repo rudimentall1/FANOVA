@@ -1,6 +1,6 @@
 # FANOVA Work Checkpoint — 2026-11-13
 
-This checkpoint records the repository state after the public provenance work and the first CI run for PR #40. It is a handoff document; it does not claim that open acceptance gates are complete.
+This checkpoint records the repository state after CI run #397 and the follow-up schema/query review for PR #40. It is a handoff document; it does not claim that open acceptance gates are complete.
 
 ## Current objective
 
@@ -31,7 +31,7 @@ Complete the public, inspectable Story → Contribution → Creator Decision pro
 
 - PR: https://github.com/rudimentall1/FANOVA/pull/40
 - Branch: `feat/public-provenance-proof`
-- Head before the CI locator fix: `945ac4bdceedc592352e1ed3318d2a254d14f7ca`
+- Latest PR head at checkpoint update: `b513bc9df6907e0c79377f91b442a9177d363f26` (the latest code hardening is `4a32ee5d5f8ee0a88ef3258ca336017e167edcf2`; the later checkpoint commit updates documentation).
 - State: OPEN, DRAFT, not merged.
 - Changes expose Story version, Contribution, and Creator decision anchors on public Story and Contribution pages.
 - `MAINNET · VERIFIED` is gated on persisted verified status and matching transaction, block, verification timestamp, event, chain ID, contract, signer, entity ID, and expected/observed hashes.
@@ -57,14 +57,14 @@ Complete the public, inspectable Story → Contribution → Creator Decision pro
 
 ## Next actions — execute in order
 
-1. Confirm the new commit on `feat/public-provenance-proof` and obtain the workflow run associated with that exact head SHA.
-2. If CI fails again, inspect the failing job log and fix only the demonstrated defect; rerun CI on the new head.
-3. Once the multi-account test passes, review the public evidence component and database query mappings against the actual persisted `provenanceAnchor` schema and stored verification snapshots. Confirm the event names and operation types for Story version, Contribution, and Creator decision.
-4. Run a read-only check of existing persisted Mainnet anchors where access is available. Confirm that real records render with accurate labels and explorer links; never fabricate records to make the UI show green.
+1. Resolve the source-anchor multiplicity inconsistency: define whether multiple attempts are allowed and make both contribution and creator-decision verifiers select/validate the same canonical source and contribution anchors. Add regression tests for zero, one, and multiple matches.
+2. Align public read selection with that canonical rule. Do not blindly display whichever anchor is newest if a newer failed retry can mask an earlier verified record; preserve audit history while selecting a defensible public state.
+3. Add a positive test fixture for a fully matching `MAINNET · VERIFIED` anchor, plus negative cases for mismatched persisted chain ID, snapshot chain ID, event, signer, entity ID, tx/block, and hash fields. Keep fixtures synthetic and clearly test-only.
+4. Run a read-only check of existing persisted Mainnet anchors where access is available. Confirm that real records render with accurate labels and explorer links; never fabricate production records.
 5. Review PR #39 and PR #40 together for security, data access, public disclosure, and acceptance coverage. Keep both Draft until review is complete.
 6. Complete the end-to-end acceptance path: authenticated creator publishes Story → separate contributor submits → creator records decision → public Story and Contribution pages show correct evidence states.
 7. Update Issue #21 and the roadmap with actual results. Close P1.6 only when all required checks pass and the changes are reviewed; do not merge without explicit authorization.
-8. After the technical gate, return to the Sony application work: freeze an original-IP pilot scenario, obtain permission for pilot material, conduct creator/fan interviews or a small pilot, and produce a concise evidence-backed demo/application. No token, marketplace, royalties, AI generation, or unrelated feature expansion without a documented decision.
+8. After the technical gate, return to the Sony application work: freeze an original-IP pilot scenario, obtain permission for pilot material, conduct creator/fan interviews or a small pilot, and produce a concise evidence-backed demo/application. No token, marketplace, royalties, AI generation, or unrelated scope expansion without a documented decision.
 
 ## Current status summary
 
@@ -72,8 +72,8 @@ Complete the public, inspectable Story → Contribution → Creator Decision pro
 |---|---|
 | Soneium Mainnet contract and recorded smoke-test sequence | MAINNET evidence recorded; not independently audited |
 | PR #39 wallet unlink/replace | OPEN · DRAFT; prior CI PASS |
-| PR #40 public provenance evidence | OPEN · DRAFT; run #396 PASS on head 9f1e318; follow-up chain-ID hardening commit 4a32ee5 pending CI |
-| Playwright locator correction | Applied; CI run #396 PASS |
+| PR #40 public provenance evidence | OPEN · DRAFT; run #397 PASS on code commit 4a32ee5; latest PR head b513bc9 is docs-only after that code commit |
+| Playwright locator correction and persisted chain-ID hardening | Applied; CI run #397 PASS |
 | Full P1.6 acceptance | OPEN |
 | Public rendering of real persisted Mainnet anchors | NOT YET CONFIRMED |
 | Original creator/fan pilot | NOT DONE |
