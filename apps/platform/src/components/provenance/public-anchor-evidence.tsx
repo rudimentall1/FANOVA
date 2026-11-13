@@ -1,5 +1,3 @@
-"use client";
-
 type AnchorEvidence = {
   status: string;
   transactionHash: string | null;
