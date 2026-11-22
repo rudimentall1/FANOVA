@@ -286,10 +286,47 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       `creator selected public visibility but persisted record is not public: ${JSON.stringify(approvedRecord)}`
     );
 
+
+    // Creator decision intent replay remains available after the creator unlinks.
+    const decisionIntentKey = "123e4567-e89b-42d3-a456-426614174003";
+    const decisionIntent = await creatorPage.evaluate(async ({ id, key, signer }) => {
+      const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: key })
+      });
+      return { status: response.status, body: await response.json(), signer };
+    }, { id: firstId, key: decisionIntentKey, signer: walletA.address });
+    assert.equal(decisionIntent.status, 201, "initial creator decision intent must be created");
+    assert.equal(decisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), decisionIntent.signer.toLowerCase());
+    bootstrapProvenance("unlink-user", creatorEmail);
+
+    const replayedDecisionIntent = await creatorPage.evaluate(async ({ id, key, signer }) => {
+      const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: key })
+      });
+      return { status: response.status, body: await response.json(), signer };
+    }, { id: firstId, key: decisionIntentKey, signer: walletA.address });
+    assert.equal(replayedDecisionIntent.status, 200, "existing creator decision intent must replay after unlink");
+    assert.equal(replayedDecisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), replayedDecisionIntent.signer.toLowerCase());
+
+    const newDecisionIntentWithoutWallet = await creatorPage.evaluate(async (id) => {
+      const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: "123e4567-e89b-42d3-a456-426614174004" })
+      });
+      return response.status;
+    }, firstId);
+    assert.equal(newDecisionIntentWithoutWallet, 409, "a fresh creator decision intent must still require the linked wallet");
+
     await creatorPage.goto(`${baseUrl}/works/${slug}`);
     const publicContribution = creatorPage.locator(".public-contribution-link").filter({ hasText: firstTitle });
     await publicContribution.waitFor({ state: "visible", timeout: 10_000 });
     await creatorPage.getByText("STORY PROVENANCE").waitFor();
+    await creatorPage.getByText("MAINNET · VERIFIED").first().waitFor();
     await creatorPage.getByText("LOCAL · NOT ANCHORED").first().waitFor();
     await creatorPage.getByText("Contribution anchor").waitFor();
     await creatorPage.getByText("Creator decision anchor").waitFor();
