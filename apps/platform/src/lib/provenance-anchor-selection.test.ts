@@ -183,6 +183,7 @@ describe("public Mainnet verification predicate", () => {
   const input = {
     anchor,
     expectedEvent: "StoryVersionRegistered",
+    expectedContractAddress: "0xContract",
     expectedSignerAddress: "0xCREATOR",
     expectedEntityId: "0xSTORY",
     expectedHashes: hashes
@@ -190,6 +191,17 @@ describe("public Mainnet verification predicate", () => {
 
   it("accepts a complete synthetic verified proof", () => {
     expect(isPublicAnchorVerified(input)).toBe(true);
+  });
+
+  it("rejects a persisted contract address that differs from the configured FANOVA contract", () => {
+    expect(isPublicAnchorVerified({
+      ...input,
+      anchor: { ...anchor, contractAddress: "0xOtherContract" }
+    })).toBe(false);
+  });
+
+  it("fails closed when the canonical contract is not configured", () => {
+    expect(isPublicAnchorVerified({ ...input, expectedContractAddress: null })).toBe(false);
   });
 
   it("rejects a persisted chain ID mismatch", () => {
