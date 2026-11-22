@@ -30,13 +30,17 @@ export function PublicAnchorEvidence({
   expectedEvent,
   anchor,
   ambiguous = false,
-  expectedHashes
+  expectedHashes,
+  expectedSignerAddress,
+  expectedEntityId
 }: {
   label: string;
   expectedEvent: string;
   anchor: AnchorEvidence;
   ambiguous?: boolean;
   expectedHashes: Record<string, string | null | undefined>;
+  expectedSignerAddress: string | null;
+  expectedEntityId: string | null;
 }) {
   const snapshot = anchor?.verificationSnapshot;
   const hashesMatch = matchesPublicProofHashes(expectedEvent, snapshot, expectedHashes);
@@ -53,9 +57,13 @@ export function PublicAnchorEvidence({
     snapshot?.eventName === expectedEvent &&
     snapshot?.transactionHash?.toLowerCase() === anchor.transactionHash?.toLowerCase() &&
     snapshot?.blockNumber === anchor.blockNumber &&
-    snapshot?.observedSigner?.toLowerCase() === anchor.expectedSignerAddress.toLowerCase() &&
-    Boolean(snapshot?.expectedEntityId) &&
-    snapshot?.observedEntityId?.toLowerCase() === snapshot?.expectedEntityId?.toLowerCase() &&
+    Boolean(expectedSignerAddress) &&
+    anchor.expectedSignerAddress.toLowerCase() === expectedSignerAddress?.toLowerCase() &&
+    snapshot?.expectedSigner?.toLowerCase() === expectedSignerAddress?.toLowerCase() &&
+    snapshot?.observedSigner?.toLowerCase() === expectedSignerAddress?.toLowerCase() &&
+    Boolean(expectedEntityId) &&
+    snapshot?.expectedEntityId?.toLowerCase() === expectedEntityId?.toLowerCase() &&
+    snapshot?.observedEntityId?.toLowerCase() === expectedEntityId?.toLowerCase() &&
     hashesMatch
   );
 
