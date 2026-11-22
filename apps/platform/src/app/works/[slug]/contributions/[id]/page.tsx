@@ -3,10 +3,10 @@ import { notFound } from "next/navigation";
 import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
 import { keccak256, toBytes } from "viem";
 import { db } from "@/db";
-import { contribution, linkedWallet, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
+import { contribution, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
 import { PublicAnchorEvidence } from "@/components/provenance/public-anchor-evidence";
 import { selectPublicAnchor } from "@/lib/provenance-anchor-selection";
-import { deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
+import { deriveContributionIdentity, deriveStoryIdentity } from "@/lib/provenance-intent";
 import { isAddress, type Address } from "viem";
 
 export const dynamic = "force-dynamic";
@@ -48,18 +48,6 @@ export default async function PublicContributionPage({ params }: { params: Promi
 
   if (!entry) notFound();
 
-  const publicWalletRows = await db.select({ userId: linkedWallet.userId, address: linkedWallet.address })
-    .from(linkedWallet)
-    .where(and(
-      inArray(linkedWallet.userId, [entry.ownerUserId, entry.contributorUserId]),
-      eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
-    ));
-  const publicWalletByUser = new Map(publicWalletRows.map((wallet) => [wallet.userId, wallet.address]));
-  const creatorWallet = publicWalletByUser.get(entry.ownerUserId) ?? null;
-  const contributorWallet = publicWalletByUser.get(entry.contributorUserId) ?? null;
-  const storyIdentity = creatorWallet && isAddress(creatorWallet)
-    ? deriveStoryIdentity(entry.workId, creatorWallet as Address).storyId
-    : null;
   const contributionIdentity = deriveContributionIdentity(entry.contributionId);
 
   const anchorFields = {
@@ -124,6 +112,11 @@ export default async function PublicContributionPage({ params }: { params: Promi
   const storySelection = selectPublicAnchor(storyAnchors, Number(storyVerifiedCountRow?.total ?? 0));
   const contributionSelection = selectPublicAnchor(contributionAnchors, Number(contributionVerifiedCountRow?.total ?? 0));
   const decisionSelection = selectPublicAnchor(decisionAnchors, Number(decisionVerifiedCountRow?.total ?? 0));
+  // Use the signer captured by each immutable intent, not a mutable linked-wallet row.
+  const storySigner = storySelection.anchor?.expectedSignerAddress ?? null;
+  const storyIdentity = storySigner && isAddress(storySigner)
+    ? deriveStoryIdentity(entry.workId, storySigner as Address).storyId
+    : null;
 
   const publicAnchor = (anchor: typeof storyAnchors[number] | typeof contributionAnchors[number] | typeof decisionAnchors[number] | null) => anchor ? {
     ...anchor,
@@ -140,9 +133,9 @@ export default async function PublicContributionPage({ params }: { params: Promi
         <div className="work-body">{entry.content.split("\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
         <section className="proof-reference">
           <p className="eyebrow">PROVENANCE EVIDENCE</p>
-          <PublicAnchorEvidence label="Source story version" expectedEvent="StoryVersionRegistered" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} expectedSignerAddress={creatorWallet} expectedEntityId={storyIdentity} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.permissionHash }} />
-          <PublicAnchorEvidence label="Contribution" expectedEvent="ContributionRegistered" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} expectedSignerAddress={contributorWallet} expectedEntityId={contributionIdentity} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.acknowledgedPermissionHash, contributionHash: entry.contentHash }} />
-          <PublicAnchorEvidence label="Creator decision" expectedEvent="ContributionDecided" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} expectedSignerAddress={creatorWallet} expectedEntityId={contributionIdentity} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.acknowledgedPermissionHash, contributionHash: entry.contentHash, reasonCode: keccak256(toBytes(entry.creatorFeedback ?? "")) }} />
+          <PublicAnchorEvidence label="Source story version" expectedEvent="StoryVersionRegistered" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} expectedSignerAddress={storySigner} expectedEntityId={storyIdentity} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.permissionHash }} />
+          <PublicAnchorEvidence label="Contribution" expectedEvent="ContributionRegistered" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} expectedSignerAddress={contributionSelection.anchor?.expectedSignerAddress ?? null} expectedEntityId={contributionIdentity} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.acknowledgedPermissionHash, contributionHash: entry.contentHash }} />
+          <PublicAnchorEvidence label="Creator decision" expectedEvent="ContributionDecided" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} expectedSignerAddress={decisionSelection.anchor?.expectedSignerAddress ?? null} expectedEntityId={contributionIdentity} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.acknowledgedPermissionHash, contributionHash: entry.contentHash, reasonCode: keccak256(toBytes(entry.creatorFeedback ?? "")) }} />
           <p>Content SHA-256</p><code>{entry.contentHash}</code>
         </section>
       </article>
