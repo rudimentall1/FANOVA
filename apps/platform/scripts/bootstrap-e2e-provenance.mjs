@@ -20,7 +20,6 @@ if (!isLocalE2eDatabase || !contractAddress || !/^0x[0-9a-fA-F]{40}$/.test(contr
 
 const pool = new Pool({ connectionString });
 const chainId = 1868;
-const creatorSigner = args[2];
 const blockNumber = "30000001";
 
 function storyIdentity(workId, signer) {
@@ -182,7 +181,7 @@ async function linkUser() {
            verified_at = EXCLUDED.verified_at`,
     [randomUUID(), account.rows[0].id, chainId, address, address.toLowerCase(), now]
   );
-  process.stdout.write(JSON.stringify({ email, address }) + "\\n");
+  process.stdout.write(JSON.stringify({ email, address }) + "\n");
 }
 
 async function unlinkUser() {
