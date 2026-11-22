@@ -60,6 +60,21 @@ describe("public provenance hash validation", () => {
     }, storyHashes)).toBe(true);
   });
 
+  it("normalizes 0x-prefixed on-chain bytes32 hashes against raw persisted SHA-256 hex", () => {
+    const sourceHash = "a".repeat(64);
+    const permissionHash = "b".repeat(64);
+    expect(matchesPublicProofHashes("StoryVersionRegistered", {
+      expectedHashes: {
+        sourceHash: `0x${sourceHash.toUpperCase()}`,
+        permissionHash: `0x${permissionHash.toUpperCase()}`
+      },
+      observedHashes: {
+        sourceHash: `0x${sourceHash}`,
+        permissionHash: `0x${permissionHash}`
+      }
+    }, { sourceHash, permissionHash })).toBe(true);
+  });
+
   it("rejects missing required keys", () => {
     expect(matchesPublicProofHashes("StoryVersionRegistered", {
       expectedHashes: { sourceHash: "0xabc" },
