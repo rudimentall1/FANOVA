@@ -146,7 +146,7 @@ export function isPublicAnchorVerified(input: {
   return anchor.status === "mainnet" &&
     anchor.chainId === 1868 &&
     typeof expectedContractAddress === "string" &&
-    expectedContractAddress.length > 0 &&
+    /^0x[0-9a-fA-F]{40}$/.test(expectedContractAddress) &&
     anchor.contractAddress.toLowerCase() === expectedContractAddress.toLowerCase() &&
     Boolean(anchor.transactionHash && anchor.blockNumber && anchor.verifiedAt) &&
     anchor.eventName === expectedEvent &&
