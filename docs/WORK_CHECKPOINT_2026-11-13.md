@@ -164,3 +164,13 @@ This section supersedes earlier PR head and CI status references above where the
 - Creator-decision intent creation no longer requires the contributor's current linked wallet to validate an already verified Contribution anchor. It checks the persisted contribution anchor signer against its verification snapshot. The creator still must have their own current wallet to initiate a new decision transaction.
 - This preserves the distinction: current wallet is required for the person initiating a new on-chain action; historical anchors are validated against their immutable server-persisted signer and verification evidence.
 - These additional route changes are not yet CI-verified. Full workflow remains the acceptance gate.
+
+
+### Historical signer fix — CI acceptance result (2026-11-22)
+
+- Current code head covered by CI run #444: `25e6e2d051f5fcd9635b98a182efc63ae65d1535`.
+- CI run #444 completed SUCCESS: https://github.com/rudimentall1/FANOVA/actions/runs/45041585100
+- Passing gates: domain/ABI/transaction tests, browser E2E, JavaScript syntax, platform TypeScript, platform authorization tests, PostgreSQL migration generation/application, Better Auth Drizzle schema validation, production build, platform/database readiness, and multi-account platform browser E2E.
+- The code changes in this run include historical signer sourcing on public Story/Contribution pages, source Story intent validation against the persisted signer, Contribution anchor validation against its persisted signer for Creator Decision intent creation, and Creator Decision submission against the immutable decision-intent signer.
+- This is CI-tested source behavior. The browser E2E does not simulate an actual live Mainnet anchor or a real production wallet unlink during an on-chain transaction. The dedicated unit assertion for historical public proof is synthetic.
+- PR #40 remains OPEN · DRAFT · not merged. P1.6 remains OPEN pending focused security review and acceptance against real persisted records where authorized read-only access is available.
