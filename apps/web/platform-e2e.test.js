@@ -407,6 +407,42 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       `creator selected public visibility but persisted record is not public: ${JSON.stringify(approvedRecord)}`
     );
 
+    // Creator Decision intent is replayable after the creator wallet is unlinked.
+    const decisionIntentKey = "123e4567-e89b-42d3-a456-426614174003";
+    const decisionIntent = await creatorPage.evaluate(async ({ id, key, signer }) => {
+      const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: key })
+      });
+      return { status: response.status, body: await response.json(), signer };
+    }, { id: firstId, key: decisionIntentKey, signer: walletA.address });
+    assert.equal(decisionIntent.status, 200, "creator decision intent should be created or recovered");
+    assert.equal(decisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), decisionIntent.signer.toLowerCase());
+    bootstrapProvenance("unlink-user", creatorEmail);
+
+    const replayedDecisionIntent = await creatorPage.evaluate(async ({ id, key, signer }) => {
+      const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: key })
+      });
+      return { status: response.status, body: await response.json(), signer };
+    }, { id: firstId, key: decisionIntentKey, signer: walletA.address });
+    assert.equal(replayedDecisionIntent.status, 200, "existing decision intent must replay after unlink");
+    assert.equal(replayedDecisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), replayedDecisionIntent.signer.toLowerCase());
+
+    const differentKeyReusesDecisionIntent = await creatorPage.evaluate(async (id) => {
+      const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: "123e4567-e89b-42d3-a456-426614174004" })
+      });
+      return { status: response.status, body: await response.json() };
+    }, firstId);
+    assert.equal(differentKeyReusesDecisionIntent.status, 200);
+    assert.equal(differentKeyReusesDecisionIntent.body.anchor.id, decisionIntent.body.anchor.id);
+
     await creatorPage.goto(`${baseUrl}/works/${slug}`);
     const publicContribution = creatorPage.locator(".public-contribution-link").filter({ hasText: firstTitle });
     await publicContribution.waitFor({ state: "visible", timeout: 10_000 });
