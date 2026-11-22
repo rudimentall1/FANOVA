@@ -83,3 +83,27 @@ export function matchesPublicProofHashes(
       typeof observed === "string" && observed.toLowerCase() === authoritative.toLowerCase();
   });
 }
+
+
+export function matchesPublicAnchorIdentity(input: {
+  expectedSignerAddress: string | null | undefined;
+  expectedEntityId: string | null | undefined;
+  anchorSignerAddress: string;
+  snapshot: {
+    expectedSigner?: string;
+    observedSigner?: string;
+    expectedEntityId?: string;
+    observedEntityId?: string;
+  } | null | undefined;
+}): boolean {
+  const { expectedSignerAddress, expectedEntityId, anchorSignerAddress, snapshot } = input;
+  if (!expectedSignerAddress || !expectedEntityId || !snapshot) return false;
+
+  const signer = expectedSignerAddress.toLowerCase();
+  const entity = expectedEntityId.toLowerCase();
+  return anchorSignerAddress.toLowerCase() === signer &&
+    snapshot.expectedSigner?.toLowerCase() === signer &&
+    snapshot.observedSigner?.toLowerCase() === signer &&
+    snapshot.expectedEntityId?.toLowerCase() === entity &&
+    snapshot.observedEntityId?.toLowerCase() === entity;
+}
