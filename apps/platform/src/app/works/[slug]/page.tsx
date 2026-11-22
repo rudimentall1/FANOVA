@@ -4,6 +4,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { contribution, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
 import { PublicAnchorEvidence } from "@/components/provenance/public-anchor-evidence";
+import { selectPublicAnchor } from "@/lib/provenance-anchor-selection";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
     .orderBy(desc(contribution.createdAt))
     .limit(20);
 
-  const [storyAnchorRow] = await db.select({
+  const storyAnchors = await db.select({
     status: provenanceAnchor.status,
     transactionHash: provenanceAnchor.transactionHash,
     blockNumber: provenanceAnchor.blockNumber,
@@ -62,11 +63,13 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
     chainId: provenanceAnchor.chainId,
     contractAddress: provenanceAnchor.contractAddress,
     expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-    verificationSnapshot: provenanceAnchor.verificationSnapshot
+    verificationSnapshot: provenanceAnchor.verificationSnapshot,
+    createdAt: provenanceAnchor.createdAt
   }).from(provenanceAnchor).where(and(
     eq(provenanceAnchor.workVersionId, entry.versionId),
     eq(provenanceAnchor.operationType, "work_version")
-  )).orderBy(desc(provenanceAnchor.createdAt)).limit(1);
+  ));
+  const storySelection = selectPublicAnchor(storyAnchors);
 
   const contributionAnchors = publicContributions.length > 0
     ? await db.select({
@@ -80,26 +83,27 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
         chainId: provenanceAnchor.chainId,
         contractAddress: provenanceAnchor.contractAddress,
         expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-        verificationSnapshot: provenanceAnchor.verificationSnapshot
+        verificationSnapshot: provenanceAnchor.verificationSnapshot,
+        createdAt: provenanceAnchor.createdAt
       }).from(provenanceAnchor).where(inArray(
         provenanceAnchor.contributionId,
         publicContributions.map((item) => item.id)
       )).orderBy(desc(provenanceAnchor.createdAt))
     : [];
 
-  const anchorByContribution = new Map<string, {
-    contribution: typeof contributionAnchors[number] | null;
-    decision: typeof contributionAnchors[number] | null;
+  const anchorAttemptsByContribution = new Map<string, {
+    contribution: typeof contributionAnchors;
+    decision: typeof contributionAnchors;
   }>();
   for (const anchor of contributionAnchors) {
     if (!anchor.contributionId) continue;
-    const current = anchorByContribution.get(anchor.contributionId) ?? { contribution: null, decision: null };
-    if (anchor.operationType === "contribution" && !current.contribution) current.contribution = anchor;
-    if (anchor.operationType === "creator_decision" && !current.decision) current.decision = anchor;
-    anchorByContribution.set(anchor.contributionId, current);
+    const current = anchorAttemptsByContribution.get(anchor.contributionId) ?? { contribution: [], decision: [] };
+    if (anchor.operationType === "contribution") current.contribution.push(anchor);
+    if (anchor.operationType === "creator_decision") current.decision.push(anchor);
+    anchorAttemptsByContribution.set(anchor.contributionId, current);
   }
 
-  const publicAnchor = (anchor: typeof storyAnchorRow | typeof contributionAnchors[number] | null | undefined) => anchor ? {
+  const publicAnchor = (anchor: typeof storyAnchors[number] | typeof contributionAnchors[number] | null | undefined) => anchor ? {
     ...anchor,
     blockNumber: anchor.blockNumber?.toString() ?? null,
     verifiedAt: anchor.verifiedAt?.toISOString() ?? null
@@ -131,21 +135,23 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
         <section className="proof-reference">
           <p className="eyebrow">STORY PROVENANCE</p>
           <p>Only a server-verified Soneium receipt and matching contract event are labelled MAINNET VERIFIED.</p>
-          <PublicAnchorEvidence label="Story version anchor" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storyAnchorRow)} />
+          <PublicAnchorEvidence label="Story version anchor" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} />
           <code>Source SHA-256: {entry.sourceHash}</code>
           <code>Permissions SHA-256: {entry.permissionHash}</code>
         </section>
         <section className="public-contributions">
           <p className="eyebrow">COMMUNITY CONTRIBUTIONS</p>
           {publicContributions.length === 0 ? <p className="field-note">No approved public contributions yet.</p> : publicContributions.map((item) => {
-            const anchors = anchorByContribution.get(item.id);
+            const attempts = anchorAttemptsByContribution.get(item.id);
+            const contributionSelection = selectPublicAnchor(attempts?.contribution ?? []);
+            const decisionSelection = selectPublicAnchor(attempts?.decision ?? []);
             return (
               <article className="version-row" key={item.id}>
                 <Link className="public-contribution-link" href={`/works/${slug}/contributions/${item.id}`}>
                   <strong>{item.title}</strong><small>{item.type.replace("_", " ")} · {item.contributorName ?? "Contributor"} · @{item.contributorHandle ?? "member"}</small>
                 </Link>
-                <PublicAnchorEvidence label="Contribution anchor" expectedEvent="ContributionRegistered" anchor={publicAnchor(anchors?.contribution)} />
-                <PublicAnchorEvidence label="Creator decision anchor" expectedEvent="ContributionDecided" anchor={publicAnchor(anchors?.decision)} />
+                <PublicAnchorEvidence label="Contribution anchor" expectedEvent="ContributionRegistered" anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} />
+                <PublicAnchorEvidence label="Creator decision anchor" expectedEvent="ContributionDecided" anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} />
               </article>
             );
           })}
