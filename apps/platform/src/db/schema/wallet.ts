@@ -36,3 +36,20 @@ export const linkedWallet = pgTable("linked_wallet", {
   uniqueIndex("linked_wallet_user_chain_unique").on(table.userId, table.chainId),
   index("linked_wallet_user_idx").on(table.userId)
 ]);
+
+
+export const walletUnlinkChallenge = pgTable("wallet_unlink_challenge", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  sessionId: text("session_id").notNull().references(() => session.id, { onDelete: "cascade" }),
+  walletId: text("wallet_id").notNull().references(() => linkedWallet.id, { onDelete: "cascade" }),
+  nonce: text("nonce").notNull(),
+  message: text("message").notNull(),
+  chainId: integer("chain_id").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => [
+  uniqueIndex("wallet_unlink_challenge_nonce_unique").on(table.nonce),
+  index("wallet_unlink_challenge_user_created_idx").on(table.userId, table.createdAt)
+]);

@@ -44,6 +44,68 @@ export function WalletLinkPanel() {
 
   useEffect(() => { void refreshWallet(); }, []);
 
+  async function unlinkWallet() {
+    if (!wallet) return;
+    setBusy(true);
+    setStatus({ kind: "info", message: "Confirm the unlink request by signing a message with the currently linked wallet. No transaction will be sent." });
+    try {
+      const provider = getRabbyProvider();
+      if (!provider) throw new Error("Rabby was not detected. Install or enable the Rabby browser extension, then reload this page.");
+
+      const accounts = await provider.request({ method: "eth_requestAccounts" });
+      if (!Array.isArray(accounts) || typeof accounts[0] !== "string" ||
+          accounts[0].toLowerCase() !== wallet.address.toLowerCase()) {
+        throw new Error("Select the currently linked wallet in Rabby before unlinking it.");
+      }
+
+      const chainHex = await provider.request({ method: "eth_chainId" });
+      const chainId = typeof chainHex === "string" ? Number.parseInt(chainHex, 16) : Number.NaN;
+      if (chainId !== 1868) {
+        try {
+          await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x74c" }] });
+        } catch {
+          throw new Error("Switch Rabby to Soneium Mainnet (Chain ID 1868), then try again.");
+        }
+        const switchedChain = await provider.request({ method: "eth_chainId" });
+        if (typeof switchedChain !== "string" || Number.parseInt(switchedChain, 16) !== 1868) {
+          throw new Error("Rabby is not connected to Soneium Mainnet (Chain ID 1868).");
+        }
+      }
+
+      const challengeResponse = await fetch("/api/wallet/unlink/challenge", { method: "POST" });
+      const challenge = await challengeResponse.json() as { messageTemplate?: string; error?: string };
+      if (!challengeResponse.ok || !challenge.messageTemplate) {
+        throw new Error(challenge.error ?? "Could not create a wallet unlink challenge.");
+      }
+
+      const message = challenge.messageTemplate.replace("<wallet-address>", wallet.address);
+      const signature = await provider.request({
+        method: "personal_sign",
+        params: [stringToHex(message), wallet.address]
+      });
+      if (typeof signature !== "string") throw new Error("The wallet did not return a signature.");
+
+      const unlinkResponse = await fetch("/api/wallet/unlink", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, signature })
+      });
+      const result = await unlinkResponse.json() as { status?: string; error?: string };
+      if (!unlinkResponse.ok || result.status !== "unlinked") {
+        throw new Error(result.error ?? "The server could not verify this unlink request.");
+      }
+      setWallet(null);
+      setStatus({ kind: "success", message: "Wallet safely unlinked. You can now connect another Soneium wallet." });
+    } catch (error) {
+      setStatus({
+        kind: "error",
+        message: error instanceof Error ? error.message : "Wallet unlinking failed. Try again."
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function connectWallet() {
     setBusy(true);
     setStatus({ kind: "info", message: "Connect your wallet. FANOVA will request a message signature only, never a transaction." });
@@ -127,6 +189,12 @@ export function WalletLinkPanel() {
       {!wallet && <button className="primary-button wallet-connect" onClick={connectWallet} disabled={busy || loading}>
         {busy ? "Waiting for wallet…" : "Connect Rabby"}
       </button>}
+      {wallet && <div>
+        <p className="field-note">To replace this wallet, first unlink it by signing a fresh message with this same address. Then connect the replacement wallet.</p>
+        <button className="primary-button wallet-unlink" onClick={unlinkWallet} disabled={busy || loading}>
+          {busy ? "Waiting for wallet…" : "Unlink wallet"}
+        </button>
+      </div>}
       {status && <p className={`form-status ${status.kind}`} role="status">{status.message}</p>}
       <p className="field-note">FANOVA will never ask for a seed phrase, private key, token approval, or transfer for wallet linking.</p>
     </section>

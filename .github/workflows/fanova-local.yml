@@ -102,6 +102,8 @@ jobs:
       - name: Start platform development server for end-to-end tests
         working-directory: apps/platform
         run: |
+          export FANOVA_SIWE_DOMAIN=127.0.0.1:3000
+          export FANOVA_SIWE_URI=http://127.0.0.1:3000
           nohup npm run dev -- --hostname 127.0.0.1 > /tmp/fanova-platform.log 2>&1 &
           echo $! > /tmp/fanova-platform.pid
         env:
