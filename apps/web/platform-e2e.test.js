@@ -220,29 +220,29 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
 
     // Recover an existing contribution intent after the contributor wallet is unlinked.
     const contributionIntentKey = "123e4567-e89b-42d3-a456-426614174001";
-    const contributionIntent = await contributorPage.evaluate(async ({ id, key }) => {
+    const contributionIntent = await contributorPage.evaluate(async ({ id, key, signer }) => {
       const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idempotencyKey: key })
       });
-      return { status: response.status, body: await response.json() };
-    }, { id: firstId, key: contributionIntentKey });
+      return { status: response.status, body: await response.json(), signer };
+    }, { id: firstId, key: contributionIntentKey, signer: walletB.address });
     assert.equal(contributionIntent.status, 201, "initial contribution intent must be created");
-    assert.equal(contributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), walletB.address.toLowerCase());
+    assert.equal(contributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), contributionIntent.signer.toLowerCase());
     bootstrapProvenance("unlink-user", contributorEmail);
 
-    const replayedContributionIntent = await contributorPage.evaluate(async ({ id, key }) => {
+    const replayedContributionIntent = await contributorPage.evaluate(async ({ id, key, signer }) => {
       const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idempotencyKey: key })
       });
-      return { status: response.status, body: await response.json() };
-    }, { id: firstId, key: contributionIntentKey });
+      return { status: response.status, body: await response.json(), signer };
+    }, { id: firstId, key: contributionIntentKey, signer: walletB.address });
     assert.equal(replayedContributionIntent.status, 200, "existing contribution intent must replay after unlink");
     assert.equal(replayedContributionIntent.body.idempotent, true);
-    assert.equal(replayedContributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), walletB.address.toLowerCase());
+    assert.equal(replayedContributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), replayedContributionIntent.signer.toLowerCase());
 
     const newContributionIntentWithoutWallet = await contributorPage.evaluate(async (id) => {
       const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
