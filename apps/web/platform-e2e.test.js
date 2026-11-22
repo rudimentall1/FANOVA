@@ -234,6 +234,16 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     }, { id: firstId, key: contributionIntentKey, signer: e2eContributorSigner });
     assert.equal(contributionIntent.status, 201, "initial contribution intent must be created");
     assert.equal(contributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), contributionIntent.signer.toLowerCase());
+    const crossAccountIntentReplay = await adminPage.evaluate(async ({ id, key }) => {
+      const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: key })
+      });
+      return response.status;
+    }, { id: firstId, key: contributionIntentKey });
+    assert.equal(crossAccountIntentReplay, 409, "another account must not retrieve a contributor's existing intent");
+
     bootstrapProvenance("unlink-user", contributorEmail);
 
     const replayedContributionIntent = await contributorPage.evaluate(async ({ id, key, signer }) => {
