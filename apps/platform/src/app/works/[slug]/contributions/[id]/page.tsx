@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { contribution, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
 import { PublicAnchorEvidence } from "@/components/provenance/public-anchor-evidence";
+import { selectPublicAnchor } from "@/lib/provenance-anchor-selection";
 
 export const dynamic = "force-dynamic";
 
@@ -37,40 +38,42 @@ export default async function PublicContributionPage({ params }: { params: Promi
 
   if (!entry) notFound();
 
-  const [storyAnchorRow] = await db.select({
+  const storyAnchors = await db.select({
     status: provenanceAnchor.status, transactionHash: provenanceAnchor.transactionHash,
     blockNumber: provenanceAnchor.blockNumber, verifiedAt: provenanceAnchor.verifiedAt,
     eventName: provenanceAnchor.eventName, chainId: provenanceAnchor.chainId,
     contractAddress: provenanceAnchor.contractAddress, expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-    verificationSnapshot: provenanceAnchor.verificationSnapshot
+    verificationSnapshot: provenanceAnchor.verificationSnapshot, createdAt: provenanceAnchor.createdAt
   }).from(provenanceAnchor).where(and(
     eq(provenanceAnchor.workVersionId, entry.sourceVersionId),
     eq(provenanceAnchor.operationType, "work_version")
-  )).orderBy(desc(provenanceAnchor.createdAt)).limit(1);
-
-  const [contributionAnchor] = await db.select({
+  ));
+  const contributionAnchors = await db.select({
     status: provenanceAnchor.status, transactionHash: provenanceAnchor.transactionHash,
     blockNumber: provenanceAnchor.blockNumber, verifiedAt: provenanceAnchor.verifiedAt,
     eventName: provenanceAnchor.eventName, chainId: provenanceAnchor.chainId,
     contractAddress: provenanceAnchor.contractAddress, expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-    verificationSnapshot: provenanceAnchor.verificationSnapshot
+    verificationSnapshot: provenanceAnchor.verificationSnapshot, createdAt: provenanceAnchor.createdAt
   }).from(provenanceAnchor).where(and(
     eq(provenanceAnchor.contributionId, entry.contributionId),
     eq(provenanceAnchor.operationType, "contribution")
-  )).orderBy(desc(provenanceAnchor.createdAt)).limit(1);
-
-  const [decisionAnchor] = await db.select({
+  ));
+  const decisionAnchors = await db.select({
     status: provenanceAnchor.status, transactionHash: provenanceAnchor.transactionHash,
     blockNumber: provenanceAnchor.blockNumber, verifiedAt: provenanceAnchor.verifiedAt,
     eventName: provenanceAnchor.eventName, chainId: provenanceAnchor.chainId,
     contractAddress: provenanceAnchor.contractAddress, expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-    verificationSnapshot: provenanceAnchor.verificationSnapshot
+    verificationSnapshot: provenanceAnchor.verificationSnapshot, createdAt: provenanceAnchor.createdAt
   }).from(provenanceAnchor).where(and(
     eq(provenanceAnchor.contributionId, entry.contributionId),
     eq(provenanceAnchor.operationType, "creator_decision")
-  )).orderBy(desc(provenanceAnchor.createdAt)).limit(1);
+  ));
 
-  const publicAnchor = (anchor: typeof storyAnchorRow | typeof contributionAnchor | typeof decisionAnchor) => anchor ? {
+  const storySelection = selectPublicAnchor(storyAnchors);
+  const contributionSelection = selectPublicAnchor(contributionAnchors);
+  const decisionSelection = selectPublicAnchor(decisionAnchors);
+
+  const publicAnchor = (anchor: typeof storyAnchors[number] | typeof contributionAnchors[number] | typeof decisionAnchors[number] | null) => anchor ? {
     ...anchor,
     blockNumber: anchor.blockNumber?.toString() ?? null,
     verifiedAt: anchor.verifiedAt?.toISOString() ?? null
@@ -85,9 +88,9 @@ export default async function PublicContributionPage({ params }: { params: Promi
         <div className="work-body">{entry.content.split("\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
         <section className="proof-reference">
           <p className="eyebrow">PROVENANCE EVIDENCE</p>
-          <PublicAnchorEvidence label="Source story version" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storyAnchorRow)} />
-          <PublicAnchorEvidence label="Contribution" expectedEvent="ContributionRegistered" anchor={publicAnchor(contributionAnchor)} />
-          <PublicAnchorEvidence label="Creator decision" expectedEvent="ContributionDecided" anchor={publicAnchor(decisionAnchor)} />
+          <PublicAnchorEvidence label="Source story version" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} />
+          <PublicAnchorEvidence label="Contribution" expectedEvent="ContributionRegistered" anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} />
+          <PublicAnchorEvidence label="Creator decision" expectedEvent="ContributionDecided" anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} />
           <p>Content SHA-256</p><code>{entry.contentHash}</code>
         </section>
       </article>
