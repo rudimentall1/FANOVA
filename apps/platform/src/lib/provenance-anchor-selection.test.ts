@@ -35,6 +35,7 @@ describe("provenance anchor selection", () => {
       ambiguous: true
     });
     expect(selectUniqueVerifiedAnchor([first, second])).toBeNull();
+    expect(selectPublicAnchor([first], 2)).toEqual({ anchor: null, ambiguous: true });
   });
 
   it("shows the newest non-verified attempt when no verified anchor exists", () => {
