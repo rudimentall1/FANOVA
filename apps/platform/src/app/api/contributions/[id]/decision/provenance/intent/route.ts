@@ -82,13 +82,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }).from(workVersion).where(eq(workVersion.id, entry.sourceVersionId)).limit(1);
     if (!version) return { kind: "not_found" as const };
 
-    const [creatorWallet] = await tx.select({ address: linkedWallet.address })
-      .from(linkedWallet).where(and(
-        eq(linkedWallet.userId, actor.userId),
-        eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
-      )).limit(1);
-    if (!creatorWallet || !isAddress(creatorWallet.address)) return { kind: "creator_wallet_missing" as const };
-
     const [storyAnchor] = await tx.select().from(provenanceAnchor).where(and(
       eq(provenanceAnchor.workVersionId, version.id),
       eq(provenanceAnchor.operationType, "work_version")
@@ -98,11 +91,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const permissionVersion = storySnapshot?.permissionVersion ?? (version.versionNumber === 1 ? 1 : null);
     if (!storyAnchor || storyAnchor.status !== "mainnet" || storyAnchor.chainId !== FANOVA_CHAIN_ID ||
         storyAnchor.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
-        storyAnchor.expectedSignerAddress.toLowerCase() !== creatorWallet.address.toLowerCase() ||
+        !isAddress(storyAnchor.expectedSignerAddress) ||
         !storyAnchor.transactionHash || storyAnchor.eventName !== "StoryVersionRegistered" || !storyAnchor.verifiedAt ||
         storyAnchor.sourceHash !== version.sourceHash || storyAnchor.permissionHash !== version.permissionHash ||
         !storySnapshot || storySnapshot.chainId !== FANOVA_CHAIN_ID ||
         storySnapshot.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
+        storySnapshot.expectedSigner?.toLowerCase() !== storyAnchor.expectedSignerAddress.toLowerCase() ||
+        storySnapshot.observedSigner?.toLowerCase() !== storyAnchor.expectedSignerAddress.toLowerCase() ||
         !Number.isSafeInteger(sourceVersion) || !sourceVersion || sourceVersion < 1 ||
         !Number.isSafeInteger(permissionVersion) || !permissionVersion || permissionVersion < 1) {
       return { kind: "story_anchor_required" as const };
@@ -140,7 +135,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const snapshot = existingByKey.verificationSnapshot;
       if (existingByKey.operationType !== "creator_decision" ||
           existingByKey.contributionId !== entry.id ||
-          existingByKey.expectedSignerAddress.toLowerCase() !== creatorWallet.address.toLowerCase() ||
+          !isAddress(existingByKey.expectedSignerAddress) ||
+          existingByKey.expectedSignerAddress.toLowerCase() !== storyAnchor.expectedSignerAddress.toLowerCase() ||
           existingByKey.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
           existingByKey.chainId !== FANOVA_CHAIN_ID ||
           snapshot?.decisionApproved !== decisionApproved ||
@@ -157,7 +153,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (prior) {
       const snapshot = prior.verificationSnapshot;
       if (prior.actorUserId !== actor.userId ||
-          prior.expectedSignerAddress.toLowerCase() !== creatorWallet.address.toLowerCase() ||
+          !isAddress(prior.expectedSignerAddress) ||
+          prior.expectedSignerAddress.toLowerCase() !== storyAnchor.expectedSignerAddress.toLowerCase() ||
           prior.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
           prior.chainId !== FANOVA_CHAIN_ID ||
           snapshot?.decisionApproved !== decisionApproved ||
@@ -165,6 +162,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return { kind: "intent_mismatch" as const };
       }
       return { kind: "existing" as const, anchor: prior, contributionIdentity, decisionApproved, reasonCode };
+    }
+
+    // Existing intents above are replayable from their immutable signer.
+    // A current wallet link is required only when creating a fresh decision.
+    const [creatorWallet] = await tx.select({ address: linkedWallet.address })
+      .from(linkedWallet).where(and(
+        eq(linkedWallet.userId, actor.userId),
+        eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
+      )).limit(1);
+    if (!creatorWallet || !isAddress(creatorWallet.address) ||
+        creatorWallet.address.toLowerCase() !== storyAnchor.expectedSignerAddress.toLowerCase()) {
+      return { kind: "creator_wallet_missing" as const };
     }
 
     const now = new Date();
