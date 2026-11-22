@@ -7,6 +7,7 @@ import { contribution, linkedWallet, provenanceAnchor, work, workVersion } from 
 import { getCurrentActor } from "@/lib/server-auth";
 import { asBytes32Hash, deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
 import { hashContribution } from "@/lib/contribution-hash";
+import { selectUniqueVerifiedAnchor } from "@/lib/provenance-anchor-selection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -111,13 +112,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const contributionHash = asBytes32Hash(entry.contentHash);
     if (!sourceHash || !permissionHash || !contributionHash) return { kind: "invalid_hash" as const };
 
-    const storyAnchors = await tx.select().from(provenanceAnchor)
-      .where(and(
-        eq(provenanceAnchor.workVersionId, sourceVersion.id),
-        eq(provenanceAnchor.operationType, "work_version")
-      ));
-    if (storyAnchors.length !== 1) return { kind: "story_anchor_required" as const };
-    const storyAnchor = storyAnchors[0];
+    // Failed/pending retries must not mask the sole verified Story anchor.
+    const storyAnchorCandidates = await tx.select().from(provenanceAnchor).where(and(
+      eq(provenanceAnchor.workVersionId, sourceVersion.id),
+      eq(provenanceAnchor.operationType, "work_version"),
+      eq(provenanceAnchor.status, "mainnet")
+    )).limit(2);
+    const storyAnchor = selectUniqueVerifiedAnchor(storyAnchorCandidates);
+    if (!storyAnchor) return { kind: "story_anchor_required" as const };
     const storySnapshot = storyAnchor.verificationSnapshot;
     const sourceVersionNumber = storySnapshot?.sourceVersion ??
       (sourceVersion.versionNumber === 1 ? 1 : null);
