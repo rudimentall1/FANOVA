@@ -1,3 +1,5 @@
+import { matchesPublicProofHashes } from "@/lib/provenance-anchor-selection";
+
 type AnchorEvidence = {
   status: string;
   transactionHash: string | null;
@@ -37,26 +39,7 @@ export function PublicAnchorEvidence({
   expectedHashes: Record<string, string | null | undefined>;
 }) {
   const snapshot = anchor?.verificationSnapshot;
-  const requiredHashKeys: Record<string, string[]> = {
-    StoryVersionRegistered: ["sourceHash", "permissionHash"],
-    ContributionRegistered: ["sourceHash", "permissionHash", "contributionHash"],
-    ContributionDecided: ["sourceHash", "permissionHash", "contributionHash", "reasonCode"]
-  };
-  const requiredKeys = requiredHashKeys[expectedEvent] ?? [];
-  const expectedHashKeys = Object.keys(snapshot?.expectedHashes ?? {}).sort();
-  const observedHashKeys = Object.keys(snapshot?.observedHashes ?? {}).sort();
-  const requiredHashSet = [...requiredKeys].sort();
-  const hashesMatch = requiredKeys.length > 0 &&
-    JSON.stringify(expectedHashKeys) === JSON.stringify(requiredHashSet) &&
-    JSON.stringify(observedHashKeys) === JSON.stringify(requiredHashSet) &&
-    requiredKeys.every((key) => {
-      const authoritative = expectedHashes[key];
-      const expected = snapshot?.expectedHashes?.[key];
-      const observed = snapshot?.observedHashes?.[key];
-      return typeof authoritative === "string" && authoritative.length > 0 &&
-        typeof expected === "string" && expected.toLowerCase() === authoritative.toLowerCase() &&
-        typeof observed === "string" && observed.toLowerCase() === authoritative.toLowerCase();
-    });
+  const hashesMatch = matchesPublicProofHashes(expectedEvent, snapshot, expectedHashes);
   const verified = Boolean(
     anchor &&
     anchor.status === "mainnet" &&
