@@ -188,3 +188,16 @@ This section supersedes earlier PR head and CI status references above where the
 - CI runs #446 and #447 were observed in progress at checkpoint time. Do not describe these changes as CI-passed until the runs complete successfully on the latest branch head.
 - No dedicated route-level regression test was found alongside these endpoints; the current CI workflow is the next syntax/type/build gate, not proof of the unlink/replay runtime scenario. Add an explicit integration regression test before treating this behavior as fully accepted.
 - No production DB inspection, live wallet unlink, or Mainnet transaction was performed. P1.6 remains OPEN.
+
+
+### Creator-decision intent source-anchor hardening — implementation in progress (2026-11-22)
+
+- Focused source review found the creator-decision intent route used unordered `LIMIT 1` for both Story and Contribution anchors. That could select a failed/pending retry instead of the sole verified anchor, or arbitrarily select one of multiple verified anchors.
+- The route now queries up to two verified Mainnet candidates and uses `selectUniqueVerifiedAnchor`; zero or multiple verified candidates fail closed.
+- Historical Story and Contribution prerequisites now pass through the same strict public proof predicate used for public verification. This binds persisted row and snapshot chain, configured contract, event, transaction hash, block number, signer, entity identity, and the exact operation-specific expected/observed hash key sets to authoritative Story/Contribution data.
+- Added unit coverage for complete ContributionRegistered evidence and ContributionDecided evidence including the decision reason hash, plus negative cases for entity/hash mismatches.
+- Commits:
+  - Route hardening: `0b06965a8ad9a58bb6abc0e3797de58811b7ea73`
+  - Proof predicate regression tests: `51c4706a6573743614068db965321f6a23d31226`
+- CI runs #449 and #450 were triggered for these sequential commits and were in progress when this checkpoint was written. Acceptance requires CI #450 to complete successfully on the latest code head.
+- This is source-level hardening and synthetic unit coverage; it does not demonstrate real persisted Mainnet anchors in production. P1.6 remains OPEN.
