@@ -86,3 +86,50 @@ Complete the public, inspectable Story → Contribution → Creator Decision pro
 - A successful build or CI run does not prove live Mainnet rendering.
 - Never label an anchor `MAINNET · VERIFIED` without all required persisted evidence checks.
 - No Mainnet write, contract deployment, PR merge, or scope expansion without explicit approval.
+
+
+---
+
+## Checkpoint update — 2026-11-22
+
+This section supersedes earlier PR head and CI status references above where they conflict.
+
+### Verified repository state
+
+- PR #39 remains OPEN · DRAFT · not merged.
+  - Head: `b4df679470913fe6f6d677c8bf7059147a771797`.
+  - CI run #432: SUCCESS on that head: https://github.com/rudimentall1/FANOVA/actions/runs/45040106498
+  - The per-session active unlink challenge cap, streamed request-body limit, and associated unit/E2E assertions are included in the tested head.
+- PR #40 remains OPEN · DRAFT · not merged.
+  - Head: `8696a4db73662b3b35f7f5c83c0f4a29d34b3cda`.
+  - CI run #436: SUCCESS on that head: https://github.com/rudimentall1/FANOVA/actions/runs/45040582858
+  - All workflow steps passed, including domain/ABI/transaction tests, browser E2E, platform TypeScript, authorization tests, PostgreSQL migrations, Better Auth schema validation, production build, and multi-account platform browser E2E.
+- PR #40 now binds public verification to the configured canonical `FANOVA_PROVENANCE_CONTRACT`. Missing, malformed, or mismatching configuration fails closed; tests cover these cases.
+- No PR has been merged. No Mainnet transaction, deployment, or contract write was performed.
+
+### Remaining acceptance gates
+
+- CI success is automated repository evidence only; it is not an independent security audit, production database check, or proof that a real persisted Mainnet anchor renders correctly on public pages.
+- A positive unit fixture for `MAINNET · VERIFIED` is synthetic. The current multi-account browser journey verifies the LOCAL / NOT ANCHORED public state; it does not substitute for a live persisted Mainnet anchor.
+- No production DB access or read-only production anchor verification has been performed in this checkpoint.
+- P1.6 remains OPEN pending focused security review and end-to-end acceptance with the required evidence.
+- The original creator/fan pilot and Sony application/demo finalization remain NOT DONE.
+
+### Next actions
+
+1. Review PR #40's public proof predicate, canonical source-anchor selection, and public query behavior as one coherent trust boundary; add or refine regression tests where review finds gaps.
+2. If authorized production read access becomes available, inspect persisted anchors read-only and verify public rendering against actual records. Do not create or alter Mainnet data to manufacture evidence.
+3. Review PR #39 and PR #40 together, keep them Draft until acceptance is complete, and update Issue #21/roadmap with evidence-backed status.
+4. Keep P1.6 OPEN until security review and the full acceptance path are complete. Do not merge without explicit approval.
+5. Resume creator/fan pilot and Sony application evidence work only after the technical acceptance path is stable.
+
+### Evidence classification
+
+| Claim | Evidence class |
+|---|---|
+| PR #39 checks pass on head `b4df679` | CI-tested |
+| PR #40 checks pass on head `8696a4d` | CI-tested |
+| Canonical contract binding fails closed in public proof predicate | Source + unit-tested |
+| Real persisted Mainnet anchor renders correctly in production | NOT VERIFIED |
+| Independent security audit / third-party certification | NOT DONE |
+| Full P1.6 acceptance | OPEN |
