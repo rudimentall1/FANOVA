@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, count, desc, eq, ne } from "drizzle-orm";
 import { keccak256, toBytes } from "viem";
 import { db } from "@/db";
 import { contribution, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
@@ -43,7 +43,7 @@ export default async function PublicContributionPage({ params }: { params: Promi
 
   if (!entry) notFound();
 
-  const storyAnchors = await db.select({
+  const anchorFields = {
     status: provenanceAnchor.status, transactionHash: provenanceAnchor.transactionHash,
     blockNumber: provenanceAnchor.blockNumber, verifiedAt: provenanceAnchor.verifiedAt,
     eventName: provenanceAnchor.eventName, chainId: provenanceAnchor.chainId,
@@ -53,34 +53,58 @@ export default async function PublicContributionPage({ params }: { params: Promi
     permissionHash: provenanceAnchor.permissionHash,
     contributionHash: provenanceAnchor.contributionHash,
     createdAt: provenanceAnchor.createdAt
-  }).from(provenanceAnchor).where(and(
+  };
+  const storyFilter = and(
     eq(provenanceAnchor.workVersionId, entry.sourceVersionId),
     eq(provenanceAnchor.operationType, "work_version")
-  ));
-  const contributionAnchors = await db.select({
-    status: provenanceAnchor.status, transactionHash: provenanceAnchor.transactionHash,
-    blockNumber: provenanceAnchor.blockNumber, verifiedAt: provenanceAnchor.verifiedAt,
-    eventName: provenanceAnchor.eventName, chainId: provenanceAnchor.chainId,
-    contractAddress: provenanceAnchor.contractAddress, expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-    verificationSnapshot: provenanceAnchor.verificationSnapshot, createdAt: provenanceAnchor.createdAt
-  }).from(provenanceAnchor).where(and(
+  );
+  const [storyVerifiedCountRow] = await db.select({ total: count() }).from(provenanceAnchor)
+    .where(and(storyFilter, eq(provenanceAnchor.status, "mainnet")));
+  const storyVerified = await db.selectDistinctOn([provenanceAnchor.workVersionId], anchorFields)
+    .from(provenanceAnchor)
+    .where(and(storyFilter, eq(provenanceAnchor.status, "mainnet")))
+    .orderBy(provenanceAnchor.workVersionId, desc(provenanceAnchor.createdAt));
+  const storyOther = await db.selectDistinctOn([provenanceAnchor.workVersionId], anchorFields)
+    .from(provenanceAnchor)
+    .where(and(storyFilter, ne(provenanceAnchor.status, "mainnet")))
+    .orderBy(provenanceAnchor.workVersionId, desc(provenanceAnchor.createdAt));
+  const storyAnchors = [...storyVerified, ...storyOther];
+
+  const contributionFilter = and(
     eq(provenanceAnchor.contributionId, entry.contributionId),
     eq(provenanceAnchor.operationType, "contribution")
-  ));
-  const decisionAnchors = await db.select({
-    status: provenanceAnchor.status, transactionHash: provenanceAnchor.transactionHash,
-    blockNumber: provenanceAnchor.blockNumber, verifiedAt: provenanceAnchor.verifiedAt,
-    eventName: provenanceAnchor.eventName, chainId: provenanceAnchor.chainId,
-    contractAddress: provenanceAnchor.contractAddress, expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-    verificationSnapshot: provenanceAnchor.verificationSnapshot, createdAt: provenanceAnchor.createdAt
-  }).from(provenanceAnchor).where(and(
+  );
+  const [contributionVerifiedCountRow] = await db.select({ total: count() }).from(provenanceAnchor)
+    .where(and(contributionFilter, eq(provenanceAnchor.status, "mainnet")));
+  const contributionVerified = await db.selectDistinctOn([provenanceAnchor.contributionId, provenanceAnchor.operationType], anchorFields)
+    .from(provenanceAnchor)
+    .where(and(contributionFilter, eq(provenanceAnchor.status, "mainnet")))
+    .orderBy(provenanceAnchor.contributionId, provenanceAnchor.operationType, desc(provenanceAnchor.createdAt));
+  const contributionOther = await db.selectDistinctOn([provenanceAnchor.contributionId, provenanceAnchor.operationType], anchorFields)
+    .from(provenanceAnchor)
+    .where(and(contributionFilter, ne(provenanceAnchor.status, "mainnet")))
+    .orderBy(provenanceAnchor.contributionId, provenanceAnchor.operationType, desc(provenanceAnchor.createdAt));
+  const contributionAnchors = [...contributionVerified, ...contributionOther];
+
+  const decisionFilter = and(
     eq(provenanceAnchor.contributionId, entry.contributionId),
     eq(provenanceAnchor.operationType, "creator_decision")
-  ));
+  );
+  const [decisionVerifiedCountRow] = await db.select({ total: count() }).from(provenanceAnchor)
+    .where(and(decisionFilter, eq(provenanceAnchor.status, "mainnet")));
+  const decisionVerified = await db.selectDistinctOn([provenanceAnchor.contributionId, provenanceAnchor.operationType], anchorFields)
+    .from(provenanceAnchor)
+    .where(and(decisionFilter, eq(provenanceAnchor.status, "mainnet")))
+    .orderBy(provenanceAnchor.contributionId, provenanceAnchor.operationType, desc(provenanceAnchor.createdAt));
+  const decisionOther = await db.selectDistinctOn([provenanceAnchor.contributionId, provenanceAnchor.operationType], anchorFields)
+    .from(provenanceAnchor)
+    .where(and(decisionFilter, ne(provenanceAnchor.status, "mainnet")))
+    .orderBy(provenanceAnchor.contributionId, provenanceAnchor.operationType, desc(provenanceAnchor.createdAt));
+  const decisionAnchors = [...decisionVerified, ...decisionOther];
 
-  const storySelection = selectPublicAnchor(storyAnchors);
-  const contributionSelection = selectPublicAnchor(contributionAnchors);
-  const decisionSelection = selectPublicAnchor(decisionAnchors);
+  const storySelection = selectPublicAnchor(storyAnchors, Number(storyVerifiedCountRow?.total ?? 0));
+  const contributionSelection = selectPublicAnchor(contributionAnchors, Number(contributionVerifiedCountRow?.total ?? 0));
+  const decisionSelection = selectPublicAnchor(decisionAnchors, Number(decisionVerifiedCountRow?.total ?? 0));
 
   const publicAnchor = (anchor: typeof storyAnchors[number] | typeof contributionAnchors[number] | typeof decisionAnchors[number] | null) => anchor ? {
     ...anchor,
