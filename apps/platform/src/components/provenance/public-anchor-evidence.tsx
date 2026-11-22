@@ -29,6 +29,7 @@ const EXPLORER_TX = "https://soneium.blockscout.com/tx/";
 export function PublicAnchorEvidence({
   label,
   expectedEvent,
+  expectedContractAddress,
   anchor,
   ambiguous = false,
   expectedHashes,
@@ -37,6 +38,7 @@ export function PublicAnchorEvidence({
 }: {
   label: string;
   expectedEvent: string;
+  expectedContractAddress: string | null;
   anchor: AnchorEvidence;
   ambiguous?: boolean;
   expectedHashes: Record<string, string | null | undefined>;
@@ -46,6 +48,7 @@ export function PublicAnchorEvidence({
   const verified = isPublicAnchorVerified({
     anchor,
     expectedEvent,
+    expectedContractAddress,
     expectedSignerAddress,
     expectedEntityId,
     expectedHashes
