@@ -143,8 +143,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const sourceAnchors = await db.select().from(provenanceAnchor).where(and(
     eq(provenanceAnchor.workVersionId, row.sourceVersionId),
-    eq(provenanceAnchor.operationType, "work_version")
-  ));
+    eq(provenanceAnchor.operationType, "work_version"),
+    eq(provenanceAnchor.status, "mainnet")
+  )).limit(2);
   const sourceAnchor = selectUniqueVerifiedAnchor(sourceAnchors);
   const sourceSnapshot = sourceAnchor?.verificationSnapshot;
   const sourceVersion = sourceSnapshot?.sourceVersion ?? (row.versionNumber === 1 ? 1 : null);
@@ -161,8 +162,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const contributionAnchors = await db.select().from(provenanceAnchor).where(and(
     eq(provenanceAnchor.contributionId, row.contributionId),
-    eq(provenanceAnchor.operationType, "contribution")
-  ));
+    eq(provenanceAnchor.operationType, "contribution"),
+    eq(provenanceAnchor.status, "mainnet")
+  )).limit(2);
   const registeredContribution = selectUniqueVerifiedAnchor(contributionAnchors);
   if (!registeredContribution || registeredContribution.status !== "mainnet" ||
       registeredContribution.chainId !== FANOVA_CHAIN_ID ||
