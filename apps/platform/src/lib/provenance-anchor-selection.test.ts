@@ -91,6 +91,13 @@ describe("public provenance hash validation", () => {
     }, storyHashes)).toBe(false);
   });
 
+  it("rejects values that are not complete bytes32 hashes", () => {
+    expect(matchesPublicProofHashes("StoryVersionRegistered", {
+      expectedHashes: { sourceHash: "0xabc", permissionHash: HASH_B },
+      observedHashes: { sourceHash: "0xabc", permissionHash: HASH_B }
+    }, storyHashes)).toBe(false);
+  });
+
   it("rejects extra keys even when required hashes match", () => {
     expect(matchesPublicProofHashes("StoryVersionRegistered", {
       expectedHashes: { ...storyHashes, unexpected: HASH_C },
