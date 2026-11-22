@@ -100,6 +100,27 @@ async function seedStory() {
       now
     ]
   );
+
+  // A newer failed retry must not mask the one verified Story anchor.
+  const failedAt = new Date(now.getTime() + 1_000);
+  await pool.query(
+    `INSERT INTO provenance_anchor
+       (id, idempotency_key, operation_type, status, actor_user_id, expected_signer_address,
+        chain_id, contract_address, work_version_id, source_hash, permission_hash,
+        verification_snapshot, created_at, updated_at)
+     VALUES ($1, $2, 'work_version', 'failed', $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $11)`,
+    [
+      randomUUID(), randomUUID(), row.creator_user_id, signer, chainId, contractAddress,
+      row.current_version_id, row.source_hash, row.permission_hash,
+      JSON.stringify({
+        checkedAt: failedAt.toISOString(),
+        chainId,
+        contractAddress,
+        failureCode: "SYNTHETIC_RETRY"
+      }),
+      failedAt
+    ]
+  );
   process.stdout.write(JSON.stringify({ storyId, creatorSigner: signer }) + "\n");
 }
 
