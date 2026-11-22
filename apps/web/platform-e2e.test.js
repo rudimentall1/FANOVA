@@ -10,7 +10,12 @@ const baseUrl = process.env.FANOVA_PLATFORM_URL ?? "http://127.0.0.1:3000";
 const logPath = process.env.FANOVA_PLATFORM_LOG ?? "/tmp/fanova-platform.log";
 const platformDir = process.env.FANOVA_PLATFORM_DIR;
 const adminBootstrap = process.env.FANOVA_ADMIN_BOOTSTRAP_SCRIPT;
+const provenanceBootstrap = process.env.FANOVA_E2E_PROVENANCE_BOOTSTRAP_SCRIPT;
 const password = "FANOVA-E2E-Password-2026!";
+
+function bootstrapProvenance(mode, ...args) {
+  execFileSync("node", [provenanceBootstrap, mode, ...args], { cwd: platformDir, env: process.env, stdio: "pipe" });
+}
 
 function readLog() {
   try { return readFileSync(logPath, "utf8"); } catch { return ""; }
@@ -90,6 +95,7 @@ async function submitContribution(page, slug, title, text) {
 test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }, async () => {
   assert.ok(platformDir, "FANOVA_PLATFORM_DIR must be configured");
   assert.ok(adminBootstrap, "FANOVA_ADMIN_BOOTSTRAP_SCRIPT must be configured");
+  assert.ok(provenanceBootstrap, "FANOVA_E2E_PROVENANCE_BOOTSTRAP_SCRIPT must be configured");
 
   const browser = await chromium.launch({ headless: true });
   const adminContext = await browser.newContext();
