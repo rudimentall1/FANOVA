@@ -18,6 +18,7 @@ import {
   FANOVA_CHAIN_ID
 } from "@/lib/provenance-intent";
 import { hashContribution } from "@/lib/contribution-hash";
+import { selectUniqueVerifiedAnchor } from "@/lib/provenance-anchor-selection";
 import {
   CONTRIBUTION_REGISTRATION_ABI,
   matchesContributionRegisteredEvent,
@@ -168,10 +169,10 @@ export async function POST(request: Request, context: RouteContext) {
       eq(provenanceAnchor.workVersionId, row.sourceVersionId),
       eq(provenanceAnchor.operationType, "work_version")
     ));
-  if (storyAnchors.length !== 1) {
-    return fail("STORY_ANCHOR_MISSING", "The exact source story version does not have one unique Mainnet provenance anchor.");
+  const storyAnchor = selectUniqueVerifiedAnchor(storyAnchors);
+  if (!storyAnchor) {
+    return fail("STORY_ANCHOR_AMBIGUOUS", "The exact source story version must have exactly one verified Mainnet provenance anchor.");
   }
-  const storyAnchor = storyAnchors[0];
   const storySnapshot = storyAnchor.verificationSnapshot;
   const sourceVersion = storySnapshot?.sourceVersion ??
     (row.versionNumber === 1 ? 1 : null);
