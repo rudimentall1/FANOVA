@@ -156,3 +156,11 @@ This section supersedes earlier PR head and CI status references above where the
 - Added a regression assertion that the public proof predicate accepts the persisted historical signer even when the current linked wallet is a different address.
 - These source changes are committed to PR #40. They have not yet passed CI at this checkpoint. The PR must remain Draft until the new head's full workflow passes.
 - Security boundary preserved: signer is sourced from the server-persisted intent row, never from request input; transaction sender and event reviewer are still checked against that signer.
+
+
+### Historical signer flow completion — intent creation
+
+- Contribution intent creation no longer requires the *creator's current linked wallet* merely to validate an already verified source Story anchor. It uses the source anchor's persisted signer and verifies the stored snapshot's expected/observed signer match before deriving the Story identity. The contributor still must have their own currently linked wallet to initiate a new contribution registration.
+- Creator-decision intent creation no longer requires the contributor's current linked wallet to validate an already verified Contribution anchor. It checks the persisted contribution anchor signer against its verification snapshot. The creator still must have their own current wallet to initiate a new decision transaction.
+- This preserves the distinction: current wallet is required for the person initiating a new on-chain action; historical anchors are validated against their immutable server-persisted signer and verification evidence.
+- These additional route changes are not yet CI-verified. Full workflow remains the acceptance gate.
