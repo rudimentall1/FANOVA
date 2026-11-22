@@ -3,7 +3,7 @@ export const MAX_ACTIVE_WALLET_UNLINK_CHALLENGES = 5;
 
 export async function readBodyWithLimit(request: Request, maxBytes = MAX_WALLET_UNLINK_BODY_BYTES): Promise<string> {
   const contentLength = request.headers.get("content-length");
-  if (contentLength && /^\\d+$/.test(contentLength) && Number(contentLength) > maxBytes) {
+  if (contentLength && /^\d+$/.test(contentLength) && Number(contentLength) > maxBytes) {
     throw new Error("BODY_TOO_LARGE");
   }
   if (!request.body) return "";
