@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
+import { keccak256, toBytes } from "viem";
 import { db } from "@/db";
 import { contribution, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
 import { PublicAnchorEvidence } from "@/components/provenance/public-anchor-evidence";
@@ -18,6 +19,10 @@ export default async function PublicContributionPage({ params }: { params: Promi
       type: contribution.type,
       content: contribution.content,
       contentHash: contribution.contentHash,
+      acknowledgedPermissionHash: contribution.acknowledgedPermissionHash,
+      creatorFeedback: contribution.creatorFeedback,
+      sourceHash: workVersion.sourceHash,
+      permissionHash: workVersion.permissionHash,
       createdAt: contribution.createdAt,
       contributorName: userProfile.displayName,
       contributorHandle: userProfile.handle,
@@ -43,7 +48,11 @@ export default async function PublicContributionPage({ params }: { params: Promi
     blockNumber: provenanceAnchor.blockNumber, verifiedAt: provenanceAnchor.verifiedAt,
     eventName: provenanceAnchor.eventName, chainId: provenanceAnchor.chainId,
     contractAddress: provenanceAnchor.contractAddress, expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-    verificationSnapshot: provenanceAnchor.verificationSnapshot, createdAt: provenanceAnchor.createdAt
+    verificationSnapshot: provenanceAnchor.verificationSnapshot,
+    sourceHash: provenanceAnchor.sourceHash,
+    permissionHash: provenanceAnchor.permissionHash,
+    contributionHash: provenanceAnchor.contributionHash,
+    createdAt: provenanceAnchor.createdAt
   }).from(provenanceAnchor).where(and(
     eq(provenanceAnchor.workVersionId, entry.sourceVersionId),
     eq(provenanceAnchor.operationType, "work_version")
@@ -88,9 +97,9 @@ export default async function PublicContributionPage({ params }: { params: Promi
         <div className="work-body">{entry.content.split("\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
         <section className="proof-reference">
           <p className="eyebrow">PROVENANCE EVIDENCE</p>
-          <PublicAnchorEvidence label="Source story version" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} />
-          <PublicAnchorEvidence label="Contribution" expectedEvent="ContributionRegistered" anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} />
-          <PublicAnchorEvidence label="Creator decision" expectedEvent="ContributionDecided" anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} />
+          <PublicAnchorEvidence label="Source story version" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.permissionHash }} />
+          <PublicAnchorEvidence label="Contribution" expectedEvent="ContributionRegistered" anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.acknowledgedPermissionHash, contributionHash: entry.contentHash }} />
+          <PublicAnchorEvidence label="Creator decision" expectedEvent="ContributionDecided" anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.acknowledgedPermissionHash, contributionHash: entry.contentHash, reasonCode: keccak256(toBytes(entry.creatorFeedback ?? "")) }} />
           <p>Content SHA-256</p><code>{entry.contentHash}</code>
         </section>
       </article>
