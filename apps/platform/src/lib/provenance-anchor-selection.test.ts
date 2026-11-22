@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesPublicAnchorIdentity, matchesPublicProofHashes, selectPublicAnchor, selectUniqueVerifiedAnchor } from "./provenance-anchor-selection";
+import { isPublicAnchorVerified, matchesPublicAnchorIdentity, matchesPublicProofHashes, selectPublicAnchor, selectUniqueVerifiedAnchor } from "./provenance-anchor-selection";
 
 type Attempt = { id: string; status: string; createdAt: Date };
 
@@ -151,5 +151,74 @@ describe("public provenance identity validation", () => {
   it("fails closed when the authoritative wallet or entity identity is unavailable", () => {
     expect(matchesPublicAnchorIdentity({ ...valid, expectedSignerAddress: null })).toBe(false);
     expect(matchesPublicAnchorIdentity({ ...valid, expectedEntityId: null })).toBe(false);
+  });
+});
+
+
+describe("public Mainnet verification predicate", () => {
+  const hashes = { sourceHash: "0xaaa", permissionHash: "0xbbb" };
+  const anchor = {
+    status: "mainnet",
+    chainId: 1868,
+    contractAddress: "0xContract",
+    expectedSignerAddress: "0xCreator",
+    transactionHash: "0xTransaction",
+    blockNumber: "12345",
+    verifiedAt: "2026-11-22T12:00:00.000Z",
+    eventName: "StoryVersionRegistered",
+    verificationSnapshot: {
+      chainId: 1868,
+      contractAddress: "0xcontract",
+      eventName: "StoryVersionRegistered",
+      expectedSigner: "0xCreator",
+      observedSigner: "0xcreator",
+      expectedEntityId: "0xStory",
+      observedEntityId: "0xstory",
+      expectedHashes: hashes,
+      observedHashes: hashes,
+      transactionHash: "0xtransaction",
+      blockNumber: "12345"
+    }
+  };
+  const input = {
+    anchor,
+    expectedEvent: "StoryVersionRegistered",
+    expectedSignerAddress: "0xCREATOR",
+    expectedEntityId: "0xSTORY",
+    expectedHashes: hashes
+  };
+
+  it("accepts a complete synthetic verified proof", () => {
+    expect(isPublicAnchorVerified(input)).toBe(true);
+  });
+
+  it("rejects a persisted chain ID mismatch", () => {
+    expect(isPublicAnchorVerified({ ...input, anchor: { ...anchor, chainId: 1 } })).toBe(false);
+  });
+
+  it("rejects a snapshot chain ID mismatch", () => {
+    expect(isPublicAnchorVerified({ ...input, anchor: { ...anchor, verificationSnapshot: { ...anchor.verificationSnapshot, chainId: 1 } } })).toBe(false);
+  });
+
+  it("rejects an event mismatch", () => {
+    expect(isPublicAnchorVerified({ ...input, anchor: { ...anchor, eventName: "OtherEvent" } })).toBe(false);
+  });
+
+  it("rejects a signer mismatch", () => {
+    expect(isPublicAnchorVerified({ ...input, anchor: { ...anchor, expectedSignerAddress: "0xAttacker" } })).toBe(false);
+  });
+
+  it("rejects an entity mismatch", () => {
+    expect(isPublicAnchorVerified({ ...input, expectedEntityId: "0xOtherStory" })).toBe(false);
+  });
+
+  it("rejects transaction and block mismatches", () => {
+    expect(isPublicAnchorVerified({ ...input, anchor: { ...anchor, transactionHash: "0xOtherTransaction" } })).toBe(false);
+    expect(isPublicAnchorVerified({ ...input, anchor: { ...anchor, blockNumber: "12346" } })).toBe(false);
+  });
+
+  it("rejects missing or mismatched authoritative hashes", () => {
+    expect(isPublicAnchorVerified({ ...input, expectedHashes: { sourceHash: "0xaaa" } })).toBe(false);
+    expect(isPublicAnchorVerified({ ...input, expectedHashes: { ...hashes, permissionHash: "0xwrong" } })).toBe(false);
   });
 });
