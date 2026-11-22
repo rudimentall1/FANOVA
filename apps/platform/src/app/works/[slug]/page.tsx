@@ -42,9 +42,15 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
       type: contribution.type,
       contributorName: userProfile.displayName,
       contributorHandle: userProfile.handle,
-      createdAt: contribution.createdAt
+      createdAt: contribution.createdAt,
+      contentHash: contribution.contentHash,
+      acknowledgedPermissionHash: contribution.acknowledgedPermissionHash,
+      creatorFeedback: contribution.creatorFeedback,
+      sourceHash: workVersion.sourceHash,
+      permissionHash: workVersion.permissionHash
     })
     .from(contribution)
+    .innerJoin(workVersion, eq(contribution.sourceVersionId, workVersion.id))
     .leftJoin(userProfile, eq(contribution.contributorUserId, userProfile.userId))
     .where(and(
       eq(contribution.workId, entry.id),
@@ -64,6 +70,9 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
     contractAddress: provenanceAnchor.contractAddress,
     expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
     verificationSnapshot: provenanceAnchor.verificationSnapshot,
+    sourceHash: provenanceAnchor.sourceHash,
+    permissionHash: provenanceAnchor.permissionHash,
+    contributionHash: provenanceAnchor.contributionHash,
     createdAt: provenanceAnchor.createdAt
   }).from(provenanceAnchor).where(and(
     eq(provenanceAnchor.workVersionId, entry.versionId),
@@ -84,6 +93,9 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
         contractAddress: provenanceAnchor.contractAddress,
         expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
         verificationSnapshot: provenanceAnchor.verificationSnapshot,
+        sourceHash: provenanceAnchor.sourceHash,
+        permissionHash: provenanceAnchor.permissionHash,
+        contributionHash: provenanceAnchor.contributionHash,
         createdAt: provenanceAnchor.createdAt
       }).from(provenanceAnchor).where(inArray(
         provenanceAnchor.contributionId,
@@ -135,7 +147,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
         <section className="proof-reference">
           <p className="eyebrow">STORY PROVENANCE</p>
           <p>Only a server-verified Soneium receipt and matching contract event are labelled MAINNET VERIFIED.</p>
-          <PublicAnchorEvidence label="Story version anchor" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} />
+          <PublicAnchorEvidence label="Story version anchor" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.permissionHash }} />
           <code>Source SHA-256: {entry.sourceHash}</code>
           <code>Permissions SHA-256: {entry.permissionHash}</code>
         </section>
@@ -150,8 +162,8 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
                 <Link className="public-contribution-link" href={`/works/${slug}/contributions/${item.id}`}>
                   <strong>{item.title}</strong><small>{item.type.replace("_", " ")} · {item.contributorName ?? "Contributor"} · @{item.contributorHandle ?? "member"}</small>
                 </Link>
-                <PublicAnchorEvidence label="Contribution anchor" expectedEvent="ContributionRegistered" anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} />
-                <PublicAnchorEvidence label="Creator decision anchor" expectedEvent="ContributionDecided" anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} />
+                <PublicAnchorEvidence label="Contribution anchor" expectedEvent="ContributionRegistered" anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash }} />
+                <PublicAnchorEvidence label="Creator decision anchor" expectedEvent="ContributionDecided" anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash, reasonCode: item.creatorFeedback }} />
               </article>
             );
           })}
