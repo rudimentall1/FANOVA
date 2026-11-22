@@ -160,7 +160,7 @@ describe("public Mainnet verification predicate", () => {
   const anchor = {
     status: "mainnet",
     chainId: 1868,
-    contractAddress: "0xContract",
+    contractAddress: "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880",
     expectedSignerAddress: "0xCreator",
     transactionHash: "0xTransaction",
     blockNumber: "12345",
@@ -168,7 +168,7 @@ describe("public Mainnet verification predicate", () => {
     eventName: "StoryVersionRegistered",
     verificationSnapshot: {
       chainId: 1868,
-      contractAddress: "0xcontract",
+      contractAddress: "0x3a302cbb8570a76e8e7e1dc15a763552a3c40880",
       eventName: "StoryVersionRegistered",
       expectedSigner: "0xCreator",
       observedSigner: "0xcreator",
@@ -183,7 +183,7 @@ describe("public Mainnet verification predicate", () => {
   const input = {
     anchor,
     expectedEvent: "StoryVersionRegistered",
-    expectedContractAddress: "0xContract",
+    expectedContractAddress: "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880",
     expectedSignerAddress: "0xCREATOR",
     expectedEntityId: "0xSTORY",
     expectedHashes: hashes
@@ -196,12 +196,16 @@ describe("public Mainnet verification predicate", () => {
   it("rejects a persisted contract address that differs from the configured FANOVA contract", () => {
     expect(isPublicAnchorVerified({
       ...input,
-      anchor: { ...anchor, contractAddress: "0xOtherContract" }
+      anchor: { ...anchor, contractAddress: "0x0000000000000000000000000000000000000001" }
     })).toBe(false);
   });
 
   it("fails closed when the canonical contract is not configured", () => {
     expect(isPublicAnchorVerified({ ...input, expectedContractAddress: null })).toBe(false);
+  });
+
+  it("rejects a malformed canonical contract configuration", () => {
+    expect(isPublicAnchorVerified({ ...input, expectedContractAddress: "0xContract" })).toBe(false);
   });
 
   it("rejects a persisted chain ID mismatch", () => {
