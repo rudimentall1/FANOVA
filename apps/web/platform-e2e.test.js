@@ -182,6 +182,9 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await creatorPage.getByText("Fan art allowed").waitFor();
     await creatorPage.getByText("Translations not permitted").waitFor();
 
+    // Seed a synthetic, fully bound Story proof in the isolated CI database.
+    bootstrapProvenance("seed-story", slug, creatorEmail, walletA.address);
+
     // A separate reader signs up, verifies email, and returns directly to the contribution form.
     const contributorPage = await registerAndVerify(
       contributorContext,
