@@ -87,4 +87,27 @@ describe("public provenance hash validation", () => {
       observedHashes: { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc" }
     }, { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc", reasonCode: "0xd" })).toBe(false);
   });
+
+  it("accepts exact contribution registration hashes", () => {
+    const hashes = { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc" };
+    expect(matchesPublicProofHashes("ContributionRegistered", {
+      expectedHashes: hashes,
+      observedHashes: { sourceHash: "0xA", permissionHash: "0xB", contributionHash: "0xC" }
+    }, hashes)).toBe(true);
+  });
+
+  it("accepts exact creator decision hashes including the reason code", () => {
+    const hashes = { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc", reasonCode: "0xd" };
+    expect(matchesPublicProofHashes("ContributionDecided", {
+      expectedHashes: hashes,
+      observedHashes: hashes
+    }, hashes)).toBe(true);
+  });
+
+  it("rejects an unknown event with no defined hash contract", () => {
+    expect(matchesPublicProofHashes("UnknownEvent", {
+      expectedHashes: storyHashes,
+      observedHashes: storyHashes
+    }, storyHashes)).toBe(false);
+  });
 });
