@@ -305,6 +305,9 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       `unlink challenge cap must admit five active challenges and reject the sixth: ${JSON.stringify(challengeCap)}`
     );
 
+    // Wallet A is now released and can be the creator historical signer for synthetic provenance fixtures.
+    bootstrapProvenance("seed-story", slug, creatorEmail, walletA.address);
+
     // Wallet settings are a separate route; return to the contribution form before checking its options.
     await contributorPage.goto(`${baseUrl}/works/${slug}/contribute`);
     await contributorPage.getByRole("heading", { name: "E2E Story" }).waitFor();
