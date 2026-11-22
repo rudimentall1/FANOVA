@@ -46,3 +46,36 @@ export function selectUniqueVerifiedAnchor<T extends { status: string }>(
   const verified = attempts.filter((attempt) => attempt.status === "mainnet");
   return verified.length === 1 ? verified[0] : null;
 }
+
+const REQUIRED_PUBLIC_HASH_KEYS: Record<string, readonly string[]> = {
+  StoryVersionRegistered: ["sourceHash", "permissionHash"],
+  ContributionRegistered: ["sourceHash", "permissionHash", "contributionHash"],
+  ContributionDecided: ["sourceHash", "permissionHash", "contributionHash", "reasonCode"]
+};
+
+export function matchesPublicProofHashes(
+  eventName: string,
+  snapshot: {
+    expectedHashes?: Record<string, string>;
+    observedHashes?: Record<string, string>;
+  } | null | undefined,
+  authoritativeHashes: Record<string, string | null | undefined>
+): boolean {
+  const required = REQUIRED_PUBLIC_HASH_KEYS[eventName];
+  if (!required || !snapshot?.expectedHashes || !snapshot.observedHashes) return false;
+
+  const expectedKeys = Object.keys(snapshot.expectedHashes).sort();
+  const observedKeys = Object.keys(snapshot.observedHashes).sort();
+  const requiredKeys = [...required].sort();
+  if (JSON.stringify(expectedKeys) !== JSON.stringify(requiredKeys) ||
+      JSON.stringify(observedKeys) !== JSON.stringify(requiredKeys)) return false;
+
+  return required.every((key) => {
+    const authoritative = authoritativeHashes[key];
+    const expected = snapshot.expectedHashes?.[key];
+    const observed = snapshot.observedHashes?.[key];
+    return typeof authoritative === "string" && authoritative.length > 0 &&
+      typeof expected === "string" && expected.toLowerCase() === authoritative.toLowerCase() &&
+      typeof observed === "string" && observed.toLowerCase() === authoritative.toLowerCase();
+  });
+}
