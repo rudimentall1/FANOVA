@@ -12,6 +12,8 @@ const platformDir = process.env.FANOVA_PLATFORM_DIR;
 const adminBootstrap = process.env.FANOVA_ADMIN_BOOTSTRAP_SCRIPT;
 const provenanceBootstrap = process.env.FANOVA_E2E_PROVENANCE_BOOTSTRAP_SCRIPT;
 const password = "FANOVA-E2E-Password-2026!";
+const e2eCreatorSigner = "0x1111111111111111111111111111111111111111";
+const e2eContributorSigner = "0x2222222222222222222222222222222222222222";
 
 function bootstrapProvenance(mode, ...args) {
   execFileSync("node", [provenanceBootstrap, mode, ...args], { cwd: platformDir, env: process.env, stdio: "pipe" });
@@ -356,7 +358,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       `creator selected public visibility but persisted record is not public: ${JSON.stringify(approvedRecord)}`
     );
 
-    // Creator Decision intent is replayable after the creator wallet is unlinked.
+    // Creator decision intent replay remains available after the creator unlinks.
     const decisionIntentKey = "123e4567-e89b-42d3-a456-426614174003";
     const decisionIntent = await creatorPage.evaluate(async ({ id, key, signer }) => {
       const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
@@ -365,8 +367,8 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
         body: JSON.stringify({ idempotencyKey: key })
       });
       return { status: response.status, body: await response.json(), signer };
-    }, { id: firstId, key: decisionIntentKey, signer: walletA.address });
-    assert.equal(decisionIntent.status, 200, "creator decision intent should be created or recovered");
+    }, { id: firstId, key: decisionIntentKey, signer: e2eCreatorSigner });
+    assert.equal(decisionIntent.status, 200, "creator decision action should already have prepared its single provenance intent");
     assert.equal(decisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), decisionIntent.signer.toLowerCase());
     bootstrapProvenance("unlink-user", creatorEmail);
 
@@ -377,8 +379,8 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
         body: JSON.stringify({ idempotencyKey: key })
       });
       return { status: response.status, body: await response.json(), signer };
-    }, { id: firstId, key: decisionIntentKey, signer: walletA.address });
-    assert.equal(replayedDecisionIntent.status, 200, "existing decision intent must replay after unlink");
+    }, { id: firstId, key: decisionIntentKey, signer: e2eCreatorSigner });
+    assert.equal(replayedDecisionIntent.status, 200, "existing creator decision intent must replay after unlink");
     assert.equal(replayedDecisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), replayedDecisionIntent.signer.toLowerCase());
 
     const differentKeyReusesDecisionIntent = await creatorPage.evaluate(async (id) => {
@@ -389,7 +391,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       });
       return { status: response.status, body: await response.json() };
     }, firstId);
-    assert.equal(differentKeyReusesDecisionIntent.status, 200);
+    assert.equal(differentKeyReusesDecisionIntent.status, 200, "one decision intent per contribution is replayable after unlink");
     assert.equal(differentKeyReusesDecisionIntent.body.anchor.id, decisionIntent.body.anchor.id);
 
     await creatorPage.goto(`${baseUrl}/works/${slug}`);
