@@ -14,9 +14,13 @@ export type PublicAnchorSelection<T> = {
  * records are ambiguous and therefore fail closed.
  */
 export function selectPublicAnchor<T extends ProvenanceAnchorAttempt>(
-  attempts: readonly T[]
+  attempts: readonly T[],
+  verifiedCount?: number
 ): PublicAnchorSelection<T> {
   const verified = attempts.filter((attempt) => attempt.status === "mainnet");
+  if (verifiedCount !== undefined && verifiedCount > 1) {
+    return { anchor: null, ambiguous: true };
+  }
 
   if (verified.length === 1) {
     return { anchor: verified[0], ambiguous: false };
