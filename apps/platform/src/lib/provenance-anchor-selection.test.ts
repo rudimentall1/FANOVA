@@ -3,6 +3,15 @@ import { isPublicAnchorVerified, matchesPublicAnchorIdentity, matchesPublicProof
 
 type Attempt = { id: string; status: string; createdAt: Date };
 
+const HASH_A = "a".repeat(64);
+const HASH_B = "b".repeat(64);
+const HASH_C = "c".repeat(64);
+const HASH_D = "d".repeat(64);
+const HASH_E = "e".repeat(64);
+const prefixHashes = (hashes: Record<string, string>) => Object.fromEntries(
+  Object.entries(hashes).map(([key, value]) => [key, `0x${value}`])
+);
+
 const attempt = (id: string, status: string, day: number): Attempt => ({
   id,
   status,
@@ -51,12 +60,12 @@ describe("provenance anchor selection", () => {
 });
 
 describe("public provenance hash validation", () => {
-  const storyHashes = { sourceHash: "0xabc", permissionHash: "0xdef" };
+  const storyHashes = { sourceHash: HASH_A, permissionHash: HASH_B };
 
   it("accepts the exact operation-specific keys bound to authoritative values", () => {
     expect(matchesPublicProofHashes("StoryVersionRegistered", {
       expectedHashes: storyHashes,
-      observedHashes: { sourceHash: "0xABC", permissionHash: "0xDEF" }
+      observedHashes: { sourceHash: `0x${HASH_A.toUpperCase()}`, permissionHash: `0x${HASH_B.toUpperCase()}` }
     }, storyHashes)).toBe(true);
   });
 
@@ -77,42 +86,42 @@ describe("public provenance hash validation", () => {
 
   it("rejects missing required keys", () => {
     expect(matchesPublicProofHashes("StoryVersionRegistered", {
-      expectedHashes: { sourceHash: "0xabc" },
-      observedHashes: { sourceHash: "0xabc" }
+      expectedHashes: { sourceHash: HASH_A },
+      observedHashes: { sourceHash: HASH_A }
     }, storyHashes)).toBe(false);
   });
 
   it("rejects extra keys even when required hashes match", () => {
     expect(matchesPublicProofHashes("StoryVersionRegistered", {
-      expectedHashes: { ...storyHashes, unexpected: "0x123" },
+      expectedHashes: { ...storyHashes, unexpected: HASH_C },
       observedHashes: { ...storyHashes, unexpected: "0x123" }
     }, storyHashes)).toBe(false);
   });
 
   it("rejects snapshots that match each other but not the authoritative entity", () => {
     expect(matchesPublicProofHashes("StoryVersionRegistered", {
-      expectedHashes: { sourceHash: "0x111", permissionHash: "0xdef" },
-      observedHashes: { sourceHash: "0x111", permissionHash: "0xdef" }
+      expectedHashes: { sourceHash: HASH_C, permissionHash: HASH_B },
+      observedHashes: { sourceHash: HASH_C, permissionHash: HASH_B }
     }, storyHashes)).toBe(false);
   });
 
   it("requires the decision reason hash in addition to contribution hashes", () => {
     expect(matchesPublicProofHashes("ContributionDecided", {
-      expectedHashes: { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc" },
-      observedHashes: { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc" }
-    }, { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc", reasonCode: "0xd" })).toBe(false);
+      expectedHashes: { sourceHash: HASH_A, permissionHash: HASH_B, contributionHash: HASH_C },
+      observedHashes: { sourceHash: HASH_A, permissionHash: HASH_B, contributionHash: HASH_C }
+    }, { sourceHash: HASH_A, permissionHash: HASH_B, contributionHash: HASH_C, reasonCode: HASH_D })).toBe(false);
   });
 
   it("accepts exact contribution registration hashes", () => {
-    const hashes = { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc" };
+    const hashes = { sourceHash: HASH_A, permissionHash: HASH_B, contributionHash: HASH_C };
     expect(matchesPublicProofHashes("ContributionRegistered", {
       expectedHashes: hashes,
-      observedHashes: { sourceHash: "0xA", permissionHash: "0xB", contributionHash: "0xC" }
+      observedHashes: { sourceHash: `0x${HASH_A.toUpperCase()}`, permissionHash: `0x${HASH_B.toUpperCase()}`, contributionHash: `0x${HASH_C.toUpperCase()}` }
     }, hashes)).toBe(true);
   });
 
   it("accepts exact creator decision hashes including the reason code", () => {
-    const hashes = { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc", reasonCode: "0xd" };
+    const hashes = { sourceHash: HASH_A, permissionHash: HASH_B, contributionHash: HASH_C, reasonCode: HASH_D };
     expect(matchesPublicProofHashes("ContributionDecided", {
       expectedHashes: hashes,
       observedHashes: hashes
@@ -171,7 +180,8 @@ describe("public provenance identity validation", () => {
 
 
 describe("public Mainnet verification predicate", () => {
-  const hashes = { sourceHash: "0xaaa", permissionHash: "0xbbb" };
+  const hashes = { sourceHash: HASH_A, permissionHash: HASH_B };
+  const snapshotHashes = prefixHashes(hashes);
   const anchor = {
     status: "mainnet",
     chainId: 1868,
@@ -189,8 +199,8 @@ describe("public Mainnet verification predicate", () => {
       observedSigner: "0xcreator",
       expectedEntityId: "0xStory",
       observedEntityId: "0xstory",
-      expectedHashes: hashes,
-      observedHashes: hashes,
+      expectedHashes: snapshotHashes,
+      observedHashes: snapshotHashes,
       transactionHash: "0xtransaction",
       blockNumber: "12345"
     }
@@ -235,9 +245,9 @@ describe("public Mainnet verification predicate", () => {
 
   it("requires complete entity and hash evidence for a contribution registration anchor", () => {
     const contributionHashes = {
-      sourceHash: "0xsource",
-      permissionHash: "0xpermission",
-      contributionHash: "0xcontribution"
+      sourceHash: HASH_A,
+      permissionHash: HASH_B,
+      contributionHash: HASH_C
     };
     const contributionAnchor = {
       ...anchor,
@@ -247,8 +257,8 @@ describe("public Mainnet verification predicate", () => {
         eventName: "ContributionRegistered",
         expectedEntityId: "0xContributionId",
         observedEntityId: "0xContributionId",
-        expectedHashes: contributionHashes,
-        observedHashes: contributionHashes
+        expectedHashes: prefixHashes(contributionHashes),
+        observedHashes: prefixHashes(contributionHashes)
       }
     };
     const contributionInput = {
@@ -275,7 +285,7 @@ describe("public Mainnet verification predicate", () => {
         ...contributionAnchor,
         verificationSnapshot: {
           ...contributionAnchor.verificationSnapshot,
-          observedHashes: { ...contributionHashes, contributionHash: "0xwrong" }
+          observedHashes: { ...prefixHashes(contributionHashes), contributionHash: `0x${HASH_E}` }
         }
       }
     })).toBe(false);
@@ -283,10 +293,10 @@ describe("public Mainnet verification predicate", () => {
 
   it("requires the creator decision reason hash in historical anchor evidence", () => {
     const decisionHashes = {
-      sourceHash: "0xsource",
-      permissionHash: "0xpermission",
-      contributionHash: "0xcontribution",
-      reasonCode: "0xreason"
+      sourceHash: HASH_A,
+      permissionHash: HASH_B,
+      contributionHash: HASH_C,
+      reasonCode: HASH_D
     };
     const decisionAnchor = {
       ...anchor,
@@ -296,8 +306,8 @@ describe("public Mainnet verification predicate", () => {
         eventName: "ContributionDecided",
         expectedEntityId: "0xContributionId",
         observedEntityId: "0xContributionId",
-        expectedHashes: decisionHashes,
-        observedHashes: decisionHashes
+        expectedHashes: prefixHashes(decisionHashes),
+        observedHashes: prefixHashes(decisionHashes)
       }
     };
     expect(isPublicAnchorVerified({
@@ -313,7 +323,7 @@ describe("public Mainnet verification predicate", () => {
         ...decisionAnchor,
         verificationSnapshot: {
           ...decisionAnchor.verificationSnapshot,
-          expectedHashes: { ...decisionHashes, reasonCode: "0xwrong" }
+          expectedHashes: { ...prefixHashes(decisionHashes), reasonCode: `0x${HASH_E}` }
         }
       },
       expectedEvent: "ContributionDecided",
@@ -348,7 +358,7 @@ describe("public Mainnet verification predicate", () => {
   });
 
   it("rejects missing or mismatched authoritative hashes", () => {
-    expect(isPublicAnchorVerified({ ...input, expectedHashes: { sourceHash: "0xaaa" } })).toBe(false);
-    expect(isPublicAnchorVerified({ ...input, expectedHashes: { ...hashes, permissionHash: "0xwrong" } })).toBe(false);
+    expect(isPublicAnchorVerified({ ...input, expectedHashes: { sourceHash: HASH_A } })).toBe(false);
+    expect(isPublicAnchorVerified({ ...input, expectedHashes: { ...hashes, permissionHash: HASH_E } })).toBe(false);
   });
 });
