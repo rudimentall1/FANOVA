@@ -164,6 +164,27 @@ async function markContributionMainnet() {
   process.stdout.write(JSON.stringify({ contributionId, entityId }) + "\n");
 }
 
+async function linkUser() {
+  const [email, address] = args;
+  if (!email || !/^0x[0-9a-fA-F]{40}$/.test(address ?? "")) {
+    throw new Error("link-user requires an account email and wallet address.");
+  }
+  const account = await pool.query('SELECT id FROM "user" WHERE email = $1 LIMIT 1', [email]);
+  if (account.rowCount !== 1) throw new Error("E2E account was not found.");
+  const now = new Date();
+  await pool.query(
+    `INSERT INTO linked_wallet
+       (id, user_id, chain_id, address, address_lower, verified_at, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $6)
+     ON CONFLICT (user_id, chain_id) DO UPDATE
+       SET address = EXCLUDED.address,
+           address_lower = EXCLUDED.address_lower,
+           verified_at = EXCLUDED.verified_at`,
+    [randomUUID(), account.rows[0].id, chainId, address, address.toLowerCase(), now]
+  );
+  process.stdout.write(JSON.stringify({ email, address }) + "\\n");
+}
+
 async function unlinkUser() {
   const [email] = args;
   if (!email) throw new Error("unlink-user requires an account email.");
@@ -180,8 +201,9 @@ async function unlinkUser() {
 try {
   if (mode === "seed-story") await seedStory();
   else if (mode === "mark-contribution-mainnet") await markContributionMainnet();
+  else if (mode === "link-user") await linkUser();
   else if (mode === "unlink-user") await unlinkUser();
-  else throw new Error("Supported modes: seed-story, mark-contribution-mainnet, unlink-user.");
+  else throw new Error("Supported modes: seed-story, mark-contribution-mainnet, link-user, unlink-user.");
 } finally {
   await pool.end();
 }
