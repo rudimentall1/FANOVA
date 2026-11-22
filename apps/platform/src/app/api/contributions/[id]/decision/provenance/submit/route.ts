@@ -6,6 +6,7 @@ import { contribution, linkedWallet, provenanceAnchor, work, workVersion } from 
 import { getCurrentActor } from "@/lib/server-auth";
 import { deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
 import { CREATOR_DECISION_ABI, matchesCreatorDecisionCall, matchesCreatorDecisionEvent } from "@/lib/provenance-submission";
+import { selectUniqueVerifiedAnchor } from "@/lib/provenance-anchor-selection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -140,10 +141,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return fail("CREATOR_WALLET_MISMATCH", "The creator's currently linked Soneium wallet no longer matches this intent.");
   }
 
-  const [sourceAnchor] = await db.select().from(provenanceAnchor).where(and(
+  const sourceAnchors = await db.select().from(provenanceAnchor).where(and(
     eq(provenanceAnchor.workVersionId, row.sourceVersionId),
     eq(provenanceAnchor.operationType, "work_version")
-  )).limit(1);
+  ));
+  const sourceAnchor = selectUniqueVerifiedAnchor(sourceAnchors);
   const sourceSnapshot = sourceAnchor?.verificationSnapshot;
   const sourceVersion = sourceSnapshot?.sourceVersion ?? (row.versionNumber === 1 ? 1 : null);
   const permissionVersion = sourceSnapshot?.permissionVersion ?? (row.versionNumber === 1 ? 1 : null);
@@ -157,10 +159,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return fail("SOURCE_STORY_ANCHOR_INVALID", "The exact source story version is not confirmed under this creator wallet.");
   }
 
-  const [registeredContribution] = await db.select().from(provenanceAnchor).where(and(
+  const contributionAnchors = await db.select().from(provenanceAnchor).where(and(
     eq(provenanceAnchor.contributionId, row.contributionId),
     eq(provenanceAnchor.operationType, "contribution")
-  )).limit(1);
+  ));
+  const registeredContribution = selectUniqueVerifiedAnchor(contributionAnchors);
   if (!registeredContribution || registeredContribution.status !== "mainnet" ||
       registeredContribution.chainId !== FANOVA_CHAIN_ID ||
       !sameHex(registeredContribution.contractAddress, row.anchor.contractAddress) ||
