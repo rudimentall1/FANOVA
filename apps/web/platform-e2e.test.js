@@ -281,6 +281,24 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await contributorPage.getByText("Wallet signature verified and linked to this FANOVA account.").waitFor({ timeout: 15_000 });
     await contributorPage.getByText(walletB.address).waitFor();
 
+    // The challenge cap is scoped to this authenticated session: five live challenges are admitted, the sixth is rate-limited.
+    const challengeCap = await contributorPage.evaluate(async () => {
+      const statuses = [];
+      for (let index = 0; index < 6; index += 1) {
+        const response = await fetch("/api/wallet/unlink/challenge", { method: "POST" });
+        statuses.push(response.status);
+        if (index < 5 && !response.ok) {
+          return { statuses, error: await response.text() };
+        }
+      }
+      return { statuses };
+    });
+    assert.deepEqual(
+      challengeCap.statuses,
+      [200, 200, 200, 200, 200, 429],
+      `unlink challenge cap must admit five active challenges and reject the sixth: ${JSON.stringify(challengeCap)}`
+    );
+
     // Wallet settings are a separate route; return to the contribution form before checking its options.
     await contributorPage.goto(`${baseUrl}/works/${slug}/contribute`);
     await contributorPage.getByRole("heading", { name: "E2E Story" }).waitFor();
