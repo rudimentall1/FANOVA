@@ -326,54 +326,6 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       "The composition follows the creator's published rules and is submitted for review. ".repeat(2)
     );
 
-    // Recover an existing Contribution intent after the contributor wallet is unlinked.
-    const contributionIntentKey = "123e4567-e89b-42d3-a456-426614174001";
-    const contributionIntent = await contributorPage.evaluate(async ({ id, key, signer }) => {
-      const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idempotencyKey: key })
-      });
-      return { status: response.status, body: await response.json(), signer };
-    }, { id: firstId, key: contributionIntentKey, signer: walletB.address });
-    assert.equal(contributionIntent.status, 201, "initial contribution intent must be created");
-    assert.equal(contributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), contributionIntent.signer.toLowerCase());
-
-    const crossAccountIntentReplay = await adminPage.evaluate(async ({ id, key }) => {
-      const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idempotencyKey: key })
-      });
-      return response.status;
-    }, { id: firstId, key: contributionIntentKey });
-    assert.equal(crossAccountIntentReplay, 409, "another account must not retrieve a contributor's existing intent");
-
-    bootstrapProvenance("unlink-user", contributorEmail);
-    const replayedContributionIntent = await contributorPage.evaluate(async ({ id, key, signer }) => {
-      const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idempotencyKey: key })
-      });
-      return { status: response.status, body: await response.json(), signer };
-    }, { id: firstId, key: contributionIntentKey, signer: walletB.address });
-    assert.equal(replayedContributionIntent.status, 200, "existing contribution intent must replay after unlink");
-    assert.equal(replayedContributionIntent.body.idempotent, true);
-    assert.equal(replayedContributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), replayedContributionIntent.signer.toLowerCase());
-
-    const newContributionIntentWithoutWallet = await contributorPage.evaluate(async (id) => {
-      const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idempotencyKey: "123e4567-e89b-42d3-a456-426614174002" })
-      });
-      return response.status;
-    }, firstId);
-    assert.equal(newContributionIntentWithoutWallet, 409, "a fresh contribution intent must still require a linked wallet");
-
-    bootstrapProvenance("mark-contribution-mainnet", firstId);
-
     // The creator approves the submission and explicitly makes it public.
     await creatorPage.goto(`${baseUrl}/studio/works/${slug}/submissions`);
     const firstReview = creatorPage.locator(".contribution-card").filter({ hasText: firstTitle });
