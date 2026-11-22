@@ -145,3 +145,14 @@ This section supersedes earlier PR head and CI status references above where the
 - Required correction: bind historical verification to an immutable, server-persisted signer identity captured when the provenance intent is created, then verify that identity against the stored anchor snapshot and observed on-chain sender. Do not trust an arbitrary request-supplied address, and do not simply weaken the signer check. Preserve current-wallet checks for initiating new actions.
 - Add regression coverage for: creator wallet unlink after Story anchoring; contributor wallet unlink after Contribution anchoring; creator wallet replacement after a decision transaction is broadcast but before verification; and normal new-intent behavior with the replacement wallet.
 - Until this is fixed and tested, treat the wallet unlink/replace and public provenance changes as not yet integration-accepted. Keep P1.6 OPEN.
+
+
+### Historical signer integration fix — implementation in progress (2026-11-22)
+
+- Updated the public Story page and public Contribution page to derive expected signer identities from the selected persisted provenance anchor's `expectedSignerAddress`, not from the current `linked_wallet` row.
+- Story identity derivation now uses the signer captured by the source Story intent. Contribution proof uses the signer captured by its registration intent. Creator-decision proof uses the signer captured by its decision intent.
+- Updated creator-decision transaction submission verification to compare the on-chain transaction sender and emitted reviewer against the immutable signer on the decision intent. It no longer rejects a valid already-prepared decision solely because the creator later unlinked/replaced the current wallet. New decision intents still require a currently linked wallet.
+- Contribution submission already validates the transaction sender against the persisted intent signer and does not depend on the current linked-wallet row; no change was needed there.
+- Added a regression assertion that the public proof predicate accepts the persisted historical signer even when the current linked wallet is a different address.
+- These source changes are committed to PR #40. They have not yet passed CI at this checkpoint. The PR must remain Draft until the new head's full workflow passes.
+- Security boundary preserved: signer is sourced from the server-persisted intent row, never from request input; transaction sender and event reviewer are still checked against that signer.
