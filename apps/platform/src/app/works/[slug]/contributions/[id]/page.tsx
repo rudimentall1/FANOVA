@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, count, desc, eq, ne } from "drizzle-orm";
 import { keccak256, toBytes } from "viem";
 import { db } from "@/db";
 import { contribution, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
@@ -16,9 +16,7 @@ export default async function PublicContributionPage({ params }: { params: Promi
   const [entry] = await db
     .select({
       contributionId: contribution.id,
-      contributorUserId: contribution.contributorUserId,
       workId: contribution.workId,
-      ownerUserId: work.ownerUserId,
       sourceVersionId: workVersion.id,
       title: contribution.title,
       type: contribution.type,
