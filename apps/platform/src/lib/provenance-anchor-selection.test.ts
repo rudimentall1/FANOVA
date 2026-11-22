@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesPublicProofHashes, selectPublicAnchor, selectUniqueVerifiedAnchor } from "./provenance-anchor-selection";
+import { matchesPublicAnchorIdentity, matchesPublicProofHashes, selectPublicAnchor, selectUniqueVerifiedAnchor } from "./provenance-anchor-selection";
 
 type Attempt = { id: string; status: string; createdAt: Date };
 
@@ -109,5 +109,47 @@ describe("public provenance hash validation", () => {
       expectedHashes: storyHashes,
       observedHashes: storyHashes
     }, storyHashes)).toBe(false);
+  });
+});
+
+
+describe("public provenance identity validation", () => {
+  const valid = {
+    expectedSignerAddress: "0xAbCd",
+    expectedEntityId: "0x1234",
+    anchorSignerAddress: "0xabcd",
+    snapshot: {
+      expectedSigner: "0xABCD",
+      observedSigner: "0xabcd",
+      expectedEntityId: "0x1234",
+      observedEntityId: "0x1234"
+    }
+  };
+
+  it("accepts signer and entity identities bound to authoritative values", () => {
+    expect(matchesPublicAnchorIdentity(valid)).toBe(true);
+  });
+
+  it("rejects an anchor signer that differs from the authoritative linked wallet", () => {
+    expect(matchesPublicAnchorIdentity({ ...valid, anchorSignerAddress: "0x9999" })).toBe(false);
+  });
+
+  it("rejects a snapshot signer that differs from the authoritative linked wallet", () => {
+    expect(matchesPublicAnchorIdentity({
+      ...valid,
+      snapshot: { ...valid.snapshot, observedSigner: "0x9999" }
+    })).toBe(false);
+  });
+
+  it("rejects an entity ID that differs from the authoritative record identity", () => {
+    expect(matchesPublicAnchorIdentity({
+      ...valid,
+      snapshot: { ...valid.snapshot, observedEntityId: "0x9999" }
+    })).toBe(false);
+  });
+
+  it("fails closed when the authoritative wallet or entity identity is unavailable", () => {
+    expect(matchesPublicAnchorIdentity({ ...valid, expectedSignerAddress: null })).toBe(false);
+    expect(matchesPublicAnchorIdentity({ ...valid, expectedEntityId: null })).toBe(false);
   });
 });
