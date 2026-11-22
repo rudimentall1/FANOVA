@@ -11,6 +11,8 @@ const platformDir = process.env.FANOVA_PLATFORM_DIR;
 const adminBootstrap = process.env.FANOVA_ADMIN_BOOTSTRAP_SCRIPT;
 const provenanceBootstrap = process.env.FANOVA_E2E_PROVENANCE_BOOTSTRAP_SCRIPT;
 const password = "FANOVA-E2E-Password-2026!";
+const e2eCreatorSigner = "0x1111111111111111111111111111111111111111";
+const e2eContributorSigner = "0x2222222222222222222222222222222222222222";
 
 function bootstrapProvenance(mode, ...args) {
   execFileSync("node", [provenanceBootstrap, mode, ...args], { cwd: platformDir, env: process.env, stdio: "pipe" });
@@ -183,7 +185,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await creatorPage.getByText("Translations not permitted").waitFor();
 
     // Seed a synthetic, fully bound Story proof in the isolated CI database.
-    bootstrapProvenance("seed-story", slug, creatorEmail, walletA.address);
+    bootstrapProvenance("seed-story", slug, creatorEmail, e2eCreatorSigner);
 
     // A separate reader signs up, verifies email, and returns directly to the contribution form.
     const contributorPage = await registerAndVerify(
@@ -218,6 +220,8 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       "The composition follows the creator's published rules and is submitted for review. ".repeat(2)
     );
 
+    bootstrapProvenance("link-user", contributorEmail, e2eContributorSigner);
+
     // Recover an existing contribution intent after the contributor wallet is unlinked.
     const contributionIntentKey = "123e4567-e89b-42d3-a456-426614174001";
     const contributionIntent = await contributorPage.evaluate(async ({ id, key, signer }) => {
@@ -227,7 +231,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
         body: JSON.stringify({ idempotencyKey: key })
       });
       return { status: response.status, body: await response.json(), signer };
-    }, { id: firstId, key: contributionIntentKey, signer: walletB.address });
+    }, { id: firstId, key: contributionIntentKey, signer: e2eContributorSigner });
     assert.equal(contributionIntent.status, 201, "initial contribution intent must be created");
     assert.equal(contributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), contributionIntent.signer.toLowerCase());
     bootstrapProvenance("unlink-user", contributorEmail);
@@ -239,7 +243,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
         body: JSON.stringify({ idempotencyKey: key })
       });
       return { status: response.status, body: await response.json(), signer };
-    }, { id: firstId, key: contributionIntentKey, signer: walletB.address });
+    }, { id: firstId, key: contributionIntentKey, signer: e2eContributorSigner });
     assert.equal(replayedContributionIntent.status, 200, "existing contribution intent must replay after unlink");
     assert.equal(replayedContributionIntent.body.idempotent, true);
     assert.equal(replayedContributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), replayedContributionIntent.signer.toLowerCase());
@@ -296,7 +300,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
         body: JSON.stringify({ idempotencyKey: key })
       });
       return { status: response.status, body: await response.json(), signer };
-    }, { id: firstId, key: decisionIntentKey, signer: walletA.address });
+    }, { id: firstId, key: decisionIntentKey, signer: e2eCreatorSigner });
     assert.equal(decisionIntent.status, 201, "initial creator decision intent must be created");
     assert.equal(decisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), decisionIntent.signer.toLowerCase());
     bootstrapProvenance("unlink-user", creatorEmail);
@@ -308,7 +312,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
         body: JSON.stringify({ idempotencyKey: key })
       });
       return { status: response.status, body: await response.json(), signer };
-    }, { id: firstId, key: decisionIntentKey, signer: walletA.address });
+    }, { id: firstId, key: decisionIntentKey, signer: e2eCreatorSigner });
     assert.equal(replayedDecisionIntent.status, 200, "existing creator decision intent must replay after unlink");
     assert.equal(replayedDecisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), replayedDecisionIntent.signer.toLowerCase());
 
