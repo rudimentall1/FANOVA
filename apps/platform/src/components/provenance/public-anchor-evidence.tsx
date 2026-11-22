@@ -13,6 +13,7 @@ type AnchorEvidence = {
     chainId?: number;
     contractAddress?: string;
     eventName?: string;
+    expectedSigner?: string;
     observedSigner?: string;
     observedEntityId?: string;
     expectedEntityId?: string;
