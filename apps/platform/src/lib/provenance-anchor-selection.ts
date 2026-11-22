@@ -107,3 +107,56 @@ export function matchesPublicAnchorIdentity(input: {
     snapshot.expectedEntityId?.toLowerCase() === entity &&
     snapshot.observedEntityId?.toLowerCase() === entity;
 }
+
+
+export function isPublicAnchorVerified(input: {
+  anchor: {
+    status: string;
+    chainId: number;
+    contractAddress: string;
+    expectedSignerAddress: string;
+    transactionHash: string | null;
+    blockNumber: string | null;
+    verifiedAt: string | null;
+    eventName: string | null;
+    verificationSnapshot: {
+      chainId?: number;
+      contractAddress?: string;
+      eventName?: string;
+      expectedSigner?: string;
+      observedSigner?: string;
+      expectedEntityId?: string;
+      observedEntityId?: string;
+      expectedHashes?: Record<string, string>;
+      observedHashes?: Record<string, string>;
+      transactionHash?: string;
+      blockNumber?: string;
+    } | null;
+  } | null | undefined;
+  expectedEvent: string;
+  expectedSignerAddress: string | null | undefined;
+  expectedEntityId: string | null | undefined;
+  expectedHashes: Record<string, string | null | undefined>;
+}): boolean {
+  const { anchor, expectedEvent, expectedSignerAddress, expectedEntityId, expectedHashes } = input;
+  if (!anchor) return false;
+  const snapshot = anchor.verificationSnapshot;
+
+  return anchor.status === "mainnet" &&
+    anchor.chainId === 1868 &&
+    Boolean(anchor.transactionHash && anchor.blockNumber && anchor.verifiedAt) &&
+    anchor.eventName === expectedEvent &&
+    snapshot?.chainId === 1868 &&
+    typeof snapshot.contractAddress === "string" &&
+    snapshot.contractAddress.toLowerCase() === anchor.contractAddress.toLowerCase() &&
+    snapshot.eventName === expectedEvent &&
+    snapshot.transactionHash?.toLowerCase() === anchor.transactionHash?.toLowerCase() &&
+    snapshot.blockNumber === anchor.blockNumber &&
+    matchesPublicAnchorIdentity({
+      expectedSignerAddress,
+      expectedEntityId,
+      anchorSignerAddress: anchor.expectedSignerAddress,
+      snapshot
+    }) &&
+    matchesPublicProofHashes(expectedEvent, snapshot, expectedHashes);
+}
