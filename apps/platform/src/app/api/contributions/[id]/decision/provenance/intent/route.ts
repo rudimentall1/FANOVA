@@ -1,16 +1,46 @@
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { isAddress, keccak256, toBytes } from "viem";
+import { isAddress, keccak256, toBytes, type Address } from "viem";
 import { db } from "@/db";
 import { contribution, linkedWallet, provenanceAnchor, work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
-import { deriveContributionIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
+import { deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
+import { isPublicAnchorVerified, selectUniqueVerifiedAnchor } from "@/lib/provenance-anchor-selection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function hasVerifiedAnchorEvidence(input: {
+  anchor: typeof provenanceAnchor.$inferSelect;
+  expectedEvent: string;
+  expectedSignerAddress: string;
+  expectedEntityId: string;
+  expectedHashes: Record<string, string>;
+  expectedContractAddress: string;
+}) {
+  const { anchor, expectedEvent, expectedSignerAddress, expectedEntityId, expectedHashes, expectedContractAddress } = input;
+  return isPublicAnchorVerified({
+    anchor: {
+      status: anchor.status,
+      chainId: anchor.chainId,
+      contractAddress: anchor.contractAddress,
+      expectedSignerAddress: anchor.expectedSignerAddress,
+      transactionHash: anchor.transactionHash,
+      blockNumber: anchor.blockNumber?.toString() ?? null,
+      verifiedAt: anchor.verifiedAt?.toISOString() ?? null,
+      eventName: anchor.eventName,
+      verificationSnapshot: anchor.verificationSnapshot
+    },
+    expectedEvent,
+    expectedContractAddress,
+    expectedSignerAddress,
+    expectedEntityId,
+    expectedHashes
+  });
+}
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const actor = await getCurrentActor();
@@ -82,50 +112,65 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }).from(workVersion).where(eq(workVersion.id, entry.sourceVersionId)).limit(1);
     if (!version) return { kind: "not_found" as const };
 
-    const [storyAnchor] = await tx.select().from(provenanceAnchor).where(and(
+    // Only one verified source anchor is authoritative. Failed/pending retries
+    // remain in history but must not be selected by an unordered LIMIT 1.
+    const storyAnchorCandidates = await tx.select().from(provenanceAnchor).where(and(
       eq(provenanceAnchor.workVersionId, version.id),
-      eq(provenanceAnchor.operationType, "work_version")
-    )).limit(1);
-    const storySnapshot = storyAnchor?.verificationSnapshot;
-    const sourceVersion = storySnapshot?.sourceVersion ?? (version.versionNumber === 1 ? 1 : null);
-    const permissionVersion = storySnapshot?.permissionVersion ?? (version.versionNumber === 1 ? 1 : null);
-    if (!storyAnchor || storyAnchor.status !== "mainnet" || storyAnchor.chainId !== FANOVA_CHAIN_ID ||
-        storyAnchor.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
-        !isAddress(storyAnchor.expectedSignerAddress) ||
-        !storyAnchor.transactionHash || storyAnchor.eventName !== "StoryVersionRegistered" || !storyAnchor.verifiedAt ||
-        storyAnchor.sourceHash !== version.sourceHash || storyAnchor.permissionHash !== version.permissionHash ||
-        !storySnapshot || storySnapshot.chainId !== FANOVA_CHAIN_ID ||
-        storySnapshot.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
-        storySnapshot.expectedSigner?.toLowerCase() !== storyAnchor.expectedSignerAddress.toLowerCase() ||
-        storySnapshot.observedSigner?.toLowerCase() !== storyAnchor.expectedSignerAddress.toLowerCase() ||
+      eq(provenanceAnchor.operationType, "work_version"),
+      eq(provenanceAnchor.status, "mainnet")
+    )).limit(2);
+    const storyAnchor = selectUniqueVerifiedAnchor(storyAnchorCandidates);
+    if (!storyAnchor || !isAddress(storyAnchor.expectedSignerAddress)) {
+      return { kind: "story_anchor_required" as const };
+    }
+
+    const story = deriveStoryIdentity(entry.workId, storyAnchor.expectedSignerAddress as Address);
+    const sourceVersion = storyAnchor.verificationSnapshot?.sourceVersion ??
+      (version.versionNumber === 1 ? 1 : null);
+    const permissionVersion = storyAnchor.verificationSnapshot?.permissionVersion ??
+      (version.versionNumber === 1 ? 1 : null);
+    if (!hasVerifiedAnchorEvidence({
+      anchor: storyAnchor,
+      expectedEvent: "StoryVersionRegistered",
+      expectedContractAddress: contractAddress,
+      expectedSignerAddress: storyAnchor.expectedSignerAddress,
+      expectedEntityId: story.storyId,
+      expectedHashes: { sourceHash: version.sourceHash, permissionHash: version.permissionHash }
+    }) ||
+        storyAnchor.sourceHash !== version.sourceHash ||
+        storyAnchor.permissionHash !== version.permissionHash ||
         !Number.isSafeInteger(sourceVersion) || !sourceVersion || sourceVersion < 1 ||
         !Number.isSafeInteger(permissionVersion) || !permissionVersion || permissionVersion < 1) {
       return { kind: "story_anchor_required" as const };
     }
 
-    const [contributionAnchor] = await tx.select().from(provenanceAnchor).where(and(
+    const contributionAnchorCandidates = await tx.select().from(provenanceAnchor).where(and(
       eq(provenanceAnchor.contributionId, entry.id),
-      eq(provenanceAnchor.operationType, "contribution")
-    )).limit(1);
-    if (!contributionAnchor || contributionAnchor.status !== "mainnet" ||
-        contributionAnchor.chainId !== FANOVA_CHAIN_ID ||
-        contributionAnchor.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
-        !contributionAnchor.transactionHash || contributionAnchor.eventName !== "ContributionRegistered" ||
-        !contributionAnchor.verifiedAt || contributionAnchor.contributionHash !== entry.contentHash ||
+      eq(provenanceAnchor.operationType, "contribution"),
+      eq(provenanceAnchor.status, "mainnet")
+    )).limit(2);
+    const contributionAnchor = selectUniqueVerifiedAnchor(contributionAnchorCandidates);
+    const contributionIdentity = deriveContributionIdentity(entry.id);
+    if (!contributionAnchor || !isAddress(contributionAnchor.expectedSignerAddress) ||
+        !hasVerifiedAnchorEvidence({
+          anchor: contributionAnchor,
+          expectedEvent: "ContributionRegistered",
+          expectedContractAddress: contractAddress,
+          expectedSignerAddress: contributionAnchor.expectedSignerAddress,
+          expectedEntityId: contributionIdentity,
+          expectedHashes: {
+            sourceHash: version.sourceHash,
+            permissionHash: entry.acknowledgedPermissionHash,
+            contributionHash: entry.contentHash
+          }
+        }) ||
+        contributionAnchor.contributionHash !== entry.contentHash ||
         contributionAnchor.permissionHash !== entry.acknowledgedPermissionHash) {
-      return { kind: "contribution_anchor_required" as const };
-    }
-
-    const contributionSnapshot = contributionAnchor.verificationSnapshot;
-    if (!isAddress(contributionAnchor.expectedSignerAddress) ||
-        contributionSnapshot?.expectedSigner?.toLowerCase() !== contributionAnchor.expectedSignerAddress.toLowerCase() ||
-        contributionSnapshot?.observedSigner?.toLowerCase() !== contributionAnchor.expectedSignerAddress.toLowerCase()) {
       return { kind: "contribution_anchor_required" as const };
     }
 
     const decisionApproved = entry.status === "approved";
     const reasonCode = keccak256(toBytes(entry.creatorFeedback ?? ""));
-    const contributionIdentity = deriveContributionIdentity(entry.id);
     const expectedSnapshot = {
       decisionApproved,
       decisionReasonCode: reasonCode
