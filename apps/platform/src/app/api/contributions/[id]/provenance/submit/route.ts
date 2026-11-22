@@ -167,8 +167,9 @@ export async function POST(request: Request, context: RouteContext) {
   const storyAnchors = await db.select().from(provenanceAnchor)
     .where(and(
       eq(provenanceAnchor.workVersionId, row.sourceVersionId),
-      eq(provenanceAnchor.operationType, "work_version")
-    ));
+      eq(provenanceAnchor.operationType, "work_version"),
+      eq(provenanceAnchor.status, "mainnet")
+    )).limit(2);
   const storyAnchor = selectUniqueVerifiedAnchor(storyAnchors);
   if (!storyAnchor) {
     return fail("STORY_ANCHOR_AMBIGUOUS", "The exact source story version must have exactly one verified Mainnet provenance anchor.");
