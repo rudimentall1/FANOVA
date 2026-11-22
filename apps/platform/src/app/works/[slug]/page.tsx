@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
 import { keccak256, toBytes } from "viem";
 import { db } from "@/db";
 import { contribution, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
@@ -61,7 +61,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
     .orderBy(desc(contribution.createdAt))
     .limit(20);
 
-  const storyAnchors = await db.select({
+  const storyAnchorFields = {
     status: provenanceAnchor.status,
     transactionHash: provenanceAnchor.transactionHash,
     blockNumber: provenanceAnchor.blockNumber,
@@ -75,40 +75,73 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
     permissionHash: provenanceAnchor.permissionHash,
     contributionHash: provenanceAnchor.contributionHash,
     createdAt: provenanceAnchor.createdAt
-  }).from(provenanceAnchor).where(and(
+  };
+  const storyFilter = and(
     eq(provenanceAnchor.workVersionId, entry.versionId),
     eq(provenanceAnchor.operationType, "work_version")
-  ));
-  const storySelection = selectPublicAnchor(storyAnchors);
+  );
+  const [storyVerifiedCountRow] = await db.select({ total: count() }).from(provenanceAnchor)
+    .where(and(storyFilter, eq(provenanceAnchor.status, "mainnet")));
+  const storyVerified = await db.selectDistinctOn([provenanceAnchor.workVersionId], storyAnchorFields)
+    .from(provenanceAnchor)
+    .where(and(storyFilter, eq(provenanceAnchor.status, "mainnet")))
+    .orderBy(provenanceAnchor.workVersionId, desc(provenanceAnchor.createdAt));
+  const storyOther = await db.selectDistinctOn([provenanceAnchor.workVersionId], storyAnchorFields)
+    .from(provenanceAnchor)
+    .where(and(storyFilter, ne(provenanceAnchor.status, "mainnet")))
+    .orderBy(provenanceAnchor.workVersionId, desc(provenanceAnchor.createdAt));
+  const storyAnchors = [...storyVerified, ...storyOther];
+  const storySelection = selectPublicAnchor(storyAnchors, Number(storyVerifiedCountRow?.total ?? 0));
 
-  const contributionAnchors = publicContributions.length > 0
+  const contributionAnchorFields = {
+    contributionId: provenanceAnchor.contributionId,
+    operationType: provenanceAnchor.operationType,
+    status: provenanceAnchor.status,
+    transactionHash: provenanceAnchor.transactionHash,
+    blockNumber: provenanceAnchor.blockNumber,
+    verifiedAt: provenanceAnchor.verifiedAt,
+    eventName: provenanceAnchor.eventName,
+    chainId: provenanceAnchor.chainId,
+    contractAddress: provenanceAnchor.contractAddress,
+    expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
+    verificationSnapshot: provenanceAnchor.verificationSnapshot,
+    sourceHash: provenanceAnchor.sourceHash,
+    permissionHash: provenanceAnchor.permissionHash,
+    contributionHash: provenanceAnchor.contributionHash,
+    createdAt: provenanceAnchor.createdAt
+  };
+  const contributionIds = publicContributions.map((item) => item.id);
+  const contributionAnchors = contributionIds.length > 0
+    ? await db.selectDistinctOn([provenanceAnchor.contributionId, provenanceAnchor.operationType], contributionAnchorFields)
+        .from(provenanceAnchor)
+        .where(and(inArray(provenanceAnchor.contributionId, contributionIds), ne(provenanceAnchor.status, "mainnet")))
+        .orderBy(provenanceAnchor.contributionId, provenanceAnchor.operationType, desc(provenanceAnchor.createdAt))
+    : [];
+  const verifiedContributionAnchors = contributionIds.length > 0
+    ? await db.selectDistinctOn([provenanceAnchor.contributionId, provenanceAnchor.operationType], contributionAnchorFields)
+        .from(provenanceAnchor)
+        .where(and(inArray(provenanceAnchor.contributionId, contributionIds), eq(provenanceAnchor.status, "mainnet")))
+        .orderBy(provenanceAnchor.contributionId, provenanceAnchor.operationType, desc(provenanceAnchor.createdAt))
+    : [];
+  const verifiedContributionCounts = contributionIds.length > 0
     ? await db.select({
         contributionId: provenanceAnchor.contributionId,
         operationType: provenanceAnchor.operationType,
-        status: provenanceAnchor.status,
-        transactionHash: provenanceAnchor.transactionHash,
-        blockNumber: provenanceAnchor.blockNumber,
-        verifiedAt: provenanceAnchor.verifiedAt,
-        eventName: provenanceAnchor.eventName,
-        chainId: provenanceAnchor.chainId,
-        contractAddress: provenanceAnchor.contractAddress,
-        expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
-        verificationSnapshot: provenanceAnchor.verificationSnapshot,
-        sourceHash: provenanceAnchor.sourceHash,
-        permissionHash: provenanceAnchor.permissionHash,
-        contributionHash: provenanceAnchor.contributionHash,
-        createdAt: provenanceAnchor.createdAt
-      }).from(provenanceAnchor).where(inArray(
-        provenanceAnchor.contributionId,
-        publicContributions.map((item) => item.id)
-      )).orderBy(desc(provenanceAnchor.createdAt))
+        total: count()
+      }).from(provenanceAnchor)
+        .where(and(inArray(provenanceAnchor.contributionId, contributionIds), eq(provenanceAnchor.status, "mainnet")))
+        .groupBy(provenanceAnchor.contributionId, provenanceAnchor.operationType)
     : [];
+  const verifiedCountByContribution = new Map(
+    verifiedContributionCounts.map((row) => [`${row.contributionId}:${row.operationType}`, Number(row.total)])
+  );
+  const allContributionAnchors = [...verifiedContributionAnchors, ...contributionAnchors];
 
   const anchorAttemptsByContribution = new Map<string, {
     contribution: typeof contributionAnchors;
     decision: typeof contributionAnchors;
   }>();
-  for (const anchor of contributionAnchors) {
+  for (const anchor of allContributionAnchors) {
     if (!anchor.contributionId) continue;
     const current = anchorAttemptsByContribution.get(anchor.contributionId) ?? { contribution: [], decision: [] };
     if (anchor.operationType === "contribution") current.contribution.push(anchor);
@@ -156,8 +189,8 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
           <p className="eyebrow">COMMUNITY CONTRIBUTIONS</p>
           {publicContributions.length === 0 ? <p className="field-note">No approved public contributions yet.</p> : publicContributions.map((item) => {
             const attempts = anchorAttemptsByContribution.get(item.id);
-            const contributionSelection = selectPublicAnchor(attempts?.contribution ?? []);
-            const decisionSelection = selectPublicAnchor(attempts?.decision ?? []);
+            const contributionSelection = selectPublicAnchor(attempts?.contribution ?? [], verifiedCountByContribution.get(`${item.id}:contribution`));
+            const decisionSelection = selectPublicAnchor(attempts?.decision ?? [], verifiedCountByContribution.get(`${item.id}:creator_decision`));
             return (
               <article className="version-row" key={item.id}>
                 <Link className="public-contribution-link" href={`/works/${slug}/contributions/${item.id}`}>
