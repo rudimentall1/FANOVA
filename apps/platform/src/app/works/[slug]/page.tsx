@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
 import { keccak256, toBytes } from "viem";
 import { db } from "@/db";
-import { contribution, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
+import { contribution, linkedWallet, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
 import { PublicAnchorEvidence } from "@/components/provenance/public-anchor-evidence";
 import { selectPublicAnchor } from "@/lib/provenance-anchor-selection";
+import { deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
+import { isAddress, type Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +41,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
   const publicContributions = await db
     .select({
       id: contribution.id,
+      contributorUserId: contribution.contributorUserId,
       title: contribution.title,
       type: contribution.type,
       contributorName: userProfile.displayName,
@@ -60,6 +63,16 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
     ))
     .orderBy(desc(contribution.createdAt))
     .limit(20);
+
+  const walletUserIds = [...new Set([entry.ownerUserId, ...publicContributions.map((item) => item.contributorUserId)])];
+  const publicWalletRows = await db.select({ userId: linkedWallet.userId, address: linkedWallet.address })
+    .from(linkedWallet)
+    .where(and(inArray(linkedWallet.userId, walletUserIds), eq(linkedWallet.chainId, FANOVA_CHAIN_ID)));
+  const publicWalletByUser = new Map(publicWalletRows.map((wallet) => [wallet.userId, wallet.address]));
+  const creatorWallet = publicWalletByUser.get(entry.ownerUserId) ?? null;
+  const storyIdentity = creatorWallet && isAddress(creatorWallet)
+    ? deriveStoryIdentity(entry.id, creatorWallet as Address).storyId
+    : null;
 
   const storyAnchorFields = {
     status: provenanceAnchor.status,
@@ -181,7 +194,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
         <section className="proof-reference">
           <p className="eyebrow">STORY PROVENANCE</p>
           <p>Only a server-verified Soneium receipt and matching contract event are labelled MAINNET VERIFIED.</p>
-          <PublicAnchorEvidence label="Story version anchor" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.permissionHash }} />
+          <PublicAnchorEvidence label="Story version anchor" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} expectedSignerAddress={creatorWallet} expectedEntityId={storyIdentity} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.permissionHash }} />
           <code>Source SHA-256: {entry.sourceHash}</code>
           <code>Permissions SHA-256: {entry.permissionHash}</code>
         </section>
@@ -196,8 +209,8 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
                 <Link className="public-contribution-link" href={`/works/${slug}/contributions/${item.id}`}>
                   <strong>{item.title}</strong><small>{item.type.replace("_", " ")} · {item.contributorName ?? "Contributor"} · @{item.contributorHandle ?? "member"}</small>
                 </Link>
-                <PublicAnchorEvidence label="Contribution anchor" expectedEvent="ContributionRegistered" anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash }} />
-                <PublicAnchorEvidence label="Creator decision anchor" expectedEvent="ContributionDecided" anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash, reasonCode: keccak256(toBytes(item.creatorFeedback ?? "")) }} />
+                <PublicAnchorEvidence label="Contribution anchor" expectedEvent="ContributionRegistered" anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} expectedSignerAddress={publicWalletByUser.get(item.contributorUserId) ?? null} expectedEntityId={deriveContributionIdentity(item.id)} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash }} />
+                <PublicAnchorEvidence label="Creator decision anchor" expectedEvent="ContributionDecided" anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} expectedSignerAddress={creatorWallet} expectedEntityId={deriveContributionIdentity(item.id)} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash, reasonCode: keccak256(toBytes(item.creatorFeedback ?? "")) }} />
               </article>
             );
           })}
