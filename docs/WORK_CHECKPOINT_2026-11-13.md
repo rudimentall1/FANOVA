@@ -252,3 +252,12 @@ This section supersedes earlier PR head and CI status references above where the
 - The red E2E was observed in CI run #474: contribution intent creation returned 409 with one verified Story anchor plus one failed retry.
 - Fix commit: `37c06e4dc5b17b12dd3ba37a5a51143efad28e7a`.
 - CI for the fix and latest E2E assertion changes is pending. P1.6 remains OPEN.
+
+
+### Contribution intent requires a complete source Story proof — implementation in progress (2026-11-22)
+
+- Contribution intent creation previously checked the source Story anchor's row fields and signer/chain/contract snapshot fields, but did not bind the snapshot's entity ID and exact expected/observed hashes to the authoritative Story version.
+- It now passes the selected unique verified Story anchor through `isPublicAnchorVerified`, binding event, configured contract, chain, tx/block, signer, derived Story identity, and exact source/permission hashes. Anchor-row source/permission hashes and version metadata remain independently checked.
+- This aligns the Contribution intent prerequisite with public rendering and Creator Decision intent validation; incomplete or mismatched historical Story evidence fails closed.
+- Fix commit: `ed6c0bd0af93ce79414a17dfb31078bfdda3de0f`.
+- CI #477 is the latest-code acceptance run and is pending. P1.6 remains OPEN.
