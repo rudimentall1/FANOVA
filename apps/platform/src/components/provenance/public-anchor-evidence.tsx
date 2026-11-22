@@ -26,11 +26,13 @@ const EXPLORER_TX = "https://soneium.blockscout.com/tx/";
 export function PublicAnchorEvidence({
   label,
   expectedEvent,
-  anchor
+  anchor,
+  ambiguous = false
 }: {
   label: string;
   expectedEvent: string;
   anchor: AnchorEvidence;
+  ambiguous?: boolean;
 }) {
   const snapshot = anchor?.verificationSnapshot;
   const verified = Boolean(
@@ -57,7 +59,9 @@ export function PublicAnchorEvidence({
   );
 
   let state = "LOCAL · NOT ANCHORED";
-  if (anchor) {
+  if (ambiguous) {
+    state = "AMBIGUOUS · REVIEW REQUIRED";
+  } else if (anchor) {
     if (verified) state = "MAINNET · VERIFIED";
     else if (anchor.status === "failed") state = "FAILED";
     else if (anchor.status === "stale") state = "STALE";
@@ -78,7 +82,7 @@ export function PublicAnchorEvidence({
             Verify transaction on Blockscout
           </a>
         </>
-      ) : anchor?.transactionHash ? (
+      ) : !ambiguous && anchor?.transactionHash ? (
         <>
           <p>Transaction is recorded but the expected event has not passed all public-proof checks.</p>
           <code>{anchor.transactionHash}</code>
@@ -87,7 +91,9 @@ export function PublicAnchorEvidence({
           </a>
         </>
       ) : (
-        <p className="field-note">No verified Soneium transaction is published for this record.</p>
+        <p className="field-note">{ambiguous
+          ? "Multiple verified anchors exist for this record. Public verification is withheld pending reconciliation."
+          : "No verified Soneium transaction is published for this record."}</p>
       )}
     </div>
   );
