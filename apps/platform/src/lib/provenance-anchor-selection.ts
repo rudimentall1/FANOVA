@@ -74,13 +74,17 @@ export function matchesPublicProofHashes(
   if (JSON.stringify(expectedKeys) !== JSON.stringify(requiredKeys) ||
       JSON.stringify(observedKeys) !== JSON.stringify(requiredKeys)) return false;
 
+  const normalizeBytes32 = (value: string | null | undefined): string | null => {
+    if (typeof value !== "string") return null;
+    const unprefixed = value.startsWith("0x") || value.startsWith("0X") ? value.slice(2) : value;
+    return /^[0-9a-f]{64}$/i.test(unprefixed) ? unprefixed.toLowerCase() : null;
+  };
+
   return required.every((key) => {
-    const authoritative = authoritativeHashes[key];
-    const expected = snapshot.expectedHashes?.[key];
-    const observed = snapshot.observedHashes?.[key];
-    return typeof authoritative === "string" && authoritative.length > 0 &&
-      typeof expected === "string" && expected.toLowerCase() === authoritative.toLowerCase() &&
-      typeof observed === "string" && observed.toLowerCase() === authoritative.toLowerCase();
+    const authoritative = normalizeBytes32(authoritativeHashes[key]);
+    const expected = normalizeBytes32(snapshot.expectedHashes?.[key]);
+    const observed = normalizeBytes32(snapshot.observedHashes?.[key]);
+    return authoritative !== null && expected === authoritative && observed === authoritative;
   });
 }
 
