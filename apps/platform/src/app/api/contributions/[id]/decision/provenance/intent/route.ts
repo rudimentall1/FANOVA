@@ -121,13 +121,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return { kind: "contribution_anchor_required" as const };
     }
 
-    const [contributorWallet] = await tx.select({ address: linkedWallet.address })
-      .from(linkedWallet).where(and(
-        eq(linkedWallet.userId, entry.contributorUserId),
-        eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
-      )).limit(1);
-    if (!contributorWallet || !isAddress(contributorWallet.address) ||
-        contributionAnchor.expectedSignerAddress.toLowerCase() !== contributorWallet.address.toLowerCase()) {
+    const contributionSnapshot = contributionAnchor.verificationSnapshot;
+    if (!isAddress(contributionAnchor.expectedSignerAddress) ||
+        contributionSnapshot?.expectedSigner?.toLowerCase() !== contributionAnchor.expectedSignerAddress.toLowerCase() ||
+        contributionSnapshot?.observedSigner?.toLowerCase() !== contributionAnchor.expectedSignerAddress.toLowerCase()) {
       return { kind: "contribution_anchor_required" as const };
     }
 
