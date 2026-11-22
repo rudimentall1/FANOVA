@@ -1,4 +1,4 @@
-import { matchesPublicAnchorIdentity, matchesPublicProofHashes } from "@/lib/provenance-anchor-selection";
+import { isPublicAnchorVerified } from "@/lib/provenance-anchor-selection";
 
 type AnchorEvidence = {
   status: string;
@@ -43,30 +43,13 @@ export function PublicAnchorEvidence({
   expectedSignerAddress: string | null;
   expectedEntityId: string | null;
 }) {
-  const snapshot = anchor?.verificationSnapshot;
-  const hashesMatch = matchesPublicProofHashes(expectedEvent, snapshot, expectedHashes);
-  const identityMatches = matchesPublicAnchorIdentity({
+  const verified = isPublicAnchorVerified({
+    anchor,
+    expectedEvent,
     expectedSignerAddress,
     expectedEntityId,
-    anchorSignerAddress: anchor?.expectedSignerAddress ?? "",
-    snapshot
+    expectedHashes
   });
-  const verified = Boolean(
-    anchor &&
-    anchor.status === "mainnet" &&
-    anchor.chainId === 1868 &&
-    anchor.transactionHash &&
-    anchor.blockNumber &&
-    anchor.verifiedAt &&
-    anchor.eventName === expectedEvent &&
-    snapshot?.chainId === 1868 &&
-    snapshot?.contractAddress?.toLowerCase() === anchor.contractAddress.toLowerCase() &&
-    snapshot?.eventName === expectedEvent &&
-    snapshot?.transactionHash?.toLowerCase() === anchor.transactionHash?.toLowerCase() &&
-    snapshot?.blockNumber === anchor.blockNumber &&
-    identityMatches &&
-    hashesMatch
-  );
 
   let state = "LOCAL · NOT ANCHORED";
   if (ambiguous) {
