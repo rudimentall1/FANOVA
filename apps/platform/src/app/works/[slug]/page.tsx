@@ -18,7 +18,6 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
       id: work.id,
       versionId: workVersion.id,
       slug: work.slug,
-      ownerUserId: work.ownerUserId,
       title: workVersion.title,
       synopsis: workVersion.synopsis,
       body: workVersion.body,
@@ -41,7 +40,6 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
   const publicContributions = await db
     .select({
       id: contribution.id,
-      contributorUserId: contribution.contributorUserId,
       title: contribution.title,
       type: contribution.type,
       contributorName: userProfile.displayName,
