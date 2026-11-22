@@ -194,7 +194,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
         <section className="proof-reference">
           <p className="eyebrow">STORY PROVENANCE</p>
           <p>Only a server-verified Soneium receipt and matching contract event are labelled MAINNET VERIFIED.</p>
-          <PublicAnchorEvidence label="Story version anchor" expectedEvent="StoryVersionRegistered" anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} expectedSignerAddress={creatorWallet} expectedEntityId={storyIdentity} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.permissionHash }} />
+          <PublicAnchorEvidence label="Story version anchor" expectedEvent="StoryVersionRegistered" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} expectedSignerAddress={creatorWallet} expectedEntityId={storyIdentity} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.permissionHash }} />
           <code>Source SHA-256: {entry.sourceHash}</code>
           <code>Permissions SHA-256: {entry.permissionHash}</code>
         </section>
@@ -209,8 +209,8 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
                 <Link className="public-contribution-link" href={`/works/${slug}/contributions/${item.id}`}>
                   <strong>{item.title}</strong><small>{item.type.replace("_", " ")} · {item.contributorName ?? "Contributor"} · @{item.contributorHandle ?? "member"}</small>
                 </Link>
-                <PublicAnchorEvidence label="Contribution anchor" expectedEvent="ContributionRegistered" anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} expectedSignerAddress={publicWalletByUser.get(item.contributorUserId) ?? null} expectedEntityId={deriveContributionIdentity(item.id)} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash }} />
-                <PublicAnchorEvidence label="Creator decision anchor" expectedEvent="ContributionDecided" anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} expectedSignerAddress={creatorWallet} expectedEntityId={deriveContributionIdentity(item.id)} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash, reasonCode: keccak256(toBytes(item.creatorFeedback ?? "")) }} />
+                <PublicAnchorEvidence label="Contribution anchor" expectedEvent="ContributionRegistered" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} expectedSignerAddress={publicWalletByUser.get(item.contributorUserId) ?? null} expectedEntityId={deriveContributionIdentity(item.id)} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash }} />
+                <PublicAnchorEvidence label="Creator decision anchor" expectedEvent="ContributionDecided" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} expectedSignerAddress={creatorWallet} expectedEntityId={deriveContributionIdentity(item.id)} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash, reasonCode: keccak256(toBytes(item.creatorFeedback ?? "")) }} />
               </article>
             );
           })}
