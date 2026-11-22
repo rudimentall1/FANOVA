@@ -45,17 +45,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "The Soneium provenance contract is not configured." }, { status: 503 });
   }
 
-  const [contributorWallet] = await db.select({
-    address: linkedWallet.address,
-    verifiedAt: linkedWallet.verifiedAt
-  }).from(linkedWallet).where(and(
-    eq(linkedWallet.userId, actor.userId),
-    eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
-  )).limit(1);
-  if (!contributorWallet || !isAddress(contributorWallet.address)) {
-    return NextResponse.json({ error: "Link and verify your Soneium wallet before registering a contribution." }, { status: 409 });
-  }
-
   const idempotencyKey = (payload as { idempotencyKey: string }).idempotencyKey;
   const result = await db.transaction(async (tx) => {
     const [existingIntent] = await tx.select().from(provenanceAnchor)
@@ -166,7 +155,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         existingIntent.sourceHash !== sourceVersion.sourceHash ||
         existingIntent.contributionHash !== entry.contentHash ||
         existingIntent.permissionHash !== entry.acknowledgedPermissionHash ||
-        existingIntent.expectedSignerAddress.toLowerCase() !== contributorWallet.address.toLowerCase() ||
+        !isAddress(existingIntent.expectedSignerAddress) ||
         existingIntent.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
         existingIntent.chainId !== FANOVA_CHAIN_ID
       ) {
@@ -190,6 +179,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         permissionHash,
         contributionHash
       };
+    }
+
+    // Replaying an owned immutable intent must not depend on the current
+    // wallet link. A current linked wallet is required only to create a new one.
+    const [contributorWallet] = await tx.select({
+      address: linkedWallet.address,
+      verifiedAt: linkedWallet.verifiedAt
+    }).from(linkedWallet).where(and(
+      eq(linkedWallet.userId, actor.userId),
+      eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
+    )).limit(1);
+    if (!contributorWallet || !isAddress(contributorWallet.address)) {
+      return { kind: "contributor_wallet_missing" as const };
     }
 
     const [prior] = await tx.select({ id: provenanceAnchor.id })
@@ -238,6 +240,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   if (result.kind === "key_conflict") return NextResponse.json({ error: "This idempotency key is already bound to another provenance request." }, { status: 409 });
   if (result.kind === "intent_mismatch") return NextResponse.json({ error: "The original contribution intent no longer matches the contributor wallet, contract, or stored hashes." }, { status: 409 });
+  if (result.kind === "contributor_wallet_missing") return NextResponse.json({ error: "Link and verify your Soneium wallet before creating a new contribution intent." }, { status: 409 });
   if (result.kind === "not_found") return NextResponse.json({ error: "Contribution not found." }, { status: 404 });
   if (result.kind === "own_work") return NextResponse.json({ error: "Creators cannot register a fan contribution to their own work." }, { status: 409 });
     if (result.kind === "stale") return NextResponse.json({ error: "This contribution references an older story version and cannot be registered." }, { status: 409 });
