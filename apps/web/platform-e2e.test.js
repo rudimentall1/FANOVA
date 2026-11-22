@@ -316,15 +316,16 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     assert.equal(replayedDecisionIntent.status, 200, "existing creator decision intent must replay after unlink");
     assert.equal(replayedDecisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), replayedDecisionIntent.signer.toLowerCase());
 
-    const newDecisionIntentWithoutWallet = await creatorPage.evaluate(async (id) => {
+    const differentKeyReusesDecisionIntent = await creatorPage.evaluate(async (id) => {
       const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idempotencyKey: "123e4567-e89b-42d3-a456-426614174004" })
       });
-      return response.status;
+      return { status: response.status, body: await response.json() };
     }, firstId);
-    assert.equal(newDecisionIntentWithoutWallet, 409, "a fresh creator decision intent must still require the linked wallet");
+    assert.equal(differentKeyReusesDecisionIntent.status, 200, "one decision intent per contribution is replayable after unlink");
+    assert.equal(differentKeyReusesDecisionIntent.body.anchor.id, decisionIntent.body.anchor.id);
 
     await creatorPage.goto(`${baseUrl}/works/${slug}`);
     const publicContribution = creatorPage.locator(".public-contribution-link").filter({ hasText: firstTitle });
