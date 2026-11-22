@@ -1,10 +1,11 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq, gt, isNull, isNotNull, lte, or, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { linkedWallet, walletUnlinkChallenge } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { MAX_ACTIVE_WALLET_UNLINK_CHALLENGES } from "@/lib/wallet-unlink-guards";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,17 +59,45 @@ export async function POST() {
     `Expiration Time: ${expiresAt.toISOString()}`
   ].join("\n");
 
-  await db.insert(walletUnlinkChallenge).values({
-    id,
-    userId: session.user.id,
-    sessionId: session.session.id,
-    walletId: wallet.id,
-    nonce,
-    message,
-    chainId: CHAIN_ID,
-    expiresAt,
-    createdAt: now
+  const admitted = await db.transaction(async (tx) => {
+    // Serialize challenge issuance per authenticated user/session so concurrent requests cannot bypass the cap.
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${session.user.id}), hashtext(${session.session.id}))`);
+
+    // Retain only live, unused challenges. This also bounds historical table growth on active traffic.
+    await tx.delete(walletUnlinkChallenge).where(or(
+      isNotNull(walletUnlinkChallenge.consumedAt),
+      lte(walletUnlinkChallenge.expiresAt, now)
+    ));
+
+    const [active] = await tx.select({ value: count() }).from(walletUnlinkChallenge)
+      .where(and(
+        eq(walletUnlinkChallenge.userId, session.user.id),
+        eq(walletUnlinkChallenge.sessionId, session.session.id),
+        isNull(walletUnlinkChallenge.consumedAt),
+        gt(walletUnlinkChallenge.expiresAt, now)
+      ));
+    if (Number(active?.value ?? 0) >= MAX_ACTIVE_WALLET_UNLINK_CHALLENGES) return false;
+
+    await tx.insert(walletUnlinkChallenge).values({
+      id,
+      userId: session.user.id,
+      sessionId: session.session.id,
+      walletId: wallet.id,
+      nonce,
+      message,
+      chainId: CHAIN_ID,
+      expiresAt,
+      createdAt: now
+    });
+    return true;
   });
+
+  if (!admitted) {
+    return NextResponse.json(
+      { error: "Too many active wallet unlink challenges. Wait for an existing challenge to expire." },
+      { status: 429 }
+    );
+  }
 
   return NextResponse.json({ nonce, messageTemplate: message, expiresAt: expiresAt.toISOString(), chainId: CHAIN_ID });
 }
