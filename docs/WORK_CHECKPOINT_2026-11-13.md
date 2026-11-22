@@ -133,3 +133,15 @@ This section supersedes earlier PR head and CI status references above where the
 | Real persisted Mainnet anchor renders correctly in production | NOT VERIFIED |
 | Independent security audit / third-party certification | NOT DONE |
 | Full P1.6 acceptance | OPEN |
+
+
+### Follow-up source review finding — historical wallet identity
+
+- A cross-PR integration issue was identified while reviewing public provenance pages against wallet unlink/replace.
+- Public Story and Contribution pages currently derive the expected creator/contributor signer and, for Story IDs, the Story identity from the *current* `linked_wallet` row.
+- PR #39 intentionally deletes the current linked-wallet row on unlink and permits replacement. Therefore, unlinking or replacing a wallet can make an already verified historical anchor fail public verification even though its on-chain transaction and receipt have not changed.
+- The creator-decision submit verifier also compares the intent signer with the creator's currently linked wallet. If the wallet is unlinked/replaced after the transaction is sent but before verification is submitted, the valid historical transaction may be rejected.
+- This is a source-level integration finding, not a demonstrated production incident. No live user data or production database was inspected.
+- Required correction: bind historical verification to an immutable, server-persisted signer identity captured when the provenance intent is created, then verify that identity against the stored anchor snapshot and observed on-chain sender. Do not trust an arbitrary request-supplied address, and do not simply weaken the signer check. Preserve current-wallet checks for initiating new actions.
+- Add regression coverage for: creator wallet unlink after Story anchoring; contributor wallet unlink after Contribution anchoring; creator wallet replacement after a decision transaction is broadcast but before verification; and normal new-intent behavior with the replacement wallet.
+- Until this is fixed and tested, treat the wallet unlink/replace and public provenance changes as not yet integration-accepted. Keep P1.6 OPEN.
