@@ -301,7 +301,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       });
       return { status: response.status, body: await response.json(), signer };
     }, { id: firstId, key: decisionIntentKey, signer: e2eCreatorSigner });
-    assert.equal(decisionIntent.status, 201, "initial creator decision intent must be created");
+    assert.equal(decisionIntent.status, 200, "creator decision action should already have prepared its single provenance intent");
     assert.equal(decisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), decisionIntent.signer.toLowerCase());
     bootstrapProvenance("unlink-user", creatorEmail);
 
