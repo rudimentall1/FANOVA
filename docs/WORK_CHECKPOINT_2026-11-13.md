@@ -174,3 +174,17 @@ This section supersedes earlier PR head and CI status references above where the
 - The code changes in this run include historical signer sourcing on public Story/Contribution pages, source Story intent validation against the persisted signer, Contribution anchor validation against its persisted signer for Creator Decision intent creation, and Creator Decision submission against the immutable decision-intent signer.
 - This is CI-tested source behavior. The browser E2E does not simulate an actual live Mainnet anchor or a real production wallet unlink during an on-chain transaction. The dedicated unit assertion for historical public proof is synthetic.
 - PR #40 remains OPEN · DRAFT · not merged. P1.6 remains OPEN pending focused security review and acceptance against real persisted records where authorized read-only access is available.
+
+
+### Intent replay after wallet unlink/replace — implementation in progress (2026-11-22)
+
+- Follow-up review found that both contribution-registration and creator-decision intent endpoints checked the current linked wallet before looking up an existing idempotency key. This prevented the same authenticated actor from recovering an already-created intent after unlinking or replacing their wallet.
+- Contribution intent route now checks ownership, operation, contribution identity, stored hashes, canonical contract, chain, and a valid persisted signer before returning an existing intent. The current contributor wallet is queried only on the new-intent path.
+- Creator-decision intent route now validates the source Story anchor's persisted signer against its verification snapshot. Existing keyed intents and the existing per-contribution prior intent are matched to that historical Story signer; the current creator wallet is required only before inserting a new decision intent and must still match the Story anchor signer.
+- Cross-actor idempotency-key conflicts remain rejected. Existing entity/operation/hash/decision checks remain in place. Submit routes continue to bind the transaction sender and emitted event signer to the persisted intent signer.
+- Changes committed sequentially to PR #40:
+  - Contribution route: `75a77bdf7ac2b384cb7392b86f31f76d8900c021`
+  - Creator-decision route: `1cea69e83c2b139f8ef097418d6cfe8ff2ee77a7`
+- CI runs #446 and #447 were observed in progress at checkpoint time. Do not describe these changes as CI-passed until the runs complete successfully on the latest branch head.
+- No dedicated route-level regression test was found alongside these endpoints; the current CI workflow is the next syntax/type/build gate, not proof of the unlink/replay runtime scenario. Add an explicit integration regression test before treating this behavior as fully accepted.
+- No production DB inspection, live wallet unlink, or Mainnet transaction was performed. P1.6 remains OPEN.
