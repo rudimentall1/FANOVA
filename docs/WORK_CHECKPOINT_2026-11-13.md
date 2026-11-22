@@ -261,3 +261,22 @@ This section supersedes earlier PR head and CI status references above where the
 - This aligns the Contribution intent prerequisite with public rendering and Creator Decision intent validation; incomplete or mismatched historical Story evidence fails closed.
 - Fix commit: `ed6c0bd0af93ce79414a17dfb31078bfdda3de0f`.
 - CI #477 is the latest-code acceptance run and is pending. P1.6 remains OPEN.
+
+
+### Merge completion — safe wallet unlink + public provenance (2026-11-22)
+
+- PR #40, public provenance proof and historical signer hardening, was squash-merged to `main` as `a58bfdd73e13a9868a0bf20dbeff6ecfd455ea7c`.
+- PR #39, signature-bound safe wallet unlink, was squash-merged to `main` as `e8d93e261ab8fa147bcf038091b64047125b8ae6`.
+- Main CI after PR #40 merge: run #480 SUCCESS.
+- Combined PR CI after PR #39 merge: run #481 SUCCESS.
+- Final main CI after both merges: run #482 SUCCESS.
+- The combined browser E2E exercises wallet A link, cross-account reuse denial, signed unlink, consumed challenge replay denial, wallet B link, five-challenge cap, Contribution intent recovery after linked-wallet removal, Creator Decision intent recovery after linked-wallet removal, cross-account intent replay denial, unique verified-anchor selection despite a later failed retry, and public Story/Contribution proof rendering after unlink.
+- The CI fixture uses synthetic rows and fake transaction hashes in an isolated GitHub Actions PostgreSQL database. It performs no RPC calls or Mainnet writes.
+- Public proof hash matching now normalizes optional `0x` prefixes and case, while requiring full bytes32 values and exact operation-specific key sets. Contribution and Creator Decision intent creation validate source anchors through the same strict proof predicate used for public verification.
+- Safe unlink challenges are session/account/wallet/chain/message/nonce/expiry-bound, single-use, body-size bounded, and capped at five active challenges per session under a transaction lock.
+
+### Remaining P1.6 acceptance gates
+
+- P1.6 remains **OPEN**. Production database access and real persisted Mainnet anchor rendering have not been verified read-only.
+- No independent third-party security audit or certification has been completed.
+- Do not claim production proof verification or external audit completion until those checks are performed. No Mainnet writes were made as part of this work.
