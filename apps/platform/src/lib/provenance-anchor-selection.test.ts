@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { selectPublicAnchor, selectUniqueVerifiedAnchor } from "./provenance-anchor-selection";
+import { matchesPublicProofHashes, selectPublicAnchor, selectUniqueVerifiedAnchor } from "./provenance-anchor-selection";
 
 type Attempt = { id: string; status: string; createdAt: Date };
 
@@ -46,5 +46,44 @@ describe("provenance anchor selection", () => {
       ambiguous: false
     });
     expect(selectUniqueVerifiedAnchor([older, newer])).toBeNull();
+  });
+});
+
+describe("public provenance hash validation", () => {
+  const storyHashes = { sourceHash: "0xabc", permissionHash: "0xdef" };
+
+  it("accepts the exact operation-specific keys bound to authoritative values", () => {
+    expect(matchesPublicProofHashes("StoryVersionRegistered", {
+      expectedHashes: storyHashes,
+      observedHashes: { sourceHash: "0xABC", permissionHash: "0xDEF" }
+    }, storyHashes)).toBe(true);
+  });
+
+  it("rejects missing required keys", () => {
+    expect(matchesPublicProofHashes("StoryVersionRegistered", {
+      expectedHashes: { sourceHash: "0xabc" },
+      observedHashes: { sourceHash: "0xabc" }
+    }, storyHashes)).toBe(false);
+  });
+
+  it("rejects extra keys even when required hashes match", () => {
+    expect(matchesPublicProofHashes("StoryVersionRegistered", {
+      expectedHashes: { ...storyHashes, unexpected: "0x123" },
+      observedHashes: { ...storyHashes, unexpected: "0x123" }
+    }, storyHashes)).toBe(false);
+  });
+
+  it("rejects snapshots that match each other but not the authoritative entity", () => {
+    expect(matchesPublicProofHashes("StoryVersionRegistered", {
+      expectedHashes: { sourceHash: "0x111", permissionHash: "0xdef" },
+      observedHashes: { sourceHash: "0x111", permissionHash: "0xdef" }
+    }, storyHashes)).toBe(false);
+  });
+
+  it("requires the decision reason hash in addition to contribution hashes", () => {
+    expect(matchesPublicProofHashes("ContributionDecided", {
+      expectedHashes: { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc" },
+      observedHashes: { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc" }
+    }, { sourceHash: "0xa", permissionHash: "0xb", contributionHash: "0xc", reasonCode: "0xd" })).toBe(false);
   });
 });
