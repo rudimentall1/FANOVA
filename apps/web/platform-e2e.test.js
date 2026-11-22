@@ -358,6 +358,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       `creator selected public visibility but persisted record is not public: ${JSON.stringify(approvedRecord)}`
     );
 
+
     // Creator decision intent replay remains available after the creator unlinks.
     const decisionIntentKey = "123e4567-e89b-42d3-a456-426614174003";
     const decisionIntent = await creatorPage.evaluate(async ({ id, key, signer }) => {
