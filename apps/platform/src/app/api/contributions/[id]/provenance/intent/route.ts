@@ -7,7 +7,7 @@ import { contribution, linkedWallet, provenanceAnchor, work, workVersion } from 
 import { getCurrentActor } from "@/lib/server-auth";
 import { asBytes32Hash, deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
 import { hashContribution } from "@/lib/contribution-hash";
-import { selectUniqueVerifiedAnchor } from "@/lib/provenance-anchor-selection";
+import { isPublicAnchorVerified, selectUniqueVerifiedAnchor } from "@/lib/provenance-anchor-selection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -126,28 +126,42 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const permissionVersion = storySnapshot?.permissionVersion ??
       (sourceVersion.versionNumber === 1 ? 1 : null);
 
+    if (!isAddress(storyAnchor.expectedSignerAddress)) {
+      return { kind: "story_anchor_required" as const };
+    }
+    const story = deriveStoryIdentity(entry.workId, storyAnchor.expectedSignerAddress as Address);
+    const hasVerifiedStoryProof = isPublicAnchorVerified({
+      anchor: {
+        status: storyAnchor.status,
+        chainId: storyAnchor.chainId,
+        contractAddress: storyAnchor.contractAddress,
+        expectedSignerAddress: storyAnchor.expectedSignerAddress,
+        transactionHash: storyAnchor.transactionHash,
+        blockNumber: storyAnchor.blockNumber?.toString() ?? null,
+        verifiedAt: storyAnchor.verifiedAt?.toISOString() ?? null,
+        eventName: storyAnchor.eventName,
+        verificationSnapshot: storyAnchor.verificationSnapshot
+      },
+      expectedEvent: "StoryVersionRegistered",
+      expectedContractAddress: contractAddress,
+      expectedSignerAddress: storyAnchor.expectedSignerAddress,
+      expectedEntityId: story.storyId,
+      expectedHashes: {
+        sourceHash: sourceVersion.sourceHash,
+        permissionHash: sourceVersion.permissionHash
+      }
+    });
+
     if (
-      storyAnchor.status !== "mainnet" ||
-      storyAnchor.chainId !== FANOVA_CHAIN_ID ||
-      storyAnchor.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
-      !isAddress(storyAnchor.expectedSignerAddress) ||
-      storySnapshot?.expectedSigner?.toLowerCase() !== storyAnchor.expectedSignerAddress.toLowerCase() ||
-      storySnapshot?.observedSigner?.toLowerCase() !== storyAnchor.expectedSignerAddress.toLowerCase() ||
-      !storyAnchor.transactionHash ||
-      storyAnchor.eventName !== "StoryVersionRegistered" ||
-      !storyAnchor.verifiedAt ||
+      !hasVerifiedStoryProof ||
       storyAnchor.sourceHash !== sourceVersion.sourceHash ||
       storyAnchor.permissionHash !== sourceVersion.permissionHash ||
-      !storySnapshot ||
-      storySnapshot.chainId !== FANOVA_CHAIN_ID ||
-      storySnapshot.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
       !Number.isSafeInteger(sourceVersionNumber) || !sourceVersionNumber || sourceVersionNumber < 1 ||
       !Number.isSafeInteger(permissionVersion) || !permissionVersion || permissionVersion < 1
     ) {
       return { kind: "story_anchor_required" as const };
     }
 
-    const story = deriveStoryIdentity(entry.workId, storyAnchor.expectedSignerAddress as Address);
     const contributionIdentity = deriveContributionIdentity(entry.id);
 
     if (existingIntent) {
