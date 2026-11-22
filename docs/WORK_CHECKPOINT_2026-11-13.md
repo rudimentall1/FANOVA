@@ -241,3 +241,14 @@ This section supersedes earlier PR head and CI status references above where the
   - malformed-hash negative test: `13624c09b79a0a0c23f426bf06291fa4ea3db978`
 - CI #468 runs on the corrected workflow configuration; the subsequent latest-head run must include the final E2E and malformed-hash test commits and pass before considering merge.
 - No production DB or Mainnet data was touched. P1.6 remains OPEN.
+
+
+### Failed Story retry must not mask verified source anchor — implementation in progress (2026-11-22)
+
+- Added a newer synthetic failed Story anchor beside the one verified Story anchor in the isolated E2E fixture.
+- The new E2E reproduced a second source-selection defect: Contribution intent creation queried all Story attempts and required exactly one row, so a harmless failed retry caused HTTP 409 even though exactly one verified Mainnet Story anchor existed.
+- Contribution intent creation now queries at most two `mainnet` candidates and uses `selectUniqueVerifiedAnchor`, matching the canonical public/decision selection policy. Zero or multiple verified anchors fail closed; failed/pending retries do not hide a valid proof.
+- Regression fixture is synthetic and restricted to the isolated CI database. It does not write Mainnet.
+- The red E2E was observed in CI run #474: contribution intent creation returned 409 with one verified Story anchor plus one failed retry.
+- Fix commit: `37c06e4dc5b17b12dd3ba37a5a51143efad28e7a`.
+- CI for the fix and latest E2E assertion changes is pending. P1.6 remains OPEN.
