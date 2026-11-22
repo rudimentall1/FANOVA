@@ -27,14 +27,36 @@ export function PublicAnchorEvidence({
   label,
   expectedEvent,
   anchor,
-  ambiguous = false
+  ambiguous = false,
+  expectedHashes
 }: {
   label: string;
   expectedEvent: string;
   anchor: AnchorEvidence;
   ambiguous?: boolean;
+  expectedHashes: Record<string, string | null | undefined>;
 }) {
   const snapshot = anchor?.verificationSnapshot;
+  const requiredHashKeys: Record<string, string[]> = {
+    StoryVersionRegistered: ["sourceHash", "permissionHash"],
+    ContributionRegistered: ["sourceHash", "permissionHash", "contributionHash"],
+    ContributionDecided: ["sourceHash", "permissionHash", "contributionHash", "reasonCode"]
+  };
+  const requiredKeys = requiredHashKeys[expectedEvent] ?? [];
+  const expectedHashKeys = Object.keys(snapshot?.expectedHashes ?? {}).sort();
+  const observedHashKeys = Object.keys(snapshot?.observedHashes ?? {}).sort();
+  const requiredHashSet = [...requiredKeys].sort();
+  const hashesMatch = requiredKeys.length > 0 &&
+    JSON.stringify(expectedHashKeys) === JSON.stringify(requiredHashSet) &&
+    JSON.stringify(observedHashKeys) === JSON.stringify(requiredHashSet) &&
+    requiredKeys.every((key) => {
+      const authoritative = expectedHashes[key];
+      const expected = snapshot?.expectedHashes?.[key];
+      const observed = snapshot?.observedHashes?.[key];
+      return typeof authoritative === "string" && authoritative.length > 0 &&
+        typeof expected === "string" && expected.toLowerCase() === authoritative.toLowerCase() &&
+        typeof observed === "string" && observed.toLowerCase() === authoritative.toLowerCase();
+    });
   const verified = Boolean(
     anchor &&
     anchor.status === "mainnet" &&
@@ -51,11 +73,7 @@ export function PublicAnchorEvidence({
     snapshot?.observedSigner?.toLowerCase() === anchor.expectedSignerAddress.toLowerCase() &&
     Boolean(snapshot?.expectedEntityId) &&
     snapshot?.observedEntityId?.toLowerCase() === snapshot?.expectedEntityId?.toLowerCase() &&
-    Boolean(snapshot?.expectedHashes && snapshot?.observedHashes) &&
-    Object.keys(snapshot?.expectedHashes ?? {}).length > 0 &&
-    Object.entries(snapshot?.expectedHashes ?? {}).every(([key, value]) =>
-      snapshot?.observedHashes?.[key]?.toLowerCase() === value.toLowerCase()
-    )
+    hashesMatch
   );
 
   let state = "LOCAL · NOT ANCHORED";
