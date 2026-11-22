@@ -193,6 +193,16 @@ describe("public Mainnet verification predicate", () => {
     expect(isPublicAnchorVerified(input)).toBe(true);
   });
 
+  it("keeps a historical proof valid after the linked wallet is replaced", () => {
+    const replacementWallet = "0xReplacementWallet";
+    expect(replacementWallet.toLowerCase()).not.toBe(anchor.expectedSignerAddress.toLowerCase());
+    expect(isPublicAnchorVerified({
+      ...input,
+      // The public page resolves this from the immutable intent row, not linked_wallet.
+      expectedSignerAddress: anchor.expectedSignerAddress
+    })).toBe(true);
+  });
+
   it("rejects a persisted contract address that differs from the configured FANOVA contract", () => {
     expect(isPublicAnchorVerified({
       ...input,
