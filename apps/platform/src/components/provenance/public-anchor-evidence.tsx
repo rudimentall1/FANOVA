@@ -1,4 +1,4 @@
-import { matchesPublicProofHashes } from "@/lib/provenance-anchor-selection";
+import { matchesPublicAnchorIdentity, matchesPublicProofHashes } from "@/lib/provenance-anchor-selection";
 
 type AnchorEvidence = {
   status: string;
@@ -44,6 +44,12 @@ export function PublicAnchorEvidence({
 }) {
   const snapshot = anchor?.verificationSnapshot;
   const hashesMatch = matchesPublicProofHashes(expectedEvent, snapshot, expectedHashes);
+  const identityMatches = matchesPublicAnchorIdentity({
+    expectedSignerAddress,
+    expectedEntityId,
+    anchorSignerAddress: anchor?.expectedSignerAddress ?? "",
+    snapshot
+  });
   const verified = Boolean(
     anchor &&
     anchor.status === "mainnet" &&
@@ -57,13 +63,7 @@ export function PublicAnchorEvidence({
     snapshot?.eventName === expectedEvent &&
     snapshot?.transactionHash?.toLowerCase() === anchor.transactionHash?.toLowerCase() &&
     snapshot?.blockNumber === anchor.blockNumber &&
-    Boolean(expectedSignerAddress) &&
-    anchor.expectedSignerAddress.toLowerCase() === expectedSignerAddress?.toLowerCase() &&
-    snapshot?.expectedSigner?.toLowerCase() === expectedSignerAddress?.toLowerCase() &&
-    snapshot?.observedSigner?.toLowerCase() === expectedSignerAddress?.toLowerCase() &&
-    Boolean(expectedEntityId) &&
-    snapshot?.expectedEntityId?.toLowerCase() === expectedEntityId?.toLowerCase() &&
-    snapshot?.observedEntityId?.toLowerCase() === expectedEntityId?.toLowerCase() &&
+    identityMatches &&
     hashesMatch
   );
 
