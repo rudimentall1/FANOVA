@@ -7,6 +7,7 @@ import { contribution, linkedWallet, provenanceAnchor, work, workVersion } from 
 import { getCurrentActor } from "@/lib/server-auth";
 import { asBytes32Hash, deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
 import { hashContribution } from "@/lib/contribution-hash";
+import { isPublicAnchorVerified, selectUniqueVerifiedAnchor } from "@/lib/provenance-anchor-selection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,17 +44,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const contractAddress = process.env.FANOVA_PROVENANCE_CONTRACT;
   if (!contractAddress || !isAddress(contractAddress)) {
     return NextResponse.json({ error: "The Soneium provenance contract is not configured." }, { status: 503 });
-  }
-
-  const [contributorWallet] = await db.select({
-    address: linkedWallet.address,
-    verifiedAt: linkedWallet.verifiedAt
-  }).from(linkedWallet).where(and(
-    eq(linkedWallet.userId, actor.userId),
-    eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
-  )).limit(1);
-  if (!contributorWallet || !isAddress(contributorWallet.address)) {
-    return NextResponse.json({ error: "Link and verify your Soneium wallet before registering a contribution." }, { status: 409 });
   }
 
   const idempotencyKey = (payload as { idempotencyKey: string }).idempotencyKey;
@@ -122,48 +112,56 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const contributionHash = asBytes32Hash(entry.contentHash);
     if (!sourceHash || !permissionHash || !contributionHash) return { kind: "invalid_hash" as const };
 
-    const [creatorWallet] = await tx.select({
-      address: linkedWallet.address,
-      verifiedAt: linkedWallet.verifiedAt
-    }).from(linkedWallet).where(and(
-      eq(linkedWallet.userId, sourceWork.ownerUserId),
-      eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
-    )).limit(1);
-    if (!creatorWallet || !isAddress(creatorWallet.address)) return { kind: "creator_wallet_missing" as const };
-
-    const storyAnchors = await tx.select().from(provenanceAnchor)
-      .where(and(
-        eq(provenanceAnchor.workVersionId, sourceVersion.id),
-        eq(provenanceAnchor.operationType, "work_version")
-      ));
-    if (storyAnchors.length !== 1) return { kind: "story_anchor_required" as const };
-    const storyAnchor = storyAnchors[0];
+    // Failed/pending retries must not mask the sole verified Story anchor.
+    const storyAnchorCandidates = await tx.select().from(provenanceAnchor).where(and(
+      eq(provenanceAnchor.workVersionId, sourceVersion.id),
+      eq(provenanceAnchor.operationType, "work_version"),
+      eq(provenanceAnchor.status, "mainnet")
+    )).limit(2);
+    const storyAnchor = selectUniqueVerifiedAnchor(storyAnchorCandidates);
+    if (!storyAnchor) return { kind: "story_anchor_required" as const };
     const storySnapshot = storyAnchor.verificationSnapshot;
     const sourceVersionNumber = storySnapshot?.sourceVersion ??
       (sourceVersion.versionNumber === 1 ? 1 : null);
     const permissionVersion = storySnapshot?.permissionVersion ??
       (sourceVersion.versionNumber === 1 ? 1 : null);
 
+    if (!isAddress(storyAnchor.expectedSignerAddress)) {
+      return { kind: "story_anchor_required" as const };
+    }
+    const story = deriveStoryIdentity(entry.workId, storyAnchor.expectedSignerAddress as Address);
+    const hasVerifiedStoryProof = isPublicAnchorVerified({
+      anchor: {
+        status: storyAnchor.status,
+        chainId: storyAnchor.chainId,
+        contractAddress: storyAnchor.contractAddress,
+        expectedSignerAddress: storyAnchor.expectedSignerAddress,
+        transactionHash: storyAnchor.transactionHash,
+        blockNumber: storyAnchor.blockNumber?.toString() ?? null,
+        verifiedAt: storyAnchor.verifiedAt?.toISOString() ?? null,
+        eventName: storyAnchor.eventName,
+        verificationSnapshot: storyAnchor.verificationSnapshot
+      },
+      expectedEvent: "StoryVersionRegistered",
+      expectedContractAddress: contractAddress,
+      expectedSignerAddress: storyAnchor.expectedSignerAddress,
+      expectedEntityId: story.storyId,
+      expectedHashes: {
+        sourceHash: sourceVersion.sourceHash,
+        permissionHash: sourceVersion.permissionHash
+      }
+    });
+
     if (
-      storyAnchor.status !== "mainnet" ||
-      storyAnchor.chainId !== FANOVA_CHAIN_ID ||
-      storyAnchor.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
-      storyAnchor.expectedSignerAddress.toLowerCase() !== creatorWallet.address.toLowerCase() ||
-      !storyAnchor.transactionHash ||
-      storyAnchor.eventName !== "StoryVersionRegistered" ||
-      !storyAnchor.verifiedAt ||
+      !hasVerifiedStoryProof ||
       storyAnchor.sourceHash !== sourceVersion.sourceHash ||
       storyAnchor.permissionHash !== sourceVersion.permissionHash ||
-      !storySnapshot ||
-      storySnapshot.chainId !== FANOVA_CHAIN_ID ||
-      storySnapshot.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
       !Number.isSafeInteger(sourceVersionNumber) || !sourceVersionNumber || sourceVersionNumber < 1 ||
       !Number.isSafeInteger(permissionVersion) || !permissionVersion || permissionVersion < 1
     ) {
       return { kind: "story_anchor_required" as const };
     }
 
-    const story = deriveStoryIdentity(entry.workId, creatorWallet.address as Address);
     const contributionIdentity = deriveContributionIdentity(entry.id);
 
     if (existingIntent) {
@@ -173,7 +171,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         existingIntent.sourceHash !== sourceVersion.sourceHash ||
         existingIntent.contributionHash !== entry.contentHash ||
         existingIntent.permissionHash !== entry.acknowledgedPermissionHash ||
-        existingIntent.expectedSignerAddress.toLowerCase() !== contributorWallet.address.toLowerCase() ||
+        !isAddress(existingIntent.expectedSignerAddress) ||
         existingIntent.contractAddress.toLowerCase() !== contractAddress.toLowerCase() ||
         existingIntent.chainId !== FANOVA_CHAIN_ID
       ) {
@@ -197,6 +195,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         permissionHash,
         contributionHash
       };
+    }
+
+    // Replaying an owned immutable intent must not depend on the current
+    // wallet link. A current linked wallet is required only to create a new one.
+    const [contributorWallet] = await tx.select({
+      address: linkedWallet.address,
+      verifiedAt: linkedWallet.verifiedAt
+    }).from(linkedWallet).where(and(
+      eq(linkedWallet.userId, actor.userId),
+      eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
+    )).limit(1);
+    if (!contributorWallet || !isAddress(contributorWallet.address)) {
+      return { kind: "contributor_wallet_missing" as const };
     }
 
     const [prior] = await tx.select({ id: provenanceAnchor.id })
@@ -245,13 +256,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   if (result.kind === "key_conflict") return NextResponse.json({ error: "This idempotency key is already bound to another provenance request." }, { status: 409 });
   if (result.kind === "intent_mismatch") return NextResponse.json({ error: "The original contribution intent no longer matches the contributor wallet, contract, or stored hashes." }, { status: 409 });
+  if (result.kind === "contributor_wallet_missing") return NextResponse.json({ error: "Link and verify your Soneium wallet before creating a new contribution intent." }, { status: 409 });
   if (result.kind === "not_found") return NextResponse.json({ error: "Contribution not found." }, { status: 404 });
   if (result.kind === "own_work") return NextResponse.json({ error: "Creators cannot register a fan contribution to their own work." }, { status: 409 });
     if (result.kind === "stale") return NextResponse.json({ error: "This contribution references an older story version and cannot be registered." }, { status: 409 });
   if (result.kind === "content_hash_mismatch") return NextResponse.json({ error: "The stored contribution content no longer matches its submission hash." }, { status: 409 });
   if (result.kind === "permission_hash_mismatch") return NextResponse.json({ error: "The contribution's acknowledged permissions do not match its source version." }, { status: 409 });
   if (result.kind === "invalid_hash") return NextResponse.json({ error: "A stored contribution or permission hash is not a bytes32 SHA-256 digest." }, { status: 422 });
-  if (result.kind === "creator_wallet_missing") return NextResponse.json({ error: "The creator has not linked a verified Soneium wallet." }, { status: 409 });
   if (result.kind === "story_anchor_required") return NextResponse.json({ error: "The exact source story version must have one confirmed Mainnet provenance anchor before a fan contribution can be registered." }, { status: 409 });
   if (result.kind === "already_exists") return NextResponse.json({ error: "A provenance intent already exists for this contribution." }, { status: 409 });
 

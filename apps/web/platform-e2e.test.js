@@ -9,7 +9,14 @@ const baseUrl = process.env.FANOVA_PLATFORM_URL ?? "http://127.0.0.1:3000";
 const logPath = process.env.FANOVA_PLATFORM_LOG ?? "/tmp/fanova-platform.log";
 const platformDir = process.env.FANOVA_PLATFORM_DIR;
 const adminBootstrap = process.env.FANOVA_ADMIN_BOOTSTRAP_SCRIPT;
+const provenanceBootstrap = process.env.FANOVA_E2E_PROVENANCE_BOOTSTRAP_SCRIPT;
 const password = "FANOVA-E2E-Password-2026!";
+const e2eCreatorSigner = "0x1111111111111111111111111111111111111111";
+const e2eContributorSigner = "0x2222222222222222222222222222222222222222";
+
+function bootstrapProvenance(mode, ...args) {
+  execFileSync("node", [provenanceBootstrap, mode, ...args], { cwd: platformDir, env: process.env, stdio: "pipe" });
+}
 
 function readLog() {
   try { return readFileSync(logPath, "utf8"); } catch { return ""; }
@@ -89,6 +96,7 @@ async function submitContribution(page, slug, title, text) {
 test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }, async () => {
   assert.ok(platformDir, "FANOVA_PLATFORM_DIR must be configured");
   assert.ok(adminBootstrap, "FANOVA_ADMIN_BOOTSTRAP_SCRIPT must be configured");
+  assert.ok(provenanceBootstrap, "FANOVA_E2E_PROVENANCE_BOOTSTRAP_SCRIPT must be configured");
 
   const browser = await chromium.launch({ headless: true });
   const adminContext = await browser.newContext();
@@ -176,6 +184,9 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await creatorPage.getByText("Fan art allowed").waitFor();
     await creatorPage.getByText("Translations not permitted").waitFor();
 
+    // Seed a synthetic, fully bound Story proof in the isolated CI database.
+    bootstrapProvenance("seed-story", slug, creatorEmail, e2eCreatorSigner);
+
     // A separate reader signs up, verifies email, and returns directly to the contribution form.
     const contributorPage = await registerAndVerify(
       contributorContext,
@@ -209,6 +220,56 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       "The composition follows the creator's published rules and is submitted for review. ".repeat(2)
     );
 
+    bootstrapProvenance("link-user", contributorEmail, e2eContributorSigner);
+
+    // Recover an existing contribution intent after the contributor wallet is unlinked.
+    const contributionIntentKey = "123e4567-e89b-42d3-a456-426614174001";
+    const contributionIntent = await contributorPage.evaluate(async ({ id, key, signer }) => {
+      const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: key })
+      });
+      return { status: response.status, body: await response.json(), signer };
+    }, { id: firstId, key: contributionIntentKey, signer: e2eContributorSigner });
+    assert.equal(contributionIntent.status, 201, "initial contribution intent must be created");
+    assert.equal(contributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), contributionIntent.signer.toLowerCase());
+    const crossAccountIntentReplay = await adminPage.evaluate(async ({ id, key }) => {
+      const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: key })
+      });
+      return response.status;
+    }, { id: firstId, key: contributionIntentKey });
+    assert.equal(crossAccountIntentReplay, 409, "another account must not retrieve a contributor's existing intent");
+
+    bootstrapProvenance("unlink-user", contributorEmail);
+
+    const replayedContributionIntent = await contributorPage.evaluate(async ({ id, key, signer }) => {
+      const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: key })
+      });
+      return { status: response.status, body: await response.json(), signer };
+    }, { id: firstId, key: contributionIntentKey, signer: e2eContributorSigner });
+    assert.equal(replayedContributionIntent.status, 200, "existing contribution intent must replay after unlink");
+    assert.equal(replayedContributionIntent.body.idempotent, true);
+    assert.equal(replayedContributionIntent.body.anchor.expectedSignerAddress.toLowerCase(), replayedContributionIntent.signer.toLowerCase());
+
+    const newContributionIntentWithoutWallet = await contributorPage.evaluate(async (id) => {
+      const response = await fetch("/api/contributions/" + id + "/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: "123e4567-e89b-42d3-a456-426614174002" })
+      });
+      return response.status;
+    }, firstId);
+    assert.equal(newContributionIntentWithoutWallet, 409, "a fresh contribution intent must still require a linked wallet");
+
+    bootstrapProvenance("mark-contribution-mainnet", firstId);
+
     // The creator approves the submission and explicitly makes it public.
     await creatorPage.goto(`${baseUrl}/studio/works/${slug}/submissions`);
     const firstReview = creatorPage.locator(".contribution-card").filter({ hasText: firstTitle });
@@ -239,11 +300,58 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       `creator selected public visibility but persisted record is not public: ${JSON.stringify(approvedRecord)}`
     );
 
+
+    // Creator decision intent replay remains available after the creator unlinks.
+    const decisionIntentKey = "123e4567-e89b-42d3-a456-426614174003";
+    const decisionIntent = await creatorPage.evaluate(async ({ id, key, signer }) => {
+      const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: key })
+      });
+      return { status: response.status, body: await response.json(), signer };
+    }, { id: firstId, key: decisionIntentKey, signer: e2eCreatorSigner });
+    assert.equal(decisionIntent.status, 200, "creator decision action should already have prepared its single provenance intent");
+    assert.equal(decisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), decisionIntent.signer.toLowerCase());
+    bootstrapProvenance("unlink-user", creatorEmail);
+
+    const replayedDecisionIntent = await creatorPage.evaluate(async ({ id, key, signer }) => {
+      const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: key })
+      });
+      return { status: response.status, body: await response.json(), signer };
+    }, { id: firstId, key: decisionIntentKey, signer: e2eCreatorSigner });
+    assert.equal(replayedDecisionIntent.status, 200, "existing creator decision intent must replay after unlink");
+    assert.equal(replayedDecisionIntent.body.anchor.expectedSignerAddress.toLowerCase(), replayedDecisionIntent.signer.toLowerCase());
+
+    const differentKeyReusesDecisionIntent = await creatorPage.evaluate(async (id) => {
+      const response = await fetch("/api/contributions/" + id + "/decision/provenance/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: "123e4567-e89b-42d3-a456-426614174004" })
+      });
+      return { status: response.status, body: await response.json() };
+    }, firstId);
+    assert.equal(differentKeyReusesDecisionIntent.status, 200, "one decision intent per contribution is replayable after unlink");
+    assert.equal(differentKeyReusesDecisionIntent.body.anchor.id, decisionIntent.body.anchor.id);
+
     await creatorPage.goto(`${baseUrl}/works/${slug}`);
     const publicContribution = creatorPage.locator(".public-contribution-link").filter({ hasText: firstTitle });
     await publicContribution.waitFor({ state: "visible", timeout: 10_000 });
+    await creatorPage.getByText("STORY PROVENANCE").waitFor();
+    await creatorPage.getByText("MAINNET · VERIFIED").first().waitFor();
+    await creatorPage.getByText("LOCAL", { exact: true }).first().waitFor();
+    await creatorPage.getByText("Contribution anchor").waitFor();
+    await creatorPage.getByText("Creator decision anchor").waitFor();
     await contributorPage.goto(`${baseUrl}/works/${slug}/contributions/${firstId}`);
     await contributorPage.getByRole("heading", { name: firstTitle }).waitFor();
+    await contributorPage.getByText("PROVENANCE EVIDENCE").waitFor();
+    await contributorPage.getByText("MAINNET · VERIFIED").first().waitFor();
+    await contributorPage.getByText("LOCAL", { exact: true }).first().waitFor();
+    await contributorPage.getByText("Contribution", { exact: true }).waitFor();
+    await contributorPage.getByText("Creator decision").waitFor();
 
     // A second pending submission becomes stale when the creator publishes a new source version.
     const secondTitle = "E2E Pending Submission";

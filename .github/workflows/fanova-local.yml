@@ -97,6 +97,7 @@ jobs:
           DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
           BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
           BETTER_AUTH_URL: http://localhost:3000
+          FANOVA_PROVENANCE_CONTRACT: "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880"
 
       - name: Start platform development server for end-to-end tests
         working-directory: apps/platform
@@ -107,6 +108,7 @@ jobs:
           DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
           BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
           BETTER_AUTH_URL: http://127.0.0.1:3000
+          FANOVA_PROVENANCE_CONTRACT: "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880"
       - name: Wait for platform and database
         run: |
           for attempt in $(seq 1 60); do
@@ -128,4 +130,6 @@ jobs:
           FANOVA_PLATFORM_LOG: /tmp/fanova-platform.log
           FANOVA_PLATFORM_DIR: ${{ github.workspace }}/apps/platform
           FANOVA_ADMIN_BOOTSTRAP_SCRIPT: ${{ github.workspace }}/apps/platform/scripts/bootstrap-e2e-admin.mjs
+          FANOVA_E2E_PROVENANCE_BOOTSTRAP_SCRIPT: ${{ github.workspace }}/apps/platform/scripts/bootstrap-e2e-provenance.mjs
+          FANOVA_PROVENANCE_CONTRACT: "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880"
           FANOVA_E2E_ADMIN_BOOTSTRAP: "true"

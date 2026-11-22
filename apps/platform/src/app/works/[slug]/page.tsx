@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
+import { keccak256, toBytes } from "viem";
 import { db } from "@/db";
-import { contribution, userProfile, work, workVersion } from "@/db/schema";
+import { contribution, provenanceAnchor, userProfile, work, workVersion } from "@/db/schema";
+import { PublicAnchorEvidence } from "@/components/provenance/public-anchor-evidence";
+import { selectPublicAnchor } from "@/lib/provenance-anchor-selection";
+import { deriveContributionIdentity, deriveStoryIdentity } from "@/lib/provenance-intent";
+import { isAddress, type Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +16,8 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
   const [entry] = await db
     .select({
       id: work.id,
+      versionId: workVersion.id,
       slug: work.slug,
-      ownerUserId: work.ownerUserId,
       title: workVersion.title,
       synopsis: workVersion.synopsis,
       body: workVersion.body,
@@ -39,9 +44,15 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
       type: contribution.type,
       contributorName: userProfile.displayName,
       contributorHandle: userProfile.handle,
-      createdAt: contribution.createdAt
+      createdAt: contribution.createdAt,
+      contentHash: contribution.contentHash,
+      acknowledgedPermissionHash: contribution.acknowledgedPermissionHash,
+      creatorFeedback: contribution.creatorFeedback,
+      sourceHash: workVersion.sourceHash,
+      permissionHash: workVersion.permissionHash
     })
     .from(contribution)
+    .innerJoin(workVersion, eq(contribution.sourceVersionId, workVersion.id))
     .leftJoin(userProfile, eq(contribution.contributorUserId, userProfile.userId))
     .where(and(
       eq(contribution.workId, entry.id),
@@ -50,8 +61,108 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
     ))
     .orderBy(desc(contribution.createdAt))
     .limit(20);
-  return (
-    <main className="shell dashboard-shell">
+
+  const storyAnchorFields = {
+    status: provenanceAnchor.status,
+    transactionHash: provenanceAnchor.transactionHash,
+    blockNumber: provenanceAnchor.blockNumber,
+    verifiedAt: provenanceAnchor.verifiedAt,
+    eventName: provenanceAnchor.eventName,
+    chainId: provenanceAnchor.chainId,
+    contractAddress: provenanceAnchor.contractAddress,
+    expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
+    verificationSnapshot: provenanceAnchor.verificationSnapshot,
+    sourceHash: provenanceAnchor.sourceHash,
+    permissionHash: provenanceAnchor.permissionHash,
+    contributionHash: provenanceAnchor.contributionHash,
+    createdAt: provenanceAnchor.createdAt
+  };
+  const storyFilter = and(
+    eq(provenanceAnchor.workVersionId, entry.versionId),
+    eq(provenanceAnchor.operationType, "work_version")
+  );
+  const [storyVerifiedCountRow] = await db.select({ total: count() }).from(provenanceAnchor)
+    .where(and(storyFilter, eq(provenanceAnchor.status, "mainnet")));
+  const storyVerified = await db.selectDistinctOn([provenanceAnchor.workVersionId], storyAnchorFields)
+    .from(provenanceAnchor)
+    .where(and(storyFilter, eq(provenanceAnchor.status, "mainnet")))
+    .orderBy(provenanceAnchor.workVersionId, desc(provenanceAnchor.createdAt));
+  const storyOther = await db.selectDistinctOn([provenanceAnchor.workVersionId], storyAnchorFields)
+    .from(provenanceAnchor)
+    .where(and(storyFilter, ne(provenanceAnchor.status, "mainnet")))
+    .orderBy(provenanceAnchor.workVersionId, desc(provenanceAnchor.createdAt));
+  const storyAnchors = [...storyVerified, ...storyOther];
+  const storySelection = selectPublicAnchor(storyAnchors, Number(storyVerifiedCountRow?.total ?? 0));
+  // Historical signer identity is immutable on the provenance intent. Do not
+  // derive public proof from the user's mutable currently linked wallet.
+  const storySigner = storySelection.anchor?.expectedSignerAddress ?? null;
+  const storyIdentity = storySigner && isAddress(storySigner)
+    ? deriveStoryIdentity(entry.id, storySigner as Address).storyId
+    : null;
+
+  const contributionAnchorFields = {
+    contributionId: provenanceAnchor.contributionId,
+    operationType: provenanceAnchor.operationType,
+    status: provenanceAnchor.status,
+    transactionHash: provenanceAnchor.transactionHash,
+    blockNumber: provenanceAnchor.blockNumber,
+    verifiedAt: provenanceAnchor.verifiedAt,
+    eventName: provenanceAnchor.eventName,
+    chainId: provenanceAnchor.chainId,
+    contractAddress: provenanceAnchor.contractAddress,
+    expectedSignerAddress: provenanceAnchor.expectedSignerAddress,
+    verificationSnapshot: provenanceAnchor.verificationSnapshot,
+    sourceHash: provenanceAnchor.sourceHash,
+    permissionHash: provenanceAnchor.permissionHash,
+    contributionHash: provenanceAnchor.contributionHash,
+    createdAt: provenanceAnchor.createdAt
+  };
+  const contributionIds = publicContributions.map((item) => item.id);
+  const contributionAnchors = contributionIds.length > 0
+    ? await db.selectDistinctOn([provenanceAnchor.contributionId, provenanceAnchor.operationType], contributionAnchorFields)
+        .from(provenanceAnchor)
+        .where(and(inArray(provenanceAnchor.contributionId, contributionIds), ne(provenanceAnchor.status, "mainnet")))
+        .orderBy(provenanceAnchor.contributionId, provenanceAnchor.operationType, desc(provenanceAnchor.createdAt))
+    : [];
+  const verifiedContributionAnchors = contributionIds.length > 0
+    ? await db.selectDistinctOn([provenanceAnchor.contributionId, provenanceAnchor.operationType], contributionAnchorFields)
+        .from(provenanceAnchor)
+        .where(and(inArray(provenanceAnchor.contributionId, contributionIds), eq(provenanceAnchor.status, "mainnet")))
+        .orderBy(provenanceAnchor.contributionId, provenanceAnchor.operationType, desc(provenanceAnchor.createdAt))
+    : [];
+  const verifiedContributionCounts = contributionIds.length > 0
+    ? await db.select({
+        contributionId: provenanceAnchor.contributionId,
+        operationType: provenanceAnchor.operationType,
+        total: count()
+      }).from(provenanceAnchor)
+        .where(and(inArray(provenanceAnchor.contributionId, contributionIds), eq(provenanceAnchor.status, "mainnet")))
+        .groupBy(provenanceAnchor.contributionId, provenanceAnchor.operationType)
+    : [];
+  const verifiedCountByContribution = new Map(
+    verifiedContributionCounts.map((row) => [`${row.contributionId}:${row.operationType}`, Number(row.total)])
+  );
+  const allContributionAnchors = [...verifiedContributionAnchors, ...contributionAnchors];
+
+  const anchorAttemptsByContribution = new Map<string, {
+    contribution: typeof contributionAnchors;
+    decision: typeof contributionAnchors;
+  }>();
+  for (const anchor of allContributionAnchors) {
+    if (!anchor.contributionId) continue;
+    const current = anchorAttemptsByContribution.get(anchor.contributionId) ?? { contribution: [], decision: [] };
+    if (anchor.operationType === "contribution") current.contribution.push(anchor);
+    if (anchor.operationType === "creator_decision") current.decision.push(anchor);
+    anchorAttemptsByContribution.set(anchor.contributionId, current);
+  }
+
+  const publicAnchor = (anchor: typeof storyAnchors[number] | typeof contributionAnchors[number] | null | undefined) => anchor ? {
+    ...anchor,
+    blockNumber: anchor.blockNumber?.toString() ?? null,
+    verifiedAt: anchor.verifiedAt?.toISOString() ?? null
+  } : null;
+
+  return (    <main className="shell dashboard-shell">
       <header className="topbar">
         <Link className="brand" href="/">FANOVA</Link>
         <nav className="home-nav"><Link href="/discover">Discover</Link><Link href="/dashboard">Workspace</Link></nav>
@@ -74,19 +185,29 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
           </ul>
           {permissions.additionalTerms ? <p className="additional-terms">{permissions.additionalTerms}</p> : null}
         </section>
-        <section className="public-contributions">
-          <p className="eyebrow">COMMUNITY CONTRIBUTIONS</p>
-          {publicContributions.length === 0 ? <p className="field-note">No approved public contributions yet.</p> : publicContributions.map((item) => (
-            <Link className="public-contribution-link" href={`/works/${slug}/contributions/${item.id}`} key={item.id}>
-              <strong>{item.title}</strong><small>{item.type.replace("_", " ")} · {item.contributorName ?? "Contributor"} · @{item.contributorHandle ?? "member"}</small>
-            </Link>
-          ))}
-        </section>
         <section className="proof-reference">
-          <p className="eyebrow">CONTENT INTEGRITY</p>
-          <p>Versioned content hashes are stored with this work. They are not yet anchored on Soneium.</p>
+          <p className="eyebrow">STORY PROVENANCE</p>
+          <p>Only a server-verified Soneium receipt and matching contract event are labelled MAINNET VERIFIED.</p>
+          <PublicAnchorEvidence label="Story version anchor" expectedEvent="StoryVersionRegistered" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(storySelection.anchor)} ambiguous={storySelection.ambiguous} expectedSignerAddress={storySigner} expectedEntityId={storyIdentity} expectedHashes={{ sourceHash: entry.sourceHash, permissionHash: entry.permissionHash }} />
           <code>Source SHA-256: {entry.sourceHash}</code>
           <code>Permissions SHA-256: {entry.permissionHash}</code>
+        </section>
+        <section className="public-contributions">
+          <p className="eyebrow">COMMUNITY CONTRIBUTIONS</p>
+          {publicContributions.length === 0 ? <p className="field-note">No approved public contributions yet.</p> : publicContributions.map((item) => {
+            const attempts = anchorAttemptsByContribution.get(item.id);
+            const contributionSelection = selectPublicAnchor(attempts?.contribution ?? [], verifiedCountByContribution.get(`${item.id}:contribution`));
+            const decisionSelection = selectPublicAnchor(attempts?.decision ?? [], verifiedCountByContribution.get(`${item.id}:creator_decision`));
+            return (
+              <article className="version-row" key={item.id}>
+                <Link className="public-contribution-link" href={`/works/${slug}/contributions/${item.id}`}>
+                  <strong>{item.title}</strong><small>{item.type.replace("_", " ")} · {item.contributorName ?? "Contributor"} · @{item.contributorHandle ?? "member"}</small>
+                </Link>
+                <PublicAnchorEvidence label="Contribution anchor" expectedEvent="ContributionRegistered" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(contributionSelection.anchor)} ambiguous={contributionSelection.ambiguous} expectedSignerAddress={contributionSelection.anchor?.expectedSignerAddress ?? null} expectedEntityId={deriveContributionIdentity(item.id)} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash }} />
+                <PublicAnchorEvidence label="Creator decision anchor" expectedEvent="ContributionDecided" expectedContractAddress={process.env.FANOVA_PROVENANCE_CONTRACT ?? null} anchor={publicAnchor(decisionSelection.anchor)} ambiguous={decisionSelection.ambiguous} expectedSignerAddress={decisionSelection.anchor?.expectedSignerAddress ?? null} expectedEntityId={deriveContributionIdentity(item.id)} expectedHashes={{ sourceHash: item.sourceHash, permissionHash: item.acknowledgedPermissionHash, contributionHash: item.contentHash, reasonCode: keccak256(toBytes(item.creatorFeedback ?? "")) }} />
+              </article>
+            );
+          })}
         </section>
       </article>
     </main>

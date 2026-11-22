@@ -2,10 +2,11 @@ import { and, eq, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { createPublicClient, decodeEventLog, http, isAddress, keccak256, toBytes, type Address, type Hex } from "viem";
 import { db } from "@/db";
-import { contribution, linkedWallet, provenanceAnchor, work, workVersion } from "@/db/schema";
+import { contribution, provenanceAnchor, work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
 import { deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
 import { CREATOR_DECISION_ABI, matchesCreatorDecisionCall, matchesCreatorDecisionEvent } from "@/lib/provenance-submission";
+import { selectUniqueVerifiedAnchor } from "@/lib/provenance-anchor-selection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -132,18 +133,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return fail("TRANSACTION_ENVELOPE_MISMATCH", "Transaction sender, destination, or chain does not match the stored creator decision intent.");
   }
 
-  const [creatorWallet] = await db.select({ address: linkedWallet.address }).from(linkedWallet).where(and(
-    eq(linkedWallet.userId, actor.userId), eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
-  )).limit(1);
-  if (!creatorWallet || !isAddress(creatorWallet.address) ||
-      !sameHex(creatorWallet.address, row.anchor.expectedSignerAddress)) {
-    return fail("CREATOR_WALLET_MISMATCH", "The creator's currently linked Soneium wallet no longer matches this intent.");
-  }
+  // The immutable intent captured the creator signer before the wallet could be
+  // unlinked or replaced. The transaction envelope above must match that signer.
+  const historicalCreatorSigner = row.anchor.expectedSignerAddress as Address;
 
-  const [sourceAnchor] = await db.select().from(provenanceAnchor).where(and(
+  const sourceAnchors = await db.select().from(provenanceAnchor).where(and(
     eq(provenanceAnchor.workVersionId, row.sourceVersionId),
-    eq(provenanceAnchor.operationType, "work_version")
-  )).limit(1);
+    eq(provenanceAnchor.operationType, "work_version"),
+    eq(provenanceAnchor.status, "mainnet")
+  )).limit(2);
+  const sourceAnchor = selectUniqueVerifiedAnchor(sourceAnchors);
   const sourceSnapshot = sourceAnchor?.verificationSnapshot;
   const sourceVersion = sourceSnapshot?.sourceVersion ?? (row.versionNumber === 1 ? 1 : null);
   const permissionVersion = sourceSnapshot?.permissionVersion ?? (row.versionNumber === 1 ? 1 : null);
@@ -157,10 +156,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return fail("SOURCE_STORY_ANCHOR_INVALID", "The exact source story version is not confirmed under this creator wallet.");
   }
 
-  const [registeredContribution] = await db.select().from(provenanceAnchor).where(and(
+  const contributionAnchors = await db.select().from(provenanceAnchor).where(and(
     eq(provenanceAnchor.contributionId, row.contributionId),
-    eq(provenanceAnchor.operationType, "contribution")
-  )).limit(1);
+    eq(provenanceAnchor.operationType, "contribution"),
+    eq(provenanceAnchor.status, "mainnet")
+  )).limit(2);
+  const registeredContribution = selectUniqueVerifiedAnchor(contributionAnchors);
   if (!registeredContribution || registeredContribution.status !== "mainnet" ||
       registeredContribution.chainId !== FANOVA_CHAIN_ID ||
       !sameHex(registeredContribution.contractAddress, row.anchor.contractAddress) ||
@@ -182,7 +183,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return fail("CALLDATA_MISMATCH", "Transaction calldata does not match the expected contribution decision and reason hash.");
   }
 
-  const storyIdentity = deriveStoryIdentity(row.workId, creatorWallet.address as Address);
+  const storyIdentity = deriveStoryIdentity(row.workId, historicalCreatorSigner);
   let matchingLog: (typeof receipt.logs)[number] | undefined;
   for (const log of receipt.logs) {
     if (!sameHex(log.address, row.anchor.contractAddress)) continue;
@@ -192,7 +193,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         contributionId: contributionIdentity,
         storyId: storyIdentity.storyId,
         sourceVersion: BigInt(sourceVersion),
-        reviewer: creatorWallet.address as Address,
+        reviewer: historicalCreatorSigner,
         approved,
         reasonCode
       })) {
