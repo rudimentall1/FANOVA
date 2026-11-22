@@ -215,3 +215,29 @@ This section supersedes earlier PR head and CI status references above where the
   - Hash normalization fix: `f4203495d87e10a6011749124fad197428d3a7dd`
 - CI runs #452, #453, and #454 were triggered; #454 is the latest-code run and must pass before acceptance.
 - The finding is source-derived; no production anchor rows were inspected. The synthetic regression test does not replace a read-only check against real persisted Mainnet records. P1.6 remains OPEN.
+
+
+### Synthetic persisted-anchor and wallet-unlink intent replay E2E — implementation in progress (2026-11-22)
+
+- Added an isolated GitHub Actions-only fixture script, `apps/platform/scripts/bootstrap-e2e-provenance.mjs`. It refuses to run unless the process is in GitHub Actions, the E2E bootstrap flag is enabled, and the database host/path are the local `fanova` CI database.
+- The fixture seeds a complete synthetic Story anchor and creator wallet, seeds a contributor wallet, promotes the newly created Contribution intent to a synthetic verified Contribution anchor, and can remove a test user's linked wallet. It performs no RPC calls or Mainnet writes.
+- Extended `apps/web/platform-e2e.test.js` to exercise:
+  - create a Contribution intent with a linked wallet;
+  - remove the linked wallet and recover the same intent with the same idempotency key;
+  - confirm a new Contribution intent is rejected while the wallet is absent;
+  - create a Creator Decision intent after seeding its verified Story and Contribution prerequisites;
+  - remove the creator wallet and recover the same decision intent;
+  - verify a different idempotency key still resolves to the one-per-contribution decision intent;
+  - render a synthetic persisted Story and Contribution proof as `MAINNET · VERIFIED`, while the unsubmitted decision intent remains `LOCAL · NOT ANCHORED`.
+- The synthetic fixture uses a test-only contract configuration and fake transaction hashes in the isolated CI database. It is explicitly not a real Mainnet transaction or production evidence.
+- Added workflow environment wiring for the canonical test contract and fixture script. The contract address must be quoted as a YAML string; the first workflow attempt had no jobs due to the unquoted value and is superseded by the corrected workflow commit.
+- Latest relevant commits include:
+  - fixture script: `c13d9a3632640b7bba62c45dab8d470b9de8ffc8` and `a72cb1ca7ad32644c479bf8f7a32a365ac35d4e4`
+  - contribution replay E2E: `22d839ffb6dccf03b3fdb47e4b3f60d3e6eb3c79`
+  - creator replay E2E: `95bcfd5c3edfcc5eb095751f261ffbc0c241070a`
+  - isolated signer wiring: `a117a9d667bd5cc437d6cb036189c35ebaafee83`
+  - decision-intent uniqueness assertion: `350a52478e542fefb1bfac598ef2024c1d993c25`
+  - corrected workflow configuration: `6acba70a28b01d5ab90c2a33771cbe16d182f254`
+  - malformed-hash negative test: `13624c09b79a0a0c23f426bf06291fa4ea3db978`
+- CI #468 runs on the corrected workflow configuration; the subsequent latest-head run must include the final E2E and malformed-hash test commits and pass before considering merge.
+- No production DB or Mainnet data was touched. P1.6 remains OPEN.
