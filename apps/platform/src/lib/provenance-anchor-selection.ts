@@ -134,16 +134,20 @@ export function isPublicAnchorVerified(input: {
     } | null;
   } | null | undefined;
   expectedEvent: string;
+  expectedContractAddress: string | null | undefined;
   expectedSignerAddress: string | null | undefined;
   expectedEntityId: string | null | undefined;
   expectedHashes: Record<string, string | null | undefined>;
 }): boolean {
-  const { anchor, expectedEvent, expectedSignerAddress, expectedEntityId, expectedHashes } = input;
+  const { anchor, expectedEvent, expectedContractAddress, expectedSignerAddress, expectedEntityId, expectedHashes } = input;
   if (!anchor) return false;
   const snapshot = anchor.verificationSnapshot;
 
   return anchor.status === "mainnet" &&
     anchor.chainId === 1868 &&
+    typeof expectedContractAddress === "string" &&
+    expectedContractAddress.length > 0 &&
+    anchor.contractAddress.toLowerCase() === expectedContractAddress.toLowerCase() &&
     Boolean(anchor.transactionHash && anchor.blockNumber && anchor.verifiedAt) &&
     anchor.eventName === expectedEvent &&
     snapshot?.chainId === 1868 &&
