@@ -2,7 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { createPublicClient, decodeEventLog, http, isAddress, keccak256, toBytes, type Address, type Hex } from "viem";
 import { db } from "@/db";
-import { contribution, linkedWallet, provenanceAnchor, work, workVersion } from "@/db/schema";
+import { contribution, provenanceAnchor, work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
 import { deriveContributionIdentity, deriveStoryIdentity, FANOVA_CHAIN_ID } from "@/lib/provenance-intent";
 import { CREATOR_DECISION_ABI, matchesCreatorDecisionCall, matchesCreatorDecisionEvent } from "@/lib/provenance-submission";
@@ -133,13 +133,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return fail("TRANSACTION_ENVELOPE_MISMATCH", "Transaction sender, destination, or chain does not match the stored creator decision intent.");
   }
 
-  const [creatorWallet] = await db.select({ address: linkedWallet.address }).from(linkedWallet).where(and(
-    eq(linkedWallet.userId, actor.userId), eq(linkedWallet.chainId, FANOVA_CHAIN_ID)
-  )).limit(1);
-  if (!creatorWallet || !isAddress(creatorWallet.address) ||
-      !sameHex(creatorWallet.address, row.anchor.expectedSignerAddress)) {
-    return fail("CREATOR_WALLET_MISMATCH", "The creator's currently linked Soneium wallet no longer matches this intent.");
-  }
+  // The immutable intent captured the creator signer before the wallet could be
+  // unlinked or replaced. The transaction envelope above must match that signer.
+  const historicalCreatorSigner = row.anchor.expectedSignerAddress as Address;
 
   const sourceAnchors = await db.select().from(provenanceAnchor).where(and(
     eq(provenanceAnchor.workVersionId, row.sourceVersionId),
@@ -187,7 +183,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return fail("CALLDATA_MISMATCH", "Transaction calldata does not match the expected contribution decision and reason hash.");
   }
 
-  const storyIdentity = deriveStoryIdentity(row.workId, creatorWallet.address as Address);
+  const storyIdentity = deriveStoryIdentity(row.workId, historicalCreatorSigner);
   let matchingLog: (typeof receipt.logs)[number] | undefined;
   for (const log of receipt.logs) {
     if (!sameHex(log.address, row.anchor.contractAddress)) continue;
@@ -197,7 +193,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         contributionId: contributionIdentity,
         storyId: storyIdentity.storyId,
         sourceVersion: BigInt(sourceVersion),
-        reviewer: creatorWallet.address as Address,
+        reviewer: historicalCreatorSigner,
         approved,
         reasonCode
       })) {
