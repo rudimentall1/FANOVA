@@ -348,6 +348,8 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await contributorPage.goto(`${baseUrl}/works/${slug}/contributions/${firstId}`);
     await contributorPage.getByRole("heading", { name: firstTitle }).waitFor();
     await contributorPage.getByText("PROVENANCE EVIDENCE").waitFor();
+    await contributorPage.getByText("MAINNET · VERIFIED").first().waitFor();
+    await contributorPage.getByText("LOCAL · NOT ANCHORED").first().waitFor();
     await contributorPage.getByText("Contribution", { exact: true }).waitFor();
     await contributorPage.getByText("Creator decision").waitFor();
 
