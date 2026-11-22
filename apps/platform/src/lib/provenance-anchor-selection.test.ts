@@ -218,6 +218,95 @@ describe("public Mainnet verification predicate", () => {
     expect(isPublicAnchorVerified({ ...input, expectedContractAddress: "0xContract" })).toBe(false);
   });
 
+  it("requires complete entity and hash evidence for a contribution registration anchor", () => {
+    const contributionHashes = {
+      sourceHash: "0xsource",
+      permissionHash: "0xpermission",
+      contributionHash: "0xcontribution"
+    };
+    const contributionAnchor = {
+      ...anchor,
+      eventName: "ContributionRegistered",
+      verificationSnapshot: {
+        ...anchor.verificationSnapshot,
+        eventName: "ContributionRegistered",
+        expectedEntityId: "0xContributionId",
+        observedEntityId: "0xContributionId",
+        expectedHashes: contributionHashes,
+        observedHashes: contributionHashes
+      }
+    };
+    const contributionInput = {
+      ...input,
+      anchor: contributionAnchor,
+      expectedEvent: "ContributionRegistered",
+      expectedEntityId: "0xContributionId",
+      expectedHashes: contributionHashes
+    };
+    expect(isPublicAnchorVerified(contributionInput)).toBe(true);
+    expect(isPublicAnchorVerified({
+      ...contributionInput,
+      anchor: {
+        ...contributionAnchor,
+        verificationSnapshot: {
+          ...contributionAnchor.verificationSnapshot,
+          observedEntityId: "0xOtherContribution"
+        }
+      }
+    })).toBe(false);
+    expect(isPublicAnchorVerified({
+      ...contributionInput,
+      anchor: {
+        ...contributionAnchor,
+        verificationSnapshot: {
+          ...contributionAnchor.verificationSnapshot,
+          observedHashes: { ...contributionHashes, contributionHash: "0xwrong" }
+        }
+      }
+    })).toBe(false);
+  });
+
+  it("requires the creator decision reason hash in historical anchor evidence", () => {
+    const decisionHashes = {
+      sourceHash: "0xsource",
+      permissionHash: "0xpermission",
+      contributionHash: "0xcontribution",
+      reasonCode: "0xreason"
+    };
+    const decisionAnchor = {
+      ...anchor,
+      eventName: "ContributionDecided",
+      verificationSnapshot: {
+        ...anchor.verificationSnapshot,
+        eventName: "ContributionDecided",
+        expectedEntityId: "0xContributionId",
+        observedEntityId: "0xContributionId",
+        expectedHashes: decisionHashes,
+        observedHashes: decisionHashes
+      }
+    };
+    expect(isPublicAnchorVerified({
+      ...input,
+      anchor: decisionAnchor,
+      expectedEvent: "ContributionDecided",
+      expectedEntityId: "0xContributionId",
+      expectedHashes: decisionHashes
+    })).toBe(true);
+    expect(isPublicAnchorVerified({
+      ...input,
+      anchor: {
+        ...decisionAnchor,
+        verificationSnapshot: {
+          ...decisionAnchor.verificationSnapshot,
+          expectedHashes: { ...decisionHashes, reasonCode: "0xwrong" }
+        }
+      },
+      expectedEvent: "ContributionDecided",
+      expectedEntityId: "0xContributionId",
+      expectedHashes: decisionHashes
+    })).toBe(false);
+  });
+
   it("rejects a persisted chain ID mismatch", () => {
     expect(isPublicAnchorVerified({ ...input, anchor: { ...anchor, chainId: 1 } })).toBe(false);
   });
