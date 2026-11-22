@@ -201,3 +201,17 @@ This section supersedes earlier PR head and CI status references above where the
   - Proof predicate regression tests: `51c4706a6573743614068db965321f6a23d31226`
 - CI runs #449 and #450 were triggered for these sequential commits and were in progress when this checkpoint was written. Acceptance requires CI #450 to complete successfully on the latest code head.
 - This is source-level hardening and synthetic unit coverage; it does not demonstrate real persisted Mainnet anchors in production. P1.6 remains OPEN.
+
+
+### Public proof SHA-256 / bytes32 representation mismatch — implementation in progress (2026-11-22)
+
+- A further source review compared the actual Story/Contribution submit snapshots with the public page's authoritative hashes. Persisted SHA-256 values are stored as 64 hex characters without `0x`; the on-chain verification snapshots store their bytes32 values with `0x`. The public proof predicate compared these strings literally, so otherwise-correct verified anchors could be rejected.
+- Added a regression test for matching a raw persisted SHA-256 digest to a 0x-prefixed snapshot digest, including case normalization.
+- `matchesPublicProofHashes` now normalizes optional `0x` prefixes and case, and fails closed unless all authoritative, expected, and observed values are exactly 32-byte hex hashes. Operation-specific key sets remain exact.
+- Updated synthetic proof fixtures to use full 32-byte hashes and to model the real persisted-vs-snapshot representation.
+- Commits:
+  - Reproduction test: `fda011e255131833459c2c2e91dfe3b07f383c3e`
+  - Full bytes32 test fixtures: `2aa51a0599c324d43dffece55b2425bd7c997ca3`
+  - Hash normalization fix: `f4203495d87e10a6011749124fad197428d3a7dd`
+- CI runs #452, #453, and #454 were triggered; #454 is the latest-code run and must pass before acceptance.
+- The finding is source-derived; no production anchor rows were inspected. The synthetic regression test does not replace a read-only check against real persisted Mainnet records. P1.6 remains OPEN.
