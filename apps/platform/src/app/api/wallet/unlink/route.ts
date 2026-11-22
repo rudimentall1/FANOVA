@@ -1,4 +1,5 @@
 import { and, eq, gt, isNull } from "drizzle-orm";
+import { readBodyWithLimit } from "@/lib/wallet-unlink-guards";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { isAddress, type Address, type Hex } from "viem";
@@ -12,7 +13,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const CHAIN_ID = 1868;
-const MAX_BODY_BYTES = 12_000;
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -23,12 +23,12 @@ export async function POST(request: Request) {
 
   let payload: unknown;
   try {
-    const raw = await request.text();
-    if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {
+    const raw = await readBodyWithLimit(request);
+    payload = JSON.parse(raw);
+  } catch (error) {
+    if (error instanceof Error && error.message === "BODY_TOO_LARGE") {
       return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
     }
-    payload = JSON.parse(raw);
-  } catch {
     return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
   }
 
