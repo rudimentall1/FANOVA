@@ -7,7 +7,8 @@ import {
 
 const configuration = {
   apiKey: "re_test_sending_key",
-  from: "FANOVA <no-reply@example.com>"
+  from: "FANOVA <no-reply@example.com>",
+  appOrigin: "https://fanova.example"
 };
 
 function createFetchMock(status = 200) {
@@ -34,7 +35,8 @@ describe("production auth email configuration", () => {
     expect(() => getResendEmailConfiguration({
       NODE_ENV: "production",
       FANOVA_EMAIL_PROVIDER: "resend",
-      RESEND_API_KEY: "re_test_key"
+      RESEND_API_KEY: "re_test_key",
+      BETTER_AUTH_URL: "https://fanova.example"
     })).toThrow("RESEND_API_KEY and a valid FANOVA_EMAIL_FROM");
   });
 
@@ -47,6 +49,26 @@ describe("production auth email configuration", () => {
     })).toThrow("RESEND_API_KEY and a valid FANOVA_EMAIL_FROM");
   });
 
+  it("rejects non-HTTPS production auth base URLs", () => {
+    expect(() => getResendEmailConfiguration({
+      NODE_ENV: "production",
+      FANOVA_EMAIL_PROVIDER: "resend",
+      RESEND_API_KEY: "re_test_key",
+      FANOVA_EMAIL_FROM: "FANOVA <sender@example.com>",
+      BETTER_AUTH_URL: "http://fanova.example"
+    })).toThrow("BETTER_AUTH_URL must be an absolute HTTPS URL");
+  });
+
+  it("rejects production auth base URLs with embedded credentials", () => {
+    expect(() => getResendEmailConfiguration({
+      NODE_ENV: "production",
+      FANOVA_EMAIL_PROVIDER: "resend",
+      RESEND_API_KEY: "re_test_key",
+      FANOVA_EMAIL_FROM: "FANOVA <sender@example.com>",
+      BETTER_AUTH_URL: "https://user:password@fanova.example"
+    })).toThrow("BETTER_AUTH_URL must not contain credentials");
+  });
+
   it("reports the development sink, configured production provider, and missing setup", () => {
     expect(getAuthEmailDeliveryStatus({ NODE_ENV: "development" })).toBe("development-sink");
     expect(getAuthEmailDeliveryStatus({ NODE_ENV: "production" })).toBe("unconfigured");
@@ -54,7 +76,8 @@ describe("production auth email configuration", () => {
       NODE_ENV: "production",
       FANOVA_EMAIL_PROVIDER: "resend",
       RESEND_API_KEY: "re_test_key",
-      FANOVA_EMAIL_FROM: "FANOVA <sender@example.com>"
+      FANOVA_EMAIL_FROM: "FANOVA <sender@example.com>",
+      BETTER_AUTH_URL: "https://fanova.example"
     })).toBe("resend");
   });
 });
@@ -85,6 +108,16 @@ describe("Resend auth email delivery", () => {
     expect(body.html).toContain("&lt;img src=x onerror=&quot;alert(1)&quot;&gt;");
     expect(body.html).toContain("token=opaque&amp;callbackURL=%2F");
     expect(body.html).not.toContain("<img");
+  });
+
+  it("rejects auth email links whose origin differs from the configured FANOVA origin", async () => {
+    const mock = createFetchMock();
+    await expect(sendAuthEmailWithResend({
+      kind: "verification",
+      to: "creator@example.com",
+      url: "https://attacker.example/verify-email?token=opaque"
+    }, configuration, mock.fetcher)).rejects.toThrow("does not match the configured FANOVA origin");
+    expect(mock.captured).toBeUndefined();
   });
 
   it("uses the password-reset subject and template", async () => {
