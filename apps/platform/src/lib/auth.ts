@@ -60,13 +60,17 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true,
     revokeSessionsOnPasswordReset: true,
-    sendResetPassword: async ({ url, user }) => {\n      scheduleAuthEmail("password-reset", user, url);\n    }
+    sendResetPassword: async ({ url, user }) => {
+      scheduleAuthEmail("password-reset", user, url);
+    }
   },
   emailVerification: {
     sendOnSignUp: true,
     sendOnSignIn: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ url, user }) => {\n      scheduleAuthEmail("verification", user, url);\n    }
+    sendVerificationEmail: async ({ url, user }) => {
+      scheduleAuthEmail("verification", user, url);
+    }
   },
   session: {
     expiresIn: 604800,
