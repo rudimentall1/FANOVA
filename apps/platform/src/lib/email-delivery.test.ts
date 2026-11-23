@@ -127,6 +127,29 @@ describe("Resend auth email delivery", () => {
     expect(mock.captured).toBeUndefined();
   });
 
+  it("derives distinct idempotency keys for different email payloads", async () => {
+    const first = createFetchMock();
+    const second = createFetchMock();
+    const url = "https://fanova.example/verify-email?token=opaque";
+
+    await sendAuthEmailWithResend({
+      kind: "verification",
+      to: "creator@example.com",
+      name: "Creator A",
+      url
+    }, configuration, first.fetcher);
+    await sendAuthEmailWithResend({
+      kind: "verification",
+      to: "creator@example.com",
+      name: "Creator B",
+      url
+    }, configuration, second.fetcher);
+
+    const firstHeaders = first.captured?.init.headers as Record<string, string>;
+    const secondHeaders = second.captured?.init.headers as Record<string, string>;
+    expect(firstHeaders["Idempotency-Key"]).not.toBe(secondHeaders["Idempotency-Key"]);
+  });
+
   it("uses the password-reset subject and template", async () => {
     const mock = createFetchMock();
     await sendAuthEmailWithResend({
