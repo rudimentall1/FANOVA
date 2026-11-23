@@ -41,6 +41,20 @@ Merged as `6c81bcf52711122b4f10938eceff10a944f85c81`.
 - Exact PR acceptance run [CI #543](https://github.com/rudimentall1/FANOVA/actions/runs/45129624903) passed the full workflow, including 14 platform test files / 109 unit tests, TypeScript, migration drift check and apply, Better Auth schema validation, production build, and multi-account Chromium browser E2E.
 - The automated Codex code-review status still showed `running` without a submitted review when the PR was merged. I manually inspected the changed workflow, SQL baseline, schema snapshot, package manifests and lockfiles. CI passed, no review threads/findings were present, but this is not an independent security audit or third-party certification.
 
+## PR #50 — reproducible PostgreSQL migrations and dependency graph
+
+Merged as `6c81bcf52711122b4f10938eceff10a944f85c81`.
+
+- Initial Drizzle/PostgreSQL migration baseline for the current 14-table schema is checked in at `apps/platform/drizzle/0000_stale_mesmero.sql`, with matching version-7 snapshot and journal metadata.
+- The CI flow uses `npm ci` from committed lockfiles in both `apps/platform` and `apps/web`.
+- CI generates Drizzle migrations and fails if schema changes are not committed under `apps/platform/drizzle/`; it then applies the committed migration chain to the disposable CI PostgreSQL 16 service before Better Auth schema validation, production build and multi-account browser E2E.
+- Better Auth CLI is pinned to `auth@1.7.27`; Drizzle Kit is pinned to `0.31.11`; Vitest is upgraded to `5.1.1`.
+- A bounded `esbuild@0.28.2` npm override removes vulnerable old esbuild resolutions from the deprecated Drizzle Kit `@esbuild-kit` toolchain. The accepted PR run's audit reported zero vulnerabilities in both full and production dependency graphs. Revisit the override after upstream Drizzle Kit removes the deprecated loader.
+- The workflow blocks high and critical npm audit findings. It prints moderate findings for visibility but does not fail on moderate-only results.
+- The migration is a baseline for a new, empty PostgreSQL database. It is not permission to apply this migration to an existing database without a separately reviewed baseline-adoption procedure.
+- Exact PR acceptance run [CI #543](https://github.com/rudimentall1/FANOVA/actions/runs/45129624903) passed the full workflow, including 14 platform test files / 109 unit tests, TypeScript, migration drift check and apply, Better Auth schema validation, production build, and multi-account Chromium browser E2E.
+- The automated Codex review status still showed `running` without a submitted review when the PR was merged. I manually inspected the changed workflow, SQL baseline, schema snapshot, package manifests and lockfiles. CI passed, no review threads/findings were present, but this is not an independent security audit or third-party certification.
+
 ## PR #48 — production authentication email adapter
 
 Merged implementation details:
