@@ -79,6 +79,13 @@ describe("production auth email configuration", () => {
       FANOVA_EMAIL_FROM: "FANOVA <sender@example.com>",
       BETTER_AUTH_URL: "https://fanova.example"
     })).toBe("resend");
+    expect(getAuthEmailDeliveryStatus({
+      NODE_ENV: "production",
+      FANOVA_EMAIL_PROVIDER: "resend",
+      RESEND_API_KEY: "re_test_key",
+      FANOVA_EMAIL_FROM: "FANOVA <sender@example.com>",
+      BETTER_AUTH_URL: "http://fanova.example"
+    })).toBe("unconfigured");
   });
 });
 
