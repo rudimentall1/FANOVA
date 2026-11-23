@@ -9,7 +9,7 @@ This is the current handoff snapshot after PR #48. It supersedes older status su
 - PR #48 squash merge commit: `a983bfb180a2ca7300df85528b86521a544fbeae`
 - Code base at this checkpoint: `main` at `a983bfb180a2ca7300df85528b86521a544fbeae`. This checkpoint is being added in a separate docs-only PR.
 - PR #48 full workflow: [CI #517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095), SUCCESS on head `9bdc98b38b35e0e997c1671725aea52c0435aeb0`.
-- At the moment this file was prepared, post-merge main runs [platform CI #518](https://github.com/rudimentall1/FANOVA/actions/runs/45119442153) and [Soneium read-only check #56](https://github.com/rudimentall1/FANOVA/actions/runs/45119442148) had been queued. Do not count them as successful until their final conclusions are checked.
+- Post-merge Soneium read-only deployment check [#56](https://github.com/rudimentall1/FANOVA/actions/runs/45119442148) completed SUCCESS against this code merge. Main platform CI [#518](https://github.com/rudimentall1/FANOVA/actions/runs/45119442153) was still in progress when this checkpoint was prepared; check its final conclusion before treating the merge as fully green.
 
 ## Shipped platform capabilities
 
