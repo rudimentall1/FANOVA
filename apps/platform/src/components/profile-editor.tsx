@@ -48,7 +48,7 @@ export function ProfileEditor({ initialProfile, canPublishProfile }: { initialPr
       <div>
         <p className="eyebrow">{canPublishProfile ? "PUBLIC CREATOR PROFILE" : "PROFILE VISIBILITY"}</p>
         <h2>{canPublishProfile ? "Edit your creator profile" : "Edit your profile"}</h2>
-        <p className="field-note">{canPublishProfile ? "Your handle is your public profile URL. Keep your bio focused on your work and creative interests." : "Your name and bio can appear beside public contributions when visibility is enabled."}</p>
+        <p className="field-note">{canPublishProfile ? "Your handle is your public profile URL. Keep your bio focused on your work and creative interests." : "Your display name and handle can appear beside public contributions when visibility is enabled."}</p>
       </div>
       <form className="auth-form" onSubmit={submit}>
         <label htmlFor="profile-handle">Public handle</label>
