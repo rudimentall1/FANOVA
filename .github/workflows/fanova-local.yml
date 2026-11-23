@@ -74,11 +74,23 @@ jobs:
       - name: Run platform authorization tests
         working-directory: apps/platform
         run: npm test
-      - name: Generate and apply PostgreSQL migrations
+      - name: Generate PostgreSQL migrations
         working-directory: apps/platform
-        run: |
-          npm run db:generate
-          npm run db:migrate
+        run: npm run db:generate
+        env:
+          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+          BETTER_AUTH_URL: http://localhost:3000
+      - name: Preserve generated Drizzle migration baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: fanova-drizzle-generated-${{ github.run_id }}
+          path: apps/platform/drizzle/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Apply PostgreSQL migrations
+        working-directory: apps/platform
+        run: npm run db:migrate
         env:
           DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
           BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
