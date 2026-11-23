@@ -30,7 +30,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
     })
     .from(work)
     .innerJoin(workVersion, eq(work.currentVersionId, workVersion.id))
-    .leftJoin(userProfile, eq(work.ownerUserId, userProfile.userId))
+    .leftJoin(userProfile, and(eq(work.ownerUserId, userProfile.userId), eq(userProfile.isPublic, true)))
     .where(and(eq(work.slug, slug), eq(work.status, "published")))
     .limit(1);
 
@@ -53,7 +53,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
     })
     .from(contribution)
     .innerJoin(workVersion, eq(contribution.sourceVersionId, workVersion.id))
-    .leftJoin(userProfile, eq(contribution.contributorUserId, userProfile.userId))
+    .leftJoin(userProfile, and(eq(contribution.contributorUserId, userProfile.userId), eq(userProfile.isPublic, true)))
     .where(and(
       eq(contribution.workId, entry.id),
       eq(contribution.status, "approved"),
@@ -171,7 +171,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
         <p className="eyebrow">CREATOR-PUBLISHED WORK · VERSION {entry.versionNumber}</p>
         <h1>{entry.title}</h1>
         <p className="work-synopsis">{entry.synopsis}</p>
-        <p className="creator-byline">By {entry.creatorName ?? "FANOVA creator"} · @{entry.creatorHandle ?? "creator"}</p>
+        {entry.creatorHandle ? <p className="creator-byline">By {entry.creatorName} · <Link href={`/creators/${entry.creatorHandle}`}>@{entry.creatorHandle}</Link></p> : <p className="creator-byline">By FANOVA creator</p>}
         <Link className="primary-button button-link" href={`/works/${slug}/contribute`}>Submit a contribution</Link>
         <div className="work-body">{entry.body.split("\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
         <section className="permission-panel">
