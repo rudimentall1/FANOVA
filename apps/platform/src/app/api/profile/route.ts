@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { userProfile } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
 import { updateProfileSchema } from "@/lib/profile-validation";
+import { readBodyWithLimit } from "@/lib/wallet-unlink-guards";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,12 +18,11 @@ export async function PATCH(request: Request) {
 
   let payload: unknown;
   try {
-    const rawBody = await request.text();
-    if (new TextEncoder().encode(rawBody).byteLength > 8_000) {
+    payload = JSON.parse(await readBodyWithLimit(request, 8_000));
+  } catch (error) {
+    if (error instanceof Error && error.message === "BODY_TOO_LARGE") {
       return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
     }
-    payload = JSON.parse(rawBody);
-  } catch {
     return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
   }
 
