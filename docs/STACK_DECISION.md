@@ -62,3 +62,13 @@ This is an implementation stack decision, not evidence that authentication, pers
 - `/api/health` reports whether the email environment is configured, but does not probe the provider or verify the sender domain.
 - No durable queue, automatic retry, bounce/complaint processing, or delivery audit exists. A successful API response is not proof that a message reached the recipient's inbox.
 - Before production acceptance, verify a sending-only key and sender domain, perform real end-to-end verification and password-reset delivery tests, confirm runtime support for post-response tasks, and review provider privacy/retention. No live email was sent in CI.
+
+
+## PostgreSQL migration baseline and dependency reproducibility — 2026-11-23
+
+- `apps/platform/drizzle/0000_stale_mesmero.sql` is the initial Drizzle PostgreSQL baseline for the current 14-table schema, its enums, foreign keys and indexes. The matching snapshot and migration journal are checked in.
+- CI generates migrations before applying them. If generation changes the `drizzle/` tree without corresponding committed migration files, the job fails. The ephemeral PostgreSQL service then applies the committed migration set before Better Auth schema verification, build, and multi-account E2E.
+- `apps/platform/package-lock.json` and `apps/web/package-lock.json` pin the CLI, test, browser, and application dependency graphs. CI will use `npm ci` once final lockfiles are recorded.
+- `drizzle-kit` currently has a deprecated transitive `@esbuild-kit` dependency. A bounded npm override pins all esbuild resolutions to `0.28.2`; this is a development-toolchain workaround until upstream removes the old dependency. It must be revisited on a supported Drizzle Kit release.
+- This migration baseline targets a new, empty PostgreSQL database. It is not permission to apply the baseline to an existing database or infer production schema state. Any existing database would require an explicit, reviewed baseline-adoption procedure before migration execution.
+- No production database was provisioned, read, or modified by this work.
