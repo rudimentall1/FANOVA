@@ -74,23 +74,17 @@ jobs:
       - name: Run platform authorization tests
         working-directory: apps/platform
         run: npm test
-      - name: Generate PostgreSQL migrations
+      - name: Check Drizzle migration drift and apply versioned migrations
         working-directory: apps/platform
-        run: npm run db:generate
-        env:
-          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
-          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
-          BETTER_AUTH_URL: http://localhost:3000
-      - name: Preserve generated Drizzle migration baseline
-        uses: actions/upload-artifact@v4
-        with:
-          name: fanova-drizzle-generated-${{ github.run_id }}
-          path: apps/platform/drizzle/
-          if-no-files-found: error
-          retention-days: 7
-      - name: Apply PostgreSQL migrations
-        working-directory: apps/platform
-        run: npm run db:migrate
+        run: |
+          npm run db:generate
+          if [ -n "$(git status --porcelain -- drizzle)" ]; then
+            echo "Drizzle schema changed without a committed migration."
+            echo "Run npm run db:generate and commit the generated files under apps/platform/drizzle/."
+            git status --short -- drizzle
+            exit 1
+          fi
+          npm run db:migrate
         env:
           DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
           BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
@@ -147,33 +141,3 @@ jobs:
           FANOVA_E2E_PROVENANCE_BOOTSTRAP_SCRIPT: ${{ github.workspace }}/apps/platform/scripts/bootstrap-e2e-provenance.mjs
           FANOVA_PROVENANCE_CONTRACT: "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880"
           FANOVA_E2E_ADMIN_BOOTSTRAP: "true"
-  persist-drizzle-baseline:
-    if: github.event_name == 'pull_request' && github.event.pull_request.number == 50 && github.event.pull_request.head.ref == 'fix/drizzle-baseline-artifact' && github.event.pull_request.head.repo.full_name == github.repository
-    needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout the PR source branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-      - name: Download the generated Drizzle baseline
-        uses: actions/download-artifact@v4
-        with:
-          name: fanova-drizzle-generated-${{ github.run_id }}
-          path: apps/platform/drizzle
-      - name: Commit the generated migration baseline to PR branch
-        env:
-          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
-        run: |
-          git status --short
-          git add apps/platform/drizzle
-          if git diff --cached --quiet; then
-            echo "No new migration baseline files to commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(db): add generated Drizzle baseline"
-          git push origin "HEAD:${PR_BRANCH}"
