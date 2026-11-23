@@ -235,6 +235,20 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await creatorPage.getByRole("heading", { name: "E2E Public Creator" }).waitFor();
     await creatorPage.getByRole("link", { name: "E2E Story" }).waitFor();
 
+    await creatorPage.goto(`${baseUrl}/discover?fanArt=allowed`);
+    await creatorPage.locator(".catalogue-card").filter({ hasText: "E2E Story" }).waitFor();
+    await creatorPage.goto(`${baseUrl}/discover?translations=allowed`);
+    assert.equal(await creatorPage.locator(".catalogue-card").filter({ hasText: "E2E Story" }).count(), 0, "works that disallow translations must not match the translations filter");
+    await creatorPage.getByText("No published work matches these filters.").waitFor();
+    await creatorPage.goto(`${baseUrl}/discover?q=e2e-creator`);
+    await creatorPage.locator(".catalogue-card").filter({ hasText: "E2E Story" }).waitFor();
+    const apiFilteredCount = await creatorPage.evaluate(async () => {
+      const response = await fetch("/api/works?translations=allowed");
+      const result = await response.json();
+      return result.works.length;
+    });
+    assert.equal(apiFilteredCount, 0, "public works API must apply the same permission filter");
+
     await creatorPage.goto(`${baseUrl}/settings/account`);
     await creatorPage.getByLabel("Show my profile publicly").uncheck();
     await creatorPage.getByRole("button", { name: "Save profile" }).click();
