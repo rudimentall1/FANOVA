@@ -35,5 +35,8 @@
     "drizzle-kit": "0.31.11",
     "typescript": "^5.9.3",
     "vitest": "5.1.1"
+  },
+  "overrides": {
+    "esbuild": "0.28.2"
   }
 }
