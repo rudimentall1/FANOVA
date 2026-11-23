@@ -317,7 +317,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await secondSessionPage.getByLabel("Email").fill(contributorEmail);
     await secondSessionPage.getByLabel("Password").fill(password);
     await secondSessionPage.getByRole("button", { name: "Sign in" }).click();
-    await secondSessionPage.waitForURL(/\\/dashboard$/, { timeout: 15_000 });
+    await secondSessionPage.waitForURL((url) => url.pathname === "/dashboard", { timeout: 15_000 });
     const secondSessionChallengeStatus = await secondSessionPage.evaluate(async () => {
       const response = await fetch("/api/wallet/unlink/challenge", { method: "POST" });
       return response.status;
