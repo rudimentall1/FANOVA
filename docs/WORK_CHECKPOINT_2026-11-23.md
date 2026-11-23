@@ -11,7 +11,7 @@ This is the current handoff snapshot after PR #50. It supersedes older status su
 - PR #50 full workflow: [CI #543](https://github.com/rudimentall1/FANOVA/actions/runs/45129624903), SUCCESS on exact PR head `4380b5707e67c2db6767c0ec9ea50b7945adbdd0`.
 - PR #48 auth-email adapter remains merged as `a983bfb180a2ca7300df85528b86521a544fbeae`; its CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095) passed.
 - Post-merge Soneium read-only deployment check [#58](https://github.com/rudimentall1/FANOVA/actions/runs/45130224697) completed SUCCESS against the PR #50 merge.
-- Post-merge main platform CI [#544](https://github.com/rudimentall1/FANOVA/actions/runs/45130224659) was still running when this checkpoint update was prepared; check the final conclusion before treating the merge as fully green.
+- Post-merge main platform CI [#544](https://github.com/rudimentall1/FANOVA/actions/runs/45130224659) completed SUCCESS against merge commit `6c81bcf52711122b4f10938eceff10a944f85c81`.
 
 ## Shipped platform capabilities
 
@@ -127,7 +127,7 @@ Internal target for the Sony application/demo is December 15, 2026. Do not prese
 
 ## Next execution order
 
-1. Soneium read-only check #58 is confirmed SUCCESS after PR #50's merge. Main CI #544 was pending at checkpoint preparation; verify its final result.
+1. Main CI #544 and Soneium read-only check #58 are both confirmed SUCCESS against the PR #50 merge commit.
 2. Prepare a provider-portable production container/deployment path and documented migration/release procedure without provisioning infrastructure.
 3. Compare hosting/database options, regions, backup/restore, privacy, runtime compatibility for Next.js `after()`, and total operating cost.
 4. Only after the user approves a provider and the required secrets/domain exist: deploy, perform real email tests, and verify persisted anchors read-only.
