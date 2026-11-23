@@ -16,7 +16,7 @@ Build the multi-user application as a separate TypeScript application under `app
 | Authentication | Better Auth with its PostgreSQL/Drizzle adapter | Maintained email/password, verification, recovery, and session primitives; avoid custom password/session implementation |
 | Validation | Zod at server boundaries | Parse and validate untrusted form and API input before domain transitions |
 | File storage | Storage adapter interface; local filesystem for development | Keep story/media bytes offchain and avoid binding the application to a cloud vendor before hosting is selected |
-| Email | Mailer adapter; development mail sink | Exercise verification and recovery locally without sending real email or requiring credentials |
+| Email | Mailer adapter; development mail sink + optional Resend HTTP driver | Keep local development credential-free while providing a server-side production integration without adding an SDK dependency |
 | Tests | Vitest for domain/server logic; Playwright for browser journeys | Verify authorization and real multi-account flows, not just UI rendering |
 | Local database | PostgreSQL through Docker Compose | Reproducible development and integration tests |
 
@@ -52,3 +52,13 @@ Build the multi-user application as a separate TypeScript application under `app
 ## Consequences and limitations
 
 This is an implementation stack decision, not evidence that authentication, persistence, email, storage, or deployment already work. The production email provider, object-storage provider, hosting platform, region, backups, and operational monitoring remain open. No production service is assumed free or suitable until verified.
+
+
+## Production auth email adapter — 2026-11-23
+
+- Added an optional Resend HTTP driver for Better Auth verification and password-reset messages. It is selected explicitly with `FANOVA_EMAIL_PROVIDER=resend`; `RESEND_API_KEY` and `FANOVA_EMAIL_FROM` are required.
+- This is an implementation adapter, not a final production-provider or paid-plan selection. No Resend account, API key, sender domain, or live message has been configured.
+- Production callbacks use Next.js `after()` to avoid delaying authentication responses. Requests have a 10-second timeout, use an idempotency key derived from the message kind/recipient/URL, escape HTML content, and log sanitized failure details only.
+- `/api/health` reports whether the email environment is configured, but does not probe the provider or verify the sender domain.
+- No durable queue, automatic retry, bounce/complaint processing, or delivery audit exists. A successful API response is not proof that a message reached the recipient's inbox.
+- Before production acceptance, verify a sending-only key and sender domain, perform real end-to-end verification and password-reset delivery tests, confirm runtime support for post-response tasks, and review provider privacy/retention. No live email was sent in CI.
