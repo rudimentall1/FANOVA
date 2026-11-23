@@ -59,12 +59,12 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
       ) : (
         <section className="catalogue-grid">
           {rows.map((entry) => (
-            <Link className="catalogue-card" href={`/works/${entry.slug}`} key={entry.slug}>
+            <article className="catalogue-card" key={entry.slug}>
               <span className="eyebrow">ORIGINAL WORK</span>
-              <h2>{entry.title}</h2>
+              <h2><Link href={`/works/${entry.slug}`}>{entry.title}</Link></h2>
               <p>{entry.synopsis}</p>
               {entry.creatorHandle ? <small>By {entry.creatorName} · <Link href={`/creators/${entry.creatorHandle}`}>@{entry.creatorHandle}</Link></small> : <small>By FANOVA creator</small>}
-            </Link>
+            </article>
           ))}
         </section>
       )}
