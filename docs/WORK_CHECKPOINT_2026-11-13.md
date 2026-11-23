@@ -2,6 +2,8 @@
 
 This checkpoint records the repository state after CI run #397 and the follow-up schema/query review for PR #40. It is a handoff document; it does not claim that open acceptance gates are complete.
 
+> **Historical note:** this file preserves the November 13 implementation history. For the current November 23 state, use [WORK_CHECKPOINT_2026-11-23.md](WORK_CHECKPOINT_2026-11-23.md), which supersedes stale status summaries below.
+
 ## Current objective
 
 Complete the public, inspectable Story → Contribution → Creator Decision provenance path in the multi-user FANOVA platform, then close the P1.6 acceptance gate only after the relevant PRs are reviewed and the complete journey is verified.
@@ -293,9 +295,9 @@ This section supersedes earlier PR head and CI status references above where the
 
 ### Current delivery status — 2026-11-23
 
-- P1.5/P1.6 implementation has reached an integrated CI-tested slice: account/creator/contributor workflows, wallet linking and signed unlink, server-backed provenance intents, strict public proof rendering, and wallet-unlink protection are integrated and covered by isolated synthetic PostgreSQL + browser tests.
+- P1.5 implementation now includes account/creator/contributor workflows, wallet linking and signed unlink, server-backed provenance intents, strict public proof rendering, public creator profiles, permission-based Discover filters, and an optional production auth-email adapter. These features pass isolated synthetic PostgreSQL + browser CI; that evidence is not production verification.
 - P1.6 remains **OPEN** pending read-only verification of real production-persisted Mainnet anchors and an independent third-party security review.
-- P1.5 remains **OPEN** pending public creator profile editing, richer discovery filters, production hosting/persistence and clean-browser journey verification, plus outsider review.
+- P1.5 remains **OPEN** pending production hosting/persistence, production email configuration and live delivery verification, a clean-browser journey against the deployed service, and independent outsider review. Public creator profiles and permission-based Discover filters are delivered; genre/category filters remain future scope.
 - P2 remains **PARTIALLY OPEN**: Mainnet contract deployment and one recorded user-approved end-to-end provenance bundle exist, but source/build equivalence, a fresh original-bundle HISTORY VERIFIED run, and final security checklist/due diligence remain outstanding.
 - P3 pilot work has not been completed: no permissioned original-IP pilot or creator/fan feedback has been recorded.
 - P4 Sony application/demo package remains incomplete: founder-specific questionnaire answers, final demo, evidence review, and outsider review remain outstanding.
@@ -311,4 +313,4 @@ This section supersedes earlier PR head and CI status references above where the
 - Privacy behavior: hidden profiles are excluded from public creator pages and public work/contribution bylines; hiding a profile does not unpublish its works. Non-creators can control whether their name/handle appears on public contributions but are not shown a creator-profile URL before creator access is granted.
 - Browser E2E covers creator profile edit → public profile and published work display → profile hide → 404 while work remains public; it also verifies a reader does not see an unavailable creator URL.
 - No schema migration or Mainnet interaction was required. CI uses isolated PostgreSQL test data.
-- Richer structured discovery filters remain open. P1.5 remains OPEN pending production hosting/persistence and clean-browser verification, structured discovery, and outsider review.
+- Permission-based Discover filters were subsequently delivered in PR #47; genre/category filters remain future scope. PR #48 adds an optional Resend auth-email adapter, but no provider account, credentials, verified sender domain or live email delivery has been configured. P1.5 remains OPEN pending production hosting/persistence, live email delivery verification, deployed clean-browser verification and outsider review.
