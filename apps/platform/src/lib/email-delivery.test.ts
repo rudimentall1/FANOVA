@@ -124,15 +124,14 @@ describe("Resend auth email delivery", () => {
       throw new Error("request contained a secret token");
     }) as typeof fetch;
 
-    await expect(sendAuthEmailWithResend({
+    const error = await sendAuthEmailWithResend({
       kind: "verification",
       to: "creator@example.com",
       url: "https://fanova.example/verify-email?token=secret-token"
-    }, configuration, fetcher)).rejects.toThrow("network or timeout");
-    await expect(sendAuthEmailWithResend({
-      kind: "verification",
-      to: "creator@example.com",
-      url: "https://fanova.example/verify-email?token=secret-token"
-    }, configuration, fetcher)).rejects.not.toThrow("secret-token");
+    }, configuration, fetcher).then(() => null, (caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain("network or timeout");
+    expect((error as Error).message).not.toContain("secret-token");
   });
 });
