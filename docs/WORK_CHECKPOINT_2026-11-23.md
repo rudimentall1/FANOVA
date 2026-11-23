@@ -9,19 +9,22 @@ This is the current handoff snapshot after PR #48. It supersedes older status su
 - PR #48 squash merge commit: `a983bfb180a2ca7300df85528b86521a544fbeae`
 - Code base at this checkpoint: `main` at `a983bfb180a2ca7300df85528b86521a544fbeae`. This checkpoint is being added in a separate docs-only PR.
 - PR #48 full workflow: [CI #517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095), SUCCESS on head `9bdc98b38b35e0e997c1671725aea52c0435aeb0`.
-- Post-merge Soneium read-only deployment check [#56](https://github.com/rudimentall1/FANOVA/actions/runs/45119442148) completed SUCCESS against this code merge. Main platform CI [#518](https://github.com/rudimentall1/FANOVA/actions/runs/45119442153) was still in progress when this checkpoint was prepared; check its final conclusion before treating the merge as fully green.
+- Post-merge Soneium read-only deployment check [#56](https://github.com/rudimentall1/FANOVA/actions/runs/45119442148) completed SUCCESS against this code merge.
+- Post-merge main platform CI [#518](https://github.com/rudimentall1/FANOVA/actions/runs/45119442153) completed SUCCESS against the same code merge.
 
 ## Shipped platform capabilities
 
-The following are implemented and merged:
+Evidence labels below follow `AGENTS.md`: `LOCAL`, `MAINNET`, and `INDEPENDENTLY VERIFIED` are distinct states. A green isolated CI run is local test evidence, not production proof.
 
-- Multi-account registration, sign-in, verification and password-recovery flows; role-separated reader, creator, contributor and administrator workflows.
-- Creator-controlled work publication, version history, explicit permitted-use rules, contribution submission and review, public contribution visibility, and stale-contribution handling.
-- Signed wallet linking and unlinking with short-lived, single-use, account-scoped challenges and challenge-rate limits.
-- Server-backed provenance intents and public Story/Contribution proof rendering with strict checks for chain, canonical contract, transaction/block, event, signer, identity and exact operation hashes.
-- Public creator profiles, privacy-aware public bylines and creator identity search: [PR #44](https://github.com/rudimentall1/FANOVA/pull/44), CI [#498](https://github.com/rudimentall1/FANOVA/actions/runs/45116195818).
-- Discover filters for fan art, translations, adaptations and commercial use, applied consistently to the page and public API: [PR #47](https://github.com/rudimentall1/FANOVA/pull/47), CI [#504](https://github.com/rudimentall1/FANOVA/actions/runs/45117076740). Genre/category filters remain future scope.
-- Optional production authentication email adapter for Better Auth verification and password reset: [PR #48](https://github.com/rudimentall1/FANOVA/pull/48), CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095).
+- **LOCAL** — Multi-account registration, sign-in, email verification/password recovery and role-separated reader, creator, contributor and administrator workflows pass isolated PostgreSQL + Chromium CI. They have not been exercised against a deployed production service.
+- **LOCAL** — Creator-controlled publication, version history, permitted-use rules, contribution submission/review, public contribution visibility and stale-contribution handling pass isolated browser/DB CI.
+- **LOCAL** — Signed wallet linking/unlinking, account-scoped single-use challenges and challenge-rate limits pass synthetic browser/DB CI. This is not proof of production wallet operations.
+- **LOCAL** — Server-backed provenance intents and public Story/Contribution proof rendering enforce chain, canonical contract, transaction/block, event, signer, identity and exact operation hashes in CI fixtures. The fixtures use fake transaction hashes and isolated synthetic database records; they do not demonstrate production-persisted anchor rows or real Mainnet proof rendering.
+- **LOCAL** — Public creator profiles, privacy-aware bylines and creator identity search pass isolated browser/DB CI: [PR #44](https://github.com/rudimentall1/FANOVA/pull/44), CI [#498](https://github.com/rudimentall1/FANOVA/actions/runs/45116195818).
+- **LOCAL** — Discover filters for fan art, translations, adaptations and commercial use pass isolated page/API parity tests: [PR #47](https://github.com/rudimentall1/FANOVA/pull/47), CI [#504](https://github.com/rudimentall1/FANOVA/actions/runs/45117076740). Genre/category filters remain future scope.
+- **LOCAL** — Optional Resend authentication email adapter for verification/password reset passes mocked provider/configuration tests and application CI: [PR #48](https://github.com/rudimentall1/FANOVA/pull/48), CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095). No production provider account, credentials, sender domain or live delivery is configured.
+- **MAINNET** — A separate user-approved Story → Contribution → Creator Decision smoke-test sequence was submitted on Soneium Mainnet on 2026-10-30. FANOVA's own verifier returned `VERIFIED` for the exact exported bundle after checking its hashes, storage, receipts and events; see [README](../README.md) and [Demo and Evidence](DEMO_AND_EVIDENCE.md). This is a project-run verification of that bundle only, not proof of all production records or a third-party review.
+- **INDEPENDENTLY VERIFIED** — No product capability, production deployment or security posture has been independently certified or audited.
 
 ## PR #48 — production authentication email adapter
 
@@ -95,7 +98,7 @@ Internal target for the Sony application/demo is December 15, 2026. Do not prese
 
 ## Next execution order
 
-1. Re-check main CI #518 and Soneium read-only check #56 after PR #48's merge.
+1. Main CI #518 and Soneium read-only check #56 are confirmed SUCCESS after PR #48's merge.
 2. Prepare a provider-portable production container/deployment path and documented migration/release procedure without provisioning infrastructure.
 3. Compare hosting/database options, regions, backup/restore, privacy, runtime compatibility for Next.js `after()`, and total operating cost.
 4. Only after the user approves a provider and the required secrets/domain exist: deploy, perform real email tests, and verify persisted anchors read-only.
