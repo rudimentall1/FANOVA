@@ -280,3 +280,23 @@ This section supersedes earlier PR head and CI status references above where the
 - P1.6 remains **OPEN**. Production database access and real persisted Mainnet anchor rendering have not been verified read-only.
 - No independent third-party security audit or certification has been completed.
 - Do not claim production proof verification or external audit completion until those checks are performed. No Mainnet writes were made as part of this work.
+
+
+### Account-wide wallet unlink challenge hardening — merged (2026-11-23)
+
+- PR #42, [Security: enforce wallet unlink challenge cap per account](https://github.com/rudimentall1/FANOVA/pull/42), was squash-merged to `main` as `75fdbb9c7015f344c8cb0e47fe633da4f2bb7462`.
+- GitHub Actions run [#485](https://github.com/rudimentall1/FANOVA/actions/runs/45113542253) completed SUCCESS. The run passed browser end-to-end coverage, TypeScript checks, platform authorization tests, migration/schema validation, and the production build.
+- The active challenge limit is now five per authenticated account across sessions, not five per individual session. A PostgreSQL transaction advisory lock scoped to user + Soneium chain serializes concurrent issuance; expired/consumed challenge cleanup and active-count queries are account-scoped.
+- Added browser E2E coverage that authenticates a second independent session for the same account and verifies challenge issuance is rate-limited with HTTP 429 after the first session consumes the account-wide allowance.
+- Code review bot completed with no findings. This is not an independent third-party security audit.
+- No production database writes, Mainnet RPC writes, or Mainnet transactions were performed.
+
+### Current delivery status — 2026-11-23
+
+- P1.5/P1.6 implementation has reached an integrated CI-tested slice: account/creator/contributor workflows, wallet linking and signed unlink, server-backed provenance intents, strict public proof rendering, and wallet-unlink protection are integrated and covered by isolated synthetic PostgreSQL + browser tests.
+- P1.6 remains **OPEN** pending read-only verification of real production-persisted Mainnet anchors and an independent third-party security review.
+- P1.5 remains **OPEN** pending public creator profile editing, richer discovery filters, production hosting/persistence and clean-browser journey verification, plus outsider review.
+- P2 remains **PARTIALLY OPEN**: Mainnet contract deployment and one recorded user-approved end-to-end provenance bundle exist, but source/build equivalence, a fresh original-bundle HISTORY VERIFIED run, and final security checklist/due diligence remain outstanding.
+- P3 pilot work has not been completed: no permissioned original-IP pilot or creator/fan feedback has been recorded.
+- P4 Sony application/demo package remains incomplete: founder-specific questionnaire answers, final demo, evidence review, and outsider review remain outstanding.
+- Evidence boundary: passing CI uses synthetic fixtures and fake transaction hashes for the server-backed provenance tests. It does not prove production anchor rows or replace Mainnet read-only verification. No Mainnet writes were performed in this hardening slice.
