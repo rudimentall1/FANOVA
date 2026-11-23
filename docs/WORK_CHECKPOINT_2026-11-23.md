@@ -1,17 +1,19 @@
 # FANOVA working checkpoint — 2026-11-23
 
-This is the current handoff snapshot after PR #50. It supersedes older status summaries in [the 2026-11-13 checkpoint](WORK_CHECKPOINT_2026-11-13.md), which remains in the repository as historical implementation notes.
+This is the current handoff snapshot after PR #52. It supersedes older status summaries in [the 2026-11-13 checkpoint](WORK_CHECKPOINT_2026-11-13.md), which remains in the repository as historical implementation notes.
 
 ## Repository state
 
 - Repository: [rudimentall1/FANOVA](https://github.com/rudimentall1/FANOVA)
-- Main code merge: PR [#50 — PostgreSQL/Drizzle baseline, dependency lockfiles and CI gates](https://github.com/rudimentall1/FANOVA/pull/50)
-- PR #50 squash merge commit: `6c81bcf52711122b4f10938eceff10a944f85c81`
-- Code base at this checkpoint: `main` at `6c81bcf52711122b4f10938eceff10a944f85c81`. This checkpoint is being updated in a separate docs-only PR.
+- Main code merges: PR [#50 — PostgreSQL/Drizzle baseline and locked dependencies](https://github.com/rudimentall1/FANOVA/pull/50) and PR [#52 — application-process restart persistence](https://github.com/rudimentall1/FANOVA/pull/52).
+- PR #50 squash merge commit: `6c81bcf52711122b4f10938eceff10a944f85c81`.
+- PR #52 squash merge commit: `fc16e0eb7af972ffa6a7f053d2c7faad09bb41b9`.
+- Code base at this checkpoint: `main` at `fc16e0eb7af972ffa6a7f053d2c7faad09bb41b9`. This checkpoint is being updated in a separate docs-only PR.
 - PR #50 full workflow: [CI #543](https://github.com/rudimentall1/FANOVA/actions/runs/45129624903), SUCCESS on exact PR head `4380b5707e67c2db6767c0ec9ea50b7945adbdd0`.
+- PR #52 full workflow: [CI #549](https://github.com/rudimentall1/FANOVA/actions/runs/45131070337), SUCCESS on exact PR head `2770daa814a491f2501231e52223022eb4210f38`.
 - PR #48 auth-email adapter remains merged as `a983bfb180a2ca7300df85528b86521a544fbeae`; its CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095) passed.
-- Post-merge Soneium read-only deployment check [#58](https://github.com/rudimentall1/FANOVA/actions/runs/45130224697) completed SUCCESS against the PR #50 merge.
-- Post-merge main platform CI [#544](https://github.com/rudimentall1/FANOVA/actions/runs/45130224659) completed SUCCESS against merge commit `6c81bcf52711122b4f10938eceff10a944f85c81`.
+- Post-merge Soneium read-only deployment check [#58](https://github.com/rudimentall1/FANOVA/actions/runs/45130224697) passed against the PR #50 merge. No read-only deployment check was run against the test-only PR #52 merge.
+- Post-merge main platform CI [#550](https://github.com/rudimentall1/FANOVA/actions/runs/45131424872) completed SUCCESS against merge commit `fc16e0eb7af972ffa6a7f053d2c7faad09bb41b9`.
 
 ## Shipped platform capabilities
 
@@ -26,6 +28,19 @@ Evidence labels below follow `AGENTS.md`: `LOCAL`, `MAINNET`, and `INDEPENDENTLY
 - **LOCAL** — Optional Resend authentication email adapter for verification/password reset passes mocked provider/configuration tests and application CI: [PR #48](https://github.com/rudimentall1/FANOVA/pull/48), CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095). No production provider account, credentials, sender domain or live delivery is configured.
 - **MAINNET** — A separate user-approved Story → Contribution → Creator Decision smoke-test sequence was submitted on Soneium Mainnet on 2026-10-30. FANOVA's own verifier returned `VERIFIED` for the exact exported bundle after checking its hashes, storage, receipts and events; see [README](../README.md) and [Demo and Evidence](DEMO_AND_EVIDENCE.md). This is a project-run verification of that bundle only, not proof of all production records or a third-party review.
 - **INDEPENDENTLY VERIFIED** — No product capability, production deployment or security posture has been independently certified or audited.
+
+## PR #52 — application-process restart persistence check
+
+Merged as `fc16e0eb7af972ffa6a7f053d2c7faad09bb41b9`.
+
+- CI now starts the Next.js server by invoking the direct Next binary so the recorded PID identifies the application process.
+- After the multi-account browser journey completes, CI sends SIGTERM to the first server process, confirms it exits and stops serving, starts a fresh Next.js process against the same disposable PostgreSQL 16 service, and waits for health readiness.
+- A new Node E2E test queries the public works API for `E2E Story Revised`, then loads its public page and asserts that the revised work and approved public `E2E Fan Art Submission` are still rendered.
+- Exact acceptance workflow [CI #549](https://github.com/rudimentall1/FANOVA/actions/runs/45131070337) passed, including both the original multi-account journey and the post-restart read-back.
+- Evidence label: **LOCAL**. This verifies data survives a Next.js application-process restart while PostgreSQL stays running in an isolated CI environment.
+- It does **not** verify PostgreSQL restart/failover, backups/restore, host replacement, production DB persistence, or Mainnet anchors. P1.5 production acceptance and P1.6 remain OPEN.
+- An initial test attempt failed because its assertion read a Fetch response body twice. The test was corrected to read the body once and the latest full CI passed. No product data or production behavior was changed.
+- The automated Codex review on the final test head still showed `running` without a submitted review at merge time. Manual diff review and full CI passed, but this does not count as independent security review.
 
 ## PR #50 — reproducible PostgreSQL migrations and dependency graph
 
@@ -127,11 +142,12 @@ Internal target for the Sony application/demo is December 15, 2026. Do not prese
 
 ## Next execution order
 
-1. Main CI #544 and Soneium read-only check #58 are both confirmed SUCCESS against the PR #50 merge commit.
-2. Prepare a provider-portable production container/deployment path and documented migration/release procedure without provisioning infrastructure.
-3. Compare hosting/database options, regions, backup/restore, privacy, runtime compatibility for Next.js `after()`, and total operating cost.
-4. Only after the user approves a provider and the required secrets/domain exist: deploy, perform real email tests, and verify persisted anchors read-only.
-5. Schedule independent security review and complete the original-IP pilot and Sony application/demo evidence.
+1. Main CI #550 is confirmed SUCCESS against the PR #52 merge. Soneium read-only check #58 passed after PR #50; no additional Soneium check was run for PR #52 because it only changed CI test coverage.
+2. Add disposable-CI PostgreSQL restart/failover, backup/restore and migration rollback/recovery tests; PR #52 currently covers application-process restart only.
+3. Prepare a provider-portable production container/deployment path and documented migration/release procedure without provisioning infrastructure.
+4. Compare hosting/database options, regions, backup/restore, privacy, runtime compatibility for Next.js `after()`, and total operating cost.
+5. Only after the user approves a provider and the required secrets/domain exist: deploy, perform real email tests, and verify persisted anchors read-only.
+6. Schedule independent security review and complete the original-IP pilot and Sony application/demo evidence.
 
 ## Key links
 

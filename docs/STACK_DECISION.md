@@ -72,3 +72,10 @@ This is an implementation stack decision, not evidence that authentication, pers
 - `drizzle-kit` currently has a deprecated transitive `@esbuild-kit` dependency. A bounded npm override pins all esbuild resolutions to `0.28.2`; this is a development-toolchain workaround until upstream removes the old dependency. It must be revisited on a supported Drizzle Kit release.
 - This migration baseline targets a new, empty PostgreSQL database. It is not permission to apply the baseline to an existing database or infer production schema state. Any existing database would require an explicit, reviewed baseline-adoption procedure before migration execution.
 - No production database was provisioned, read, or modified by this work.
+
+
+## Application process-restart persistence evidence — 2026-11-23
+
+- PR #52 added an isolated CI acceptance step: after multi-account browser E2E, the Next.js process is stopped, a fresh process is started against the same disposable PostgreSQL database, and the public works API/page are queried for the published work revision and approved public contribution.
+- Full workflow [CI #549](https://github.com/rudimentall1/FANOVA/actions/runs/45131070337) passed with the restart/read-back step.
+- Scope is limited to application-process restart with PostgreSQL continuously available. It does not verify PostgreSQL restart, failover, backups/restore, host replacement, production persistence or Mainnet records. Production hosting and persistence gates remain open.
