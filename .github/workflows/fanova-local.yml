@@ -138,7 +138,7 @@ jobs:
           BETTER_AUTH_URL: http://localhost:3000
       - name: Validate Better Auth Drizzle schema
         working-directory: apps/platform
-        run: npx auth@latest check schema --config ./src/lib/auth.ts
+        run: npm run auth:check
         env:
           DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
           BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
