@@ -81,7 +81,7 @@ jobs:
 
       - name: Install platform dependencies
         working-directory: apps/platform
-        run: npm ci
+        run: npm install
       - name: Report npm security advisories
         working-directory: apps/platform
         run: |
