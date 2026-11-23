@@ -5,7 +5,8 @@ This is the current handoff snapshot after PR #54. It supersedes older status su
 ## Repository state
 
 - Repository: [rudimentall1/FANOVA](https://github.com/rudimentall1/FANOVA)
-- Main merges since PR #50: PR [#52 — application-process restart persistence](https://github.com/rudimentall1/FANOVA/pull/52) and PR [#54 — PostgreSQL container restart persistence](https://github.com/rudimentall1/FANOVA/pull/54).
+- Main merges since PR #50: PR [#52 — application-process restart persistence](https://github.com/rudimentall1/FANOVA/pull/52), PR [#53 — updated working checkpoint](https://github.com/rudimentall1/FANOVA/pull/53), and PR [#54 — PostgreSQL container restart persistence](https://github.com/rudimentall1/FANOVA/pull/54).
+- PR #53 documentation merge commit: `755d067b6ece08b77201d4ef0c4966f4f7a83c7f`; its docs CI [#551](https://github.com/rudimentall1/FANOVA/actions/runs/45131902040) passed and automated review completed without findings.
 - PR #50 squash merge commit: `6c81bcf52711122b4f10938eceff10a944f85c81`.
 - PR #52 squash merge commit: `fc16e0eb7af972ffa6a7f053d2c7faad09bb41b9`.
 - PR #54 squash merge commit: `7be8a194d9e162a500d5bde895c86644cba390c2`.
