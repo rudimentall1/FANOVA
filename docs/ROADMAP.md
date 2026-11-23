@@ -102,7 +102,7 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 - [ ] Deploy and verify the complete user journey from a clean browser and a second independent account.
 - [ ] Add structured discovery filters (at minimum genre/category and permitted-use filters) with tests proving hidden profiles and unpublished works are not exposed.
 
-**Exit gate: NOT MET.** The account/creator/contributor + wallet/provenance integration slice now passes isolated CI. The complete WEB_PRODUCT_SPEC.md acceptance criteria still require public profile editing, richer discovery, production persistence/deployment verification, read-only inspection of real persisted Mainnet anchors, and independent outsider/security review. Do not record the final Sony demo yet.
+**Exit gate: NOT MET.** The account/creator/contributor + wallet/provenance + public-profile integration slice passes isolated CI. Remaining P1.5 criteria are structured discovery, production hosting/persistence, a clean-browser journey against the deployed service, and outsider review. P1.6 separately requires read-only verification of real persisted Mainnet anchors and independent security review. Do not record the final Sony demo yet.
 
 **Demo policy:** no final video while the product is still a localStorage prototype or uses simulated user identities. Interim screen recordings may be used privately for debugging, but must not be presented as the final Sony product demo.
 
