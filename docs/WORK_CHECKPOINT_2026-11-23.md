@@ -5,13 +5,15 @@ This is the current handoff snapshot after PR #52. It supersedes older status su
 ## Repository state
 
 - Repository: [rudimentall1/FANOVA](https://github.com/rudimentall1/FANOVA)
-- Main code merge: PR [#50 — PostgreSQL/Drizzle baseline, dependency lockfiles and CI gates](https://github.com/rudimentall1/FANOVA/pull/50)
-- PR #50 squash merge commit: `6c81bcf52711122b4f10938eceff10a944f85c81`
-- Code base at this checkpoint: `main` at `6c81bcf52711122b4f10938eceff10a944f85c81`. This checkpoint is being updated in a separate docs-only PR.
+- Main code merges: PR [#50 — PostgreSQL/Drizzle baseline and locked dependencies](https://github.com/rudimentall1/FANOVA/pull/50) and PR [#52 — application-process restart persistence](https://github.com/rudimentall1/FANOVA/pull/52).
+- PR #50 squash merge commit: `6c81bcf52711122b4f10938eceff10a944f85c81`.
+- PR #52 squash merge commit: `fc16e0eb7af972ffa6a7f053d2c7faad09bb41b9`.
+- Code base at this checkpoint: `main` at `fc16e0eb7af972ffa6a7f053d2c7faad09bb41b9`. This checkpoint is being updated in a separate docs-only PR.
 - PR #50 full workflow: [CI #543](https://github.com/rudimentall1/FANOVA/actions/runs/45129624903), SUCCESS on exact PR head `4380b5707e67c2db6767c0ec9ea50b7945adbdd0`.
+- PR #52 full workflow: [CI #549](https://github.com/rudimentall1/FANOVA/actions/runs/45131070337), SUCCESS on exact PR head `2770daa814a491f2501231e52223022eb4210f38`.
 - PR #48 auth-email adapter remains merged as `a983bfb180a2ca7300df85528b86521a544fbeae`; its CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095) passed.
-- Post-merge Soneium read-only deployment check [#58](https://github.com/rudimentall1/FANOVA/actions/runs/45130224697) completed SUCCESS against the PR #50 merge.
-- Post-merge main platform CI [#544](https://github.com/rudimentall1/FANOVA/actions/runs/45130224659) completed SUCCESS against merge commit `6c81bcf52711122b4f10938eceff10a944f85c81`.
+- Post-merge Soneium read-only deployment check [#58](https://github.com/rudimentall1/FANOVA/actions/runs/45130224697) passed against the PR #50 merge. No read-only deployment check was run against the test-only PR #52 merge.
+- Post-merge main platform CI [#550](https://github.com/rudimentall1/FANOVA/actions/runs/45131424872) completed SUCCESS against merge commit `fc16e0eb7af972ffa6a7f053d2c7faad09bb41b9`.
 
 ## Shipped platform capabilities
 
@@ -140,11 +142,12 @@ Internal target for the Sony application/demo is December 15, 2026. Do not prese
 
 ## Next execution order
 
-1. Main CI #544 and Soneium read-only check #58 are both confirmed SUCCESS against the PR #50 merge commit.
-2. Prepare a provider-portable production container/deployment path and documented migration/release procedure without provisioning infrastructure.
-3. Compare hosting/database options, regions, backup/restore, privacy, runtime compatibility for Next.js `after()`, and total operating cost.
-4. Only after the user approves a provider and the required secrets/domain exist: deploy, perform real email tests, and verify persisted anchors read-only.
-5. Schedule independent security review and complete the original-IP pilot and Sony application/demo evidence.
+1. Main CI #550 is confirmed SUCCESS against the PR #52 merge. Soneium read-only check #58 passed after PR #50; no additional Soneium check was run for PR #52 because it only changed CI test coverage.
+2. Add disposable-CI PostgreSQL restart/failover, backup/restore and migration rollback/recovery tests; PR #52 currently covers application-process restart only.
+3. Prepare a provider-portable production container/deployment path and documented migration/release procedure without provisioning infrastructure.
+4. Compare hosting/database options, regions, backup/restore, privacy, runtime compatibility for Next.js `after()`, and total operating cost.
+5. Only after the user approves a provider and the required secrets/domain exist: deploy, perform real email tests, and verify persisted anchors read-only.
+6. Schedule independent security review and complete the original-IP pilot and Sony application/demo evidence.
 
 ## Key links
 
