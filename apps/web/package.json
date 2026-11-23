@@ -8,5 +8,9 @@
     "test": "node --test domain.test.js evidence-validation.test.js content-integrity.test.js event-coverage.test.js event-history.test.js",
     "test:e2e": "node --test e2e.test.js",
     "test:e2e:platform": "node --test platform-e2e.test.js"
+  },
+  "devDependencies": {
+    "ethers": "6.17.0",
+    "playwright": "1.65.1"
   }
 }
