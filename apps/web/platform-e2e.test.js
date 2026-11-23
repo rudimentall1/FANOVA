@@ -267,7 +267,13 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
         `serverLog=${readLog().slice(-6000)}; cause=${error.message}`
       );
     }
-    // Link a wallet, reject cross-account reuse, then require that wallet's signature to unlink and replace it.
+    await contributorPage.goto(`${baseUrl}/settings/account`);
+    await contributorPage.getByLabel("Show my name on public contributions").waitFor();
+    await contributorPage.getByText("A public creator profile URL becomes available after creator access is approved.").waitFor();
+    assert.equal(await contributorPage.locator('a[href^="/creators/"]').count(), 0, "readers must not be shown an unavailable creator profile URL");
+    await contributorPage.goto(`${baseUrl}/works/${slug}/contribute`);
+
+    // Link a wallet, reject cross-account reuse, then require a signature to unlink and replace it.
     await contributorPage.goto(`${baseUrl}/settings/account`);
     await contributorPage.getByRole("heading", { name: "Wallet identity" }).waitFor();
     await contributorPage.getByRole("button", { name: "Connect Rabby" }).click();
