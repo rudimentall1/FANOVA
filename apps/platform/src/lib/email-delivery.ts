@@ -132,8 +132,15 @@ export async function sendAuthEmailWithResend(
   }
 
   const content = buildAuthEmailContent(message);
+  const payload = {
+    from: configuration.from,
+    to: [recipient],
+    subject: content.subject,
+    text: content.text,
+    html: content.html
+  };
   const idempotencyDigest = createHash("sha256")
-    .update(`${message.kind}\0${recipient}\0${message.url}`)
+    .update(JSON.stringify(payload))
     .digest("hex");
 
   let response: Response;
@@ -145,13 +152,7 @@ export async function sendAuthEmailWithResend(
         "Content-Type": "application/json",
         "Idempotency-Key": `fanova-${idempotencyDigest}`
       },
-      body: JSON.stringify({
-        from: configuration.from,
-        to: [recipient],
-        subject: content.subject,
-        text: content.text,
-        html: content.html
-      }),
+      body: JSON.stringify(payload),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
     });
   } catch {
