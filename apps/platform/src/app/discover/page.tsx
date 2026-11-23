@@ -12,7 +12,9 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
   if (query) {
     filters.push(or(
       ilike(workVersion.title, `%${query}%`),
-      ilike(workVersion.synopsis, `%${query}%`)
+      ilike(workVersion.synopsis, `%${query}%`),
+      ilike(userProfile.handle, `%${query}%`),
+      ilike(userProfile.displayName, `%${query}%`)
     ) as typeof filters[number]);
   }
 
