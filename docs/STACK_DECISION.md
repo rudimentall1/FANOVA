@@ -79,3 +79,11 @@ This is an implementation stack decision, not evidence that authentication, pers
 - PR #52 added an isolated CI acceptance step: after multi-account browser E2E, the Next.js process is stopped, a fresh process is started against the same disposable PostgreSQL database, and the public works API/page are queried for the published work revision and approved public contribution.
 - Full workflow [CI #549](https://github.com/rudimentall1/FANOVA/actions/runs/45131070337) passed with the restart/read-back step.
 - Scope is limited to application-process restart with PostgreSQL continuously available. It does not verify PostgreSQL restart, failover, backups/restore, host replacement, production persistence or Mainnet records. Production hosting and persistence gates remain open.
+
+
+## PostgreSQL service-container restart persistence evidence — 2026-11-23
+
+- PR #54 adds a CI step after the PR #52 application-process restart test. It locates exactly one `postgres:16-alpine` service container, records `StartedAt`, restarts that same container with Docker, checks its health and `pg_isready`, and requires the new `StartedAt` to differ.
+- CI then launches a new Next.js process against that PostgreSQL container and repeats the public works API/page read-back for the published Story revision and approved public contribution.
+- Full workflow [CI #553](https://github.com/rudimentall1/FANOVA/actions/runs/45132721837) passed; logs show the same container restarted, health/readiness recovered, and the post-restart read-back passed.
+- Scope is LOCAL CI evidence on a disposable PostgreSQL service. It does not prove backups/restore, data-volume loss recovery, replica failover, host replacement, production persistence or Mainnet records.

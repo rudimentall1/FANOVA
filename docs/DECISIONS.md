@@ -184,3 +184,9 @@ This file is the append-only record of material project decisions. New decisions
 - **Delivered:** PR #52 restarts the Next.js application process after the existing multi-account browser journey and verifies the published work revision plus approved public contribution are still readable from a fresh process backed by the same disposable PostgreSQL service.
 - **Validation:** full workflow [CI #549](https://github.com/rudimentall1/FANOVA/actions/runs/45131070337) passed on the final PR head.
 - **Boundary:** this is LOCAL CI evidence only. The database itself remains running; no production DB, backup/restore, failover or real Mainnet data has been tested. P1.5/P1.6 remain open.
+
+## Implementation update — PostgreSQL service-container restart persistence (2026-11-23)
+
+- **Delivered:** PR #54 restarts the existing disposable PostgreSQL 16 service container after the app-process restart acceptance check, verifies Docker health and `pg_isready`, proves the container's `StartedAt` changed, starts a new Next.js process and confirms the Story revision/public contribution remain readable.
+- **Validation:** full workflow [CI #553](https://github.com/rudimentall1/FANOVA/actions/runs/45132721837) passed on the exact PR head. Codex review completed with no findings.
+- **Boundary:** same ephemeral container is restarted; no backup/restore, volume-loss, replica failover, production database or Mainnet behavior is established. P1.5/P1.6 remain open.
