@@ -1,16 +1,17 @@
 # FANOVA working checkpoint — 2026-11-23
 
-This is the current handoff snapshot after PR #48. It supersedes older status summaries in [the 2026-11-13 checkpoint](WORK_CHECKPOINT_2026-11-13.md), which remains in the repository as historical implementation notes.
+This is the current handoff snapshot after PR #50. It supersedes older status summaries in [the 2026-11-13 checkpoint](WORK_CHECKPOINT_2026-11-13.md), which remains in the repository as historical implementation notes.
 
 ## Repository state
 
 - Repository: [rudimentall1/FANOVA](https://github.com/rudimentall1/FANOVA)
-- Main code merge: PR [#48 — production auth email adapter](https://github.com/rudimentall1/FANOVA/pull/48)
-- PR #48 squash merge commit: `a983bfb180a2ca7300df85528b86521a544fbeae`
-- Code base at this checkpoint: `main` at `a983bfb180a2ca7300df85528b86521a544fbeae`. This checkpoint is being added in a separate docs-only PR.
-- PR #48 full workflow: [CI #517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095), SUCCESS on head `9bdc98b38b35e0e997c1671725aea52c0435aeb0`.
-- Post-merge Soneium read-only deployment check [#56](https://github.com/rudimentall1/FANOVA/actions/runs/45119442148) completed SUCCESS against this code merge.
-- Post-merge main platform CI [#518](https://github.com/rudimentall1/FANOVA/actions/runs/45119442153) completed SUCCESS against the same code merge.
+- Main code merge: PR [#50 — PostgreSQL/Drizzle baseline, dependency lockfiles and CI gates](https://github.com/rudimentall1/FANOVA/pull/50)
+- PR #50 squash merge commit: `6c81bcf52711122b4f10938eceff10a944f85c81`
+- Code base at this checkpoint: `main` at `6c81bcf52711122b4f10938eceff10a944f85c81`. This checkpoint is being updated in a separate docs-only PR.
+- PR #50 full workflow: [CI #543](https://github.com/rudimentall1/FANOVA/actions/runs/45129624903), SUCCESS on exact PR head `4380b5707e67c2db6767c0ec9ea50b7945adbdd0`.
+- PR #48 auth-email adapter remains merged as `a983bfb180a2ca7300df85528b86521a544fbeae`; its CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095) passed.
+- Post-merge Soneium read-only deployment check [#58](https://github.com/rudimentall1/FANOVA/actions/runs/45130224697) completed SUCCESS against the PR #50 merge.
+- Post-merge main platform CI [#544](https://github.com/rudimentall1/FANOVA/actions/runs/45130224659) was still running when this checkpoint update was prepared; check the final conclusion before treating the merge as fully green.
 
 ## Shipped platform capabilities
 
@@ -25,6 +26,20 @@ Evidence labels below follow `AGENTS.md`: `LOCAL`, `MAINNET`, and `INDEPENDENTLY
 - **LOCAL** — Optional Resend authentication email adapter for verification/password reset passes mocked provider/configuration tests and application CI: [PR #48](https://github.com/rudimentall1/FANOVA/pull/48), CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095). No production provider account, credentials, sender domain or live delivery is configured.
 - **MAINNET** — A separate user-approved Story → Contribution → Creator Decision smoke-test sequence was submitted on Soneium Mainnet on 2026-10-30. FANOVA's own verifier returned `VERIFIED` for the exact exported bundle after checking its hashes, storage, receipts and events; see [README](../README.md) and [Demo and Evidence](DEMO_AND_EVIDENCE.md). This is a project-run verification of that bundle only, not proof of all production records or a third-party review.
 - **INDEPENDENTLY VERIFIED** — No product capability, production deployment or security posture has been independently certified or audited.
+
+## PR #50 — reproducible PostgreSQL migrations and dependency graph
+
+Merged as `6c81bcf52711122b4f10938eceff10a944f85c81`.
+
+- Initial Drizzle/PostgreSQL migration baseline for the current 14-table schema is checked in at `apps/platform/drizzle/0000_stale_mesmero.sql`, with matching version-7 snapshot and journal metadata.
+- The CI flow now runs `npm ci` from committed lockfiles in both `apps/platform` and `apps/web`.
+- CI generates Drizzle migrations and fails if schema changes are not committed under `apps/platform/drizzle/`; it then applies the committed migration chain to the disposable CI PostgreSQL 16 service before Better Auth schema validation, production build and multi-account browser E2E.
+- Better Auth CLI is pinned to `auth@1.7.27`; Drizzle Kit is pinned to `0.31.11`; Vitest is upgraded to `5.1.1`.
+- A bounded `esbuild@0.28.2` npm override removes vulnerable old esbuild resolutions from the deprecated Drizzle Kit `@esbuild-kit` toolchain. CI audit showed zero vulnerabilities in both full and production dependency graphs after this override. Revisit the override when upstream Drizzle Kit removes the deprecated loader.
+- The workflow blocks high and critical npm audit findings. It prints moderate findings for visibility but does not fail on moderate-only results.
+- The migration is a baseline for a new, empty PostgreSQL database. It is not permission to apply this migration to an existing database without a separately reviewed baseline-adoption procedure.
+- Exact PR acceptance run [CI #543](https://github.com/rudimentall1/FANOVA/actions/runs/45129624903) passed the full workflow, including 14 platform test files / 109 unit tests, TypeScript, migration drift check and apply, Better Auth schema validation, production build, and multi-account Chromium browser E2E.
+- The automated Codex code-review status still showed `running` without a submitted review when the PR was merged. I manually inspected the changed workflow, SQL baseline, schema snapshot, package manifests and lockfiles. CI passed, no review threads/findings were present, but this is not an independent security audit or third-party certification.
 
 ## PR #48 — production authentication email adapter
 
@@ -98,7 +113,7 @@ Internal target for the Sony application/demo is December 15, 2026. Do not prese
 
 ## Next execution order
 
-1. Main CI #518 and Soneium read-only check #56 are confirmed SUCCESS after PR #48's merge.
+1. Soneium read-only check #58 is confirmed SUCCESS after PR #50's merge. Main CI #544 was pending at checkpoint preparation; verify its final result.
 2. Prepare a provider-portable production container/deployment path and documented migration/release procedure without provisioning infrastructure.
 3. Compare hosting/database options, regions, backup/restore, privacy, runtime compatibility for Next.js `after()`, and total operating cost.
 4. Only after the user approves a provider and the required secrets/domain exist: deploy, perform real email tests, and verify persisted anchors read-only.
