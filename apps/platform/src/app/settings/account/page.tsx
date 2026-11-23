@@ -37,7 +37,7 @@ export default async function AccountSettingsPage() {
         <div><span className="panel-label">ACCESS</span><div className="role-list">{actor.roles.map((role) => <span className="role-chip" key={role}>{role}</span>)}</div></div>
         <p className="field-note">Your public profile is separate from your login identity. Hiding your profile does not unpublish works you have already made public.</p>
       </section>
-      <ProfileEditor initialProfile={{ handle: profile?.handle ?? "", displayName: profile?.displayName ?? session.user.name, bio: profile?.bio ?? "", isPublic: profile?.isPublic ?? true }} />
+      <ProfileEditor initialProfile={{ handle: profile?.handle ?? "", displayName: profile?.displayName ?? session.user.name, bio: profile?.bio ?? "", isPublic: profile?.isPublic ?? true }} canPublishProfile={actor.roles.includes("creator")} />
       <WalletLinkPanel />
       <p className="auth-switch"><Link href="/dashboard">Back to workspace</Link></p>
     </main>
