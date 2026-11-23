@@ -60,20 +60,18 @@ export async function POST() {
   ].join("\n");
 
   const admitted = await db.transaction(async (tx) => {
-    // Serialize challenge issuance per authenticated user/session so concurrent requests cannot bypass the cap.
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${session.user.id}), hashtext(${session.session.id}))`);
+    // Serialize challenge issuance per authenticated user and chain so concurrent requests cannot bypass the cap.
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${session.user.id}), ${CHAIN_ID})`);
 
     // Retain only live, unused challenges. This also bounds historical table growth on active traffic.
     await tx.delete(walletUnlinkChallenge).where(and(
       eq(walletUnlinkChallenge.userId, session.user.id),
-      eq(walletUnlinkChallenge.sessionId, session.session.id),
       or(isNotNull(walletUnlinkChallenge.consumedAt), lte(walletUnlinkChallenge.expiresAt, now))
     ));
 
     const [active] = await tx.select({ value: count() }).from(walletUnlinkChallenge)
       .where(and(
         eq(walletUnlinkChallenge.userId, session.user.id),
-        eq(walletUnlinkChallenge.sessionId, session.session.id),
         isNull(walletUnlinkChallenge.consumedAt),
         gt(walletUnlinkChallenge.expiresAt, now)
       ));
