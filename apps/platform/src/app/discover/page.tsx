@@ -12,7 +12,9 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
   if (query) {
     filters.push(or(
       ilike(workVersion.title, `%${query}%`),
-      ilike(workVersion.synopsis, `%${query}%`)
+      ilike(workVersion.synopsis, `%${query}%`),
+      ilike(userProfile.handle, `%${query}%`),
+      ilike(userProfile.displayName, `%${query}%`)
     ) as typeof filters[number]);
   }
 
@@ -27,7 +29,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
     })
     .from(work)
     .innerJoin(workVersion, eq(work.currentVersionId, workVersion.id))
-    .leftJoin(userProfile, eq(work.ownerUserId, userProfile.userId))
+    .leftJoin(userProfile, and(eq(work.ownerUserId, userProfile.userId), eq(userProfile.isPublic, true)))
     .where(and(...filters))
     .orderBy(desc(work.publishedAt))
     .limit(50);
@@ -57,12 +59,12 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
       ) : (
         <section className="catalogue-grid">
           {rows.map((entry) => (
-            <Link className="catalogue-card" href={`/works/${entry.slug}`} key={entry.slug}>
+            <article className="catalogue-card" key={entry.slug}>
               <span className="eyebrow">ORIGINAL WORK</span>
-              <h2>{entry.title}</h2>
+              <h2><Link href={`/works/${entry.slug}`}>{entry.title}</Link></h2>
               <p>{entry.synopsis}</p>
-              <small>By {entry.creatorName ?? "FANOVA creator"} · @{entry.creatorHandle ?? "creator"}</small>
-            </Link>
+              {entry.creatorHandle ? <small>By {entry.creatorName} · <Link href={`/creators/${entry.creatorHandle}`}>@{entry.creatorHandle}</Link></small> : <small>By FANOVA creator</small>}
+            </article>
           ))}
         </section>
       )}

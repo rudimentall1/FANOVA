@@ -35,7 +35,7 @@ export default async function PublicContributionPage({ params }: { params: Promi
     .from(contribution)
     .innerJoin(work, eq(contribution.workId, work.id))
     .innerJoin(workVersion, eq(contribution.sourceVersionId, workVersion.id))
-    .leftJoin(userProfile, eq(contribution.contributorUserId, userProfile.userId))
+    .leftJoin(userProfile, and(eq(contribution.contributorUserId, userProfile.userId), eq(userProfile.isPublic, true)))
     .where(and(
       eq(contribution.id, id),
       eq(work.slug, slug),

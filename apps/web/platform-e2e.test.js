@@ -224,6 +224,30 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await creatorPage.getByText("Fan art allowed").waitFor();
     await creatorPage.getByText("Translations not permitted").waitFor();
 
+    // Creator can edit a public profile; public works link to it, and hiding the profile does not unpublish the work.
+    await creatorPage.goto(`${baseUrl}/settings/account`);
+    await creatorPage.getByLabel("Public handle").fill("e2e-creator");
+    await creatorPage.getByLabel("Display name").fill("E2E Public Creator");
+    await creatorPage.getByLabel("Bio").fill("An isolated test creator profile used only by the CI browser journey.");
+    await creatorPage.getByRole("button", { name: "Save profile" }).click();
+    await creatorPage.getByText("Profile saved.").waitFor();
+    await creatorPage.goto(`${baseUrl}/creators/e2e-creator`);
+    await creatorPage.getByRole("heading", { name: "E2E Public Creator" }).waitFor();
+    await creatorPage.getByRole("link", { name: "E2E Story" }).waitFor();
+
+    await creatorPage.goto(`${baseUrl}/settings/account`);
+    await creatorPage.getByLabel("Show my profile publicly").uncheck();
+    await creatorPage.getByRole("button", { name: "Save profile" }).click();
+    await creatorPage.getByText("Profile saved.").waitFor();
+    const hiddenProfileStatus = await creatorPage.evaluate(async () => {
+      const response = await fetch("/creators/e2e-creator");
+      return response.status;
+    });
+    assert.equal(hiddenProfileStatus, 404, "private creator profiles must not be publicly retrievable");
+    await creatorPage.goto(`${baseUrl}/works/${slug}`);
+    await creatorPage.getByRole("heading", { name: "E2E Story" }).waitFor();
+    await creatorPage.getByText("By FANOVA creator").waitFor();
+
     // Seed a synthetic, fully bound Story proof in the isolated CI database.
     bootstrapProvenance("seed-story", slug, creatorEmail, e2eCreatorSigner);
 
@@ -243,7 +267,13 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
         `serverLog=${readLog().slice(-6000)}; cause=${error.message}`
       );
     }
-    // Link a wallet, reject cross-account reuse, then require that wallet's signature to unlink and replace it.
+    await contributorPage.goto(`${baseUrl}/settings/account`);
+    await contributorPage.getByLabel("Show my name on public contributions").waitFor();
+    await contributorPage.getByText("A public creator profile URL becomes available after creator access is approved.").waitFor();
+    assert.equal(await contributorPage.locator('a[href^="/creators/"]').count(), 0, "readers must not be shown an unavailable creator profile URL");
+    await contributorPage.goto(`${baseUrl}/works/${slug}/contribute`);
+
+    // Link a wallet, reject cross-account reuse, then require a signature to unlink and replace it.
     await contributorPage.goto(`${baseUrl}/settings/account`);
     await contributorPage.getByRole("heading", { name: "Wallet identity" }).waitFor();
     await contributorPage.getByRole("button", { name: "Connect Rabby" }).click();

@@ -27,7 +27,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
     })
     .from(work)
     .innerJoin(workVersion, eq(work.currentVersionId, workVersion.id))
-    .leftJoin(userProfile, eq(work.ownerUserId, userProfile.userId))
+    .leftJoin(userProfile, and(eq(work.ownerUserId, userProfile.userId), eq(userProfile.isPublic, true)))
     .where(and(eq(work.slug, slug), eq(work.status, "published")))
     .limit(1);
 
