@@ -1,18 +1,20 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { work, workVersion } from "@/db/schema";
 import { getCurrentActor } from "@/lib/server-auth";
 import { createWorkSchema } from "@/lib/work-validation";
 import { hashWorkPermissions, hashWorkSource } from "@/lib/work-hash";
+import { parseDiscoverFilters } from "@/lib/discover-filters";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const query = url.searchParams.get("q")?.trim().slice(0, 100);
+  const parsedFilters = parseDiscoverFilters(url.searchParams);
+  const query = parsedFilters.q;
   const filters = [eq(work.status, "published")];
 
   if (query) {
@@ -21,6 +23,10 @@ export async function GET(request: Request) {
       ilike(workVersion.synopsis, `%${query}%`)
     ) as typeof filters[number]);
   }
+  if (parsedFilters.fanArt) filters.push(sql`(${workVersion.permissions}->>'fanArt') = 'true'`);
+  if (parsedFilters.translations) filters.push(sql`(${workVersion.permissions}->>'translations') = 'true'`);
+  if (parsedFilters.adaptations) filters.push(sql`(${workVersion.permissions}->>'adaptations') = 'true'`);
+  if (parsedFilters.commercialUse) filters.push(sql`(${workVersion.permissions}->>'commercialUse') = 'true'`);
 
   const rows = await db
     .select({
