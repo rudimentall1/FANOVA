@@ -300,3 +300,15 @@ This section supersedes earlier PR head and CI status references above where the
 - P3 pilot work has not been completed: no permissioned original-IP pilot or creator/fan feedback has been recorded.
 - P4 Sony application/demo package remains incomplete: founder-specific questionnaire answers, final demo, evidence review, and outsider review remain outstanding.
 - Evidence boundary: passing CI uses synthetic fixtures and fake transaction hashes for the server-backed provenance tests. It does not prove production anchor rows or replace Mainnet read-only verification. No Mainnet writes were performed in this hardening slice.
+
+
+### Public creator profiles and privacy controls — merged (2026-11-23)
+
+- PR #44, [Feature: public creator profiles with privacy controls](https://github.com/rudimentall1/FANOVA/pull/44), was squash-merged to `main` as `6de4bc51ed4b74038005c022971c718c619897ce`.
+- CI run [#498](https://github.com/rudimentall1/FANOVA/actions/runs/45116195818) passed the full workflow: domain/ABI tests, JavaScript browser E2E, platform TypeScript, authorization tests, migration/schema checks, production build, and multi-account browser E2E.
+- Added authenticated profile editing for handle, display name, bio, and visibility. Updates are account-scoped, strictly validated, and request bodies are limited with streaming reads; duplicate handles return HTTP 409.
+- Added public creator pages listing published works, creator links on work bylines and Discover cards, and search by public creator handle/display name.
+- Privacy behavior: hidden profiles are excluded from public creator pages and public work/contribution bylines; hiding a profile does not unpublish its works. Non-creators can control whether their name/handle appears on public contributions but are not shown a creator-profile URL before creator access is granted.
+- Browser E2E covers creator profile edit → public profile and published work display → profile hide → 404 while work remains public; it also verifies a reader does not see an unavailable creator URL.
+- No schema migration or Mainnet interaction was required. CI uses isolated PostgreSQL test data.
+- Richer structured discovery filters remain open. P1.5 remains OPEN pending production hosting/persistence and clean-browser verification, structured discovery, and outsider review.
