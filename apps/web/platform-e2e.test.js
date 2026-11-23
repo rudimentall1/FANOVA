@@ -103,6 +103,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
   const adminContext = await browser.newContext();
   const creatorContext = await browser.newContext();
   const contributorContext = await browser.newContext();
+  const secondContributorContext = await browser.newContext();
 
   const walletA = new Wallet("0x0123456789012345678901234567890123456789012345678901234567890123");
   const walletB = new Wallet("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd");
@@ -292,7 +293,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await contributorPage.getByText("Wallet signature verified and linked to this FANOVA account.").waitFor({ timeout: 15_000 });
     await contributorPage.getByText(walletB.address).waitFor();
 
-    // The challenge cap is scoped to this authenticated session: five live challenges are admitted, the sixth is rate-limited.
+    // The account-wide challenge cap admits five live challenges across all sessions and rate-limits the sixth.
     const challengeCap = await contributorPage.evaluate(async () => {
       const statuses = [];
       for (let index = 0; index < 6; index += 1) {
@@ -309,6 +310,19 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
       [200, 200, 200, 200, 200, 429],
       `unlink challenge cap must admit five active challenges and reject the sixth: ${JSON.stringify(challengeCap)}`
     );
+
+    // A second authenticated session for the same account must share the same cap.
+    const secondSessionPage = await secondContributorContext.newPage();
+    await secondSessionPage.goto(`${baseUrl}/sign-in`);
+    await secondSessionPage.getByLabel("Email").fill(contributorEmail);
+    await secondSessionPage.getByLabel("Password").fill(password);
+    await secondSessionPage.getByRole("button", { name: "Sign in" }).click();
+    await secondSessionPage.waitForURL(/\\/dashboard$/, { timeout: 15_000 });
+    const secondSessionChallengeStatus = await secondSessionPage.evaluate(async () => {
+      const response = await fetch("/api/wallet/unlink/challenge", { method: "POST" });
+      return response.status;
+    });
+    assert.equal(secondSessionChallengeStatus, 429, "a second session for the same account must not bypass the active challenge cap");
 
     // Wallet settings are a separate route; return to the contribution form before checking its options.
     await contributorPage.goto(`${baseUrl}/works/${slug}/contribute`);
@@ -520,6 +534,7 @@ test("FANOVA multi-account creator-to-contributor journey", { timeout: 300_000 }
     await adminContext.close();
     await creatorContext.close();
     await contributorContext.close();
+    await secondContributorContext.close();
     await browser.close();
   }
 });
