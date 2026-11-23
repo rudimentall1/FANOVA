@@ -46,7 +46,7 @@ The production adapter uses Resend's `POST https://api.resend.com/emails` endpoi
 - `RESEND_API_KEY` (prefer a sending-only API key)
 - `FANOVA_EMAIL_FROM` (an address on a domain verified with Resend)
 
-Set these only in the production environment after the sender domain's DNS verification is complete. Never commit the API key. Production verification and password-reset callbacks schedule delivery with Next.js `after()`, so sending does not block the auth response. The request has a 10-second timeout and a deterministic idempotency key. HTML values are escaped; auth URLs and API keys are not included in delivery error logs.
+Set these only in the production environment after the sender domain's DNS verification is complete. Never commit the API key. Production verification and password-reset callbacks schedule delivery with Next.js `after()`, so sending does not block the auth response. The request has a 10-second timeout and a deterministic idempotency key. Production requires `BETTER_AUTH_URL` to be an absolute HTTPS URL without embedded credentials, and each generated email link must match that exact origin. HTML values are escaped; auth URLs and API keys are not included in delivery error logs.
 
 `GET /api/health` reports `email: "resend"` when production configuration is present, `email: "unconfigured"` with HTTP 503 when required variables are missing, and `email: "development-sink"` outside production. This check validates configuration only: it does not test Resend connectivity, sender-domain verification, inbox placement, or actual delivery.
 
