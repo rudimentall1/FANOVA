@@ -84,6 +84,7 @@ jobs:
           node --check serve.mjs
           node --check e2e.test.js
           node --check platform-e2e.test.js
+          node --check platform-persistence-e2e.test.js
 
       - name: Install platform dependencies
         working-directory: apps/platform
@@ -168,7 +169,7 @@ jobs:
         run: |
           export FANOVA_SIWE_DOMAIN=127.0.0.1:3000
           export FANOVA_SIWE_URI=http://127.0.0.1:3000
-          nohup npm run dev -- --hostname 127.0.0.1 > /tmp/fanova-platform.log 2>&1 &
+          nohup ./node_modules/.bin/next dev --hostname 127.0.0.1 > /tmp/fanova-platform.log 2>&1 </dev/null &
           echo $! > /tmp/fanova-platform.pid
         env:
           DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
@@ -199,3 +200,56 @@ jobs:
           FANOVA_E2E_PROVENANCE_BOOTSTRAP_SCRIPT: ${{ github.workspace }}/apps/platform/scripts/bootstrap-e2e-provenance.mjs
           FANOVA_PROVENANCE_CONTRACT: "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880"
           FANOVA_E2E_ADMIN_BOOTSTRAP: "true"
+
+      - name: Stop the first platform process
+        run: |
+          pid="$(cat /tmp/fanova-platform.pid)"
+          kill -TERM "$pid"
+          for attempt in $(seq 1 30); do
+            if ! kill -0 "$pid" 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          if kill -0 "$pid" 2>/dev/null; then
+            echo "Platform process did not exit after SIGTERM."
+            cat /tmp/fanova-platform.log
+            exit 1
+          fi
+          for attempt in $(seq 1 15); do
+            if ! curl --connect-timeout 1 --max-time 2 --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "The old platform server is still responding after its process exited."
+          ps -ef | grep -E '[n]ext dev|[n]ext-server' || true
+          cat /tmp/fanova-platform.log
+          exit 1
+      - name: Start a fresh platform process against the same PostgreSQL database
+        working-directory: apps/platform
+        run: |
+          export FANOVA_SIWE_DOMAIN=127.0.0.1:3000
+          export FANOVA_SIWE_URI=http://127.0.0.1:3000
+          nohup ./node_modules/.bin/next dev --hostname 127.0.0.1 > /tmp/fanova-platform-restart.log 2>&1 </dev/null &
+          echo $! > /tmp/fanova-platform-restart.pid
+        env:
+          DATABASE_URL: postgres://fanova:fanova_dev_only@localhost:5432/fanova
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+          BETTER_AUTH_URL: http://127.0.0.1:3000
+          FANOVA_PROVENANCE_CONTRACT: "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880"
+      - name: Wait for restarted platform process
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --connect-timeout 2 --max-time 5 --fail --silent http://127.0.0.1:3000/api/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/fanova-platform-restart.log
+          exit 1
+      - name: Verify persisted work and contribution after restart
+        working-directory: apps/web
+        run: node --test platform-persistence-e2e.test.js
+        env:
+          FANOVA_PLATFORM_URL: http://127.0.0.1:3000
