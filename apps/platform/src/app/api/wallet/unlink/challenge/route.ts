@@ -60,7 +60,7 @@ export async function POST() {
   ].join("\n");
 
   const admitted = await db.transaction(async (tx) => {
-    // Serialize challenge issuance per authenticated user/session so concurrent requests cannot bypass the cap.
+    // Serialize challenge issuance per authenticated user and chain so concurrent requests cannot bypass the cap.
     await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${session.user.id}), ${CHAIN_ID})`);
 
     // Retain only live, unused challenges. This also bounds historical table growth on active traffic.
