@@ -8,9 +8,10 @@ test("published work and approved public contribution survive an application-pro
   searchUrl.searchParams.set("q", "E2E Story Revised");
 
   const worksResponse = await fetch(searchUrl);
-  assert.equal(worksResponse.status, 200, `public works search failed: ${worksResponse.status} ${await worksResponse.text()}`);
+  const worksBody = await worksResponse.text();
+  assert.equal(worksResponse.status, 200, `public works search failed: ${worksResponse.status} ${worksBody}`);
 
-  const worksPayload = await worksResponse.json();
+  const worksPayload = JSON.parse(worksBody);
   const persistedWork = worksPayload.works?.find((item) => item.title === "E2E Story Revised");
   assert.ok(persistedWork, "the latest published work version must be readable after the server restart");
 
