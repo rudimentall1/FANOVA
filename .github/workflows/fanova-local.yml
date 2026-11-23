@@ -33,7 +33,7 @@ jobs:
           node-version: 22
       - name: Install browser and ABI test dependencies
         working-directory: apps/web
-        run: npm install --no-save playwright ethers@6.15.0
+        run: npm ci
       - name: Run domain, ABI, and transaction tests
         working-directory: apps/web
         run: |
@@ -170,3 +170,38 @@ jobs:
           FANOVA_E2E_PROVENANCE_BOOTSTRAP_SCRIPT: ${{ github.workspace }}/apps/platform/scripts/bootstrap-e2e-provenance.mjs
           FANOVA_PROVENANCE_CONTRACT: "0x3A302Cbb8570a76E8e7E1Dc15A763552A3c40880"
           FANOVA_E2E_ADMIN_BOOTSTRAP: "true"
+
+  persist-updated-npm-lockfiles:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 50 && github.event.pull_request.head.ref == 'fix/drizzle-baseline-artifact' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout the PR source branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generate platform lockfile without install scripts
+        working-directory: apps/platform
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Generate web lockfile without install scripts
+        working-directory: apps/web
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Commit both lockfiles to the PR branch
+        env:
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git add apps/platform/package-lock.json apps/web/package-lock.json
+          if git diff --cached --quiet; then
+            echo "No lockfile updates."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+users.noreply.github.com"
+          git commit -m "build: lock platform and web dependency graphs"
+          git push origin "HEAD:${PR_BRANCH}"
