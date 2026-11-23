@@ -9,7 +9,7 @@ type ProfileValues = {
   isPublic: boolean;
 };
 
-export function ProfileEditor({ initialProfile }: { initialProfile: ProfileValues }) {
+export function ProfileEditor({ initialProfile, canPublishProfile }: { initialProfile: ProfileValues; canPublishProfile: boolean }) {
   const [values, setValues] = useState(initialProfile);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
@@ -59,12 +59,12 @@ export function ProfileEditor({ initialProfile }: { initialProfile: ProfileValue
         <textarea id="profile-bio" value={values.bio} maxLength={500} rows={4} onChange={(event) => setValues({ ...values, bio: event.target.value })} />
         <label className="checkbox-row">
           <input type="checkbox" checked={values.isPublic} onChange={(event) => setValues({ ...values, isPublic: event.target.checked })} />
-          Show my profile publicly
+          {canPublishProfile ? "Show my profile publicly" : "Show my name on public contributions"}
         </label>
         <button className="primary-button" type="submit" disabled={saving}>{saving ? "Saving…" : "Save profile"}</button>
         {message ? <p className="field-note" role="status" aria-live="polite">{message}</p> : null}
       </form>
-      {values.isPublic ? <p className="field-note">Public URL: <a href={`/creators/${values.handle.toLowerCase()}`}>/creators/{values.handle.toLowerCase()}</a></p> : <p className="field-note">Your public profile is hidden. Published works remain available in Discover.</p>}
+      {canPublishProfile && values.isPublic ? <p className="field-note">Public URL: <a href={`/creators/${values.handle.toLowerCase()}`}>/creators/{values.handle.toLowerCase()}</a></p> : canPublishProfile ? <p className="field-note">Your public profile is hidden. Published works remain available in Discover.</p> : <p className="field-note">A public creator profile URL becomes available after creator access is approved.</p> }
     </section>
   );
 }
