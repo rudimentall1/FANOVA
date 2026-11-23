@@ -27,7 +27,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
     })
     .from(work)
     .innerJoin(workVersion, eq(work.currentVersionId, workVersion.id))
-    .leftJoin(userProfile, eq(work.ownerUserId, userProfile.userId))
+    .leftJoin(userProfile, and(eq(work.ownerUserId, userProfile.userId), eq(userProfile.isPublic, true)))
     .where(and(...filters))
     .orderBy(desc(work.publishedAt))
     .limit(50);
@@ -61,7 +61,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
               <span className="eyebrow">ORIGINAL WORK</span>
               <h2>{entry.title}</h2>
               <p>{entry.synopsis}</p>
-              <small>By {entry.creatorName ?? "FANOVA creator"} · @{entry.creatorHandle ?? "creator"}</small>
+              {entry.creatorHandle ? <small>By {entry.creatorName} · <Link href={`/creators/${entry.creatorHandle}`}>@{entry.creatorHandle}</Link></small> : <small>By FANOVA creator</small>}
             </Link>
           ))}
         </section>
