@@ -178,3 +178,9 @@ This file is the append-only record of material project decisions. New decisions
 - **Delivered:** lockfiles for both the platform and browser-test packages, with Vitest upgraded past the previously detected critical advisories and esbuild pinned to patched `0.28.2` through a bounded override of the Drizzle Kit toolchain.
 - **Validation:** PR #50 workflow [CI #533](https://github.com/rudimentall1/FANOVA/actions/runs/45123680593) passed the full unit/typecheck/migration/build/multi-account browser workflow before the override. The final PR head uses `npm ci` from both committed lockfiles, pins the Better Auth CLI and blocks high/critical audit findings; do not mark complete until the latest head and review pass.
 - **Boundary:** these checks exercise only disposable CI PostgreSQL. The migration baseline has not been applied to production, and does not verify any production DB or existing production schema.
+
+## Implementation update — application-process restart persistence (2026-11-23)
+
+- **Delivered:** PR #52 restarts the Next.js application process after the existing multi-account browser journey and verifies the published work revision plus approved public contribution are still readable from a fresh process backed by the same disposable PostgreSQL service.
+- **Validation:** full workflow [CI #549](https://github.com/rudimentall1/FANOVA/actions/runs/45131070337) passed on the final PR head.
+- **Boundary:** this is LOCAL CI evidence only. The database itself remains running; no production DB, backup/restore, failover or real Mainnet data has been tested. P1.5/P1.6 remain open.
