@@ -8,7 +8,11 @@ export const dynamic = "force-dynamic";
 
 export default async function DiscoverPage({ searchParams }: { searchParams: Promise<{ q?: string; fanArt?: string; translations?: string; adaptations?: string; commercialUse?: string }> }) {
   const params = await searchParams;
-  const filtersFromUrl = parseDiscoverFilters(new URLSearchParams(params as Record<string, string>));
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string") search.set(key, value);
+  }
+  const filtersFromUrl = parseDiscoverFilters(search);
   const query = filtersFromUrl.q;
   const filters = [eq(work.status, "published")];
   if (query) {
