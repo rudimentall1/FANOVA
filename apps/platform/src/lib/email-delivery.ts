@@ -6,6 +6,7 @@ export type AuthEmailDeliveryStatus = "development-sink" | "resend" | "unconfigu
 export interface ResendEmailConfiguration {
   apiKey: string;
   from: string;
+  appOrigin: string;
 }
 
 export interface AuthEmailMessage {
@@ -33,7 +34,20 @@ export function getResendEmailConfiguration(
     );
   }
 
-  return { apiKey, from };
+  let baseUrl: URL;
+  try {
+    baseUrl = new URL(env.BETTER_AUTH_URL?.trim() ?? "");
+  } catch {
+    throw new Error("BETTER_AUTH_URL must be an absolute HTTPS URL.");
+  }
+  if (baseUrl.protocol !== "https:" || !baseUrl.hostname) {
+    throw new Error("BETTER_AUTH_URL must be an absolute HTTPS URL.");
+  }
+  if (baseUrl.username || baseUrl.password) {
+    throw new Error("BETTER_AUTH_URL must not contain credentials.");
+  }
+
+  return { apiKey, from, appOrigin: baseUrl.origin };
 }
 
 export function getAuthEmailDeliveryStatus(
@@ -109,6 +123,12 @@ export async function sendAuthEmailWithResend(
   }
   if (verificationUrl.protocol !== "https:") {
     throw new Error("Production auth email links must use HTTPS.");
+  }
+  if (verificationUrl.username || verificationUrl.password) {
+    throw new Error("Production auth email links must not contain credentials.");
+  }
+  if (verificationUrl.origin !== configuration.appOrigin) {
+    throw new Error("Auth email URL does not match the configured FANOVA origin.");
   }
 
   const content = buildAuthEmailContent(message);
