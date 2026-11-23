@@ -171,3 +171,10 @@ This file is the append-only record of material project decisions. New decisions
 - **Consequences:** More engineering work is required, including backend, database, authentication, deployment, privacy, and authorization testing. The final demo remains blocked until the full multi-user acceptance criteria pass. The existing local prototype and provenance contract remain reusable foundations.
 - **Explicit user approval:** Yes, in project conversation on 2026-10-30. The user explicitly requested the full multi-page site with user/creator accounts, login/password, work pages, and catalogues, and approved proceeding with the product/site specification.
 
+
+## Implementation update — migration and dependency baseline (2026-11-23)
+
+- **Delivered:** an initial checked-in PostgreSQL/Drizzle schema baseline and snapshot for 14 tables; CI generates migrations, detects uncommitted schema drift, and applies the committed migration chain to an ephemeral PostgreSQL database before browser E2E.
+- **Delivered:** lockfiles for both the platform and browser-test packages, with Vitest upgraded past the previously detected critical advisories and esbuild pinned to patched `0.28.2` through a bounded override of the Drizzle Kit toolchain.
+- **Validation:** PR #50 workflow [CI #533](https://github.com/rudimentall1/FANOVA/actions/runs/45123680593) passed the full unit/typecheck/migration/build/multi-account browser workflow before the override. The final PR head uses `npm ci` from both committed lockfiles, pins the Better Auth CLI and blocks high/critical audit findings; do not mark complete until the latest head and review pass.
+- **Boundary:** these checks exercise only disposable CI PostgreSQL. The migration baseline has not been applied to production, and does not verify any production DB or existing production schema.

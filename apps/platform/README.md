@@ -51,3 +51,9 @@ Set these only in the production environment after the sender domain's DNS verif
 `GET /api/health` reports `email: "resend"` when production configuration is present, `email: "unconfigured"` with HTTP 503 when required variables are missing, and `email: "development-sink"` outside production. This check validates configuration only: it does not test Resend connectivity, sender-domain verification, inbox placement, or actual delivery.
 
 There is no durable email queue, retry worker, bounce/complaint webhook, or persisted delivery audit yet. Before accepting real users, configure a verified sender domain, send and receive real verification/reset test messages, confirm the deployed runtime supports post-response work, and review provider privacy/retention terms. No live email has been sent as part of this repository change.
+
+## Development dependency security
+
+The platform pins `drizzle-kit` as a development-only CLI. Its published dependency tree currently includes the deprecated `@esbuild-kit` chain, which otherwise resolves an old esbuild version. A bounded npm override forces every esbuild instance to `0.28.2` while keeping the CLI version stable. This is a build/test-toolchain mitigation, not an application runtime dependency.
+
+The override should be revisited when the upstream Drizzle Kit release removes the deprecated loader and declares a patched esbuild dependency. References: [Drizzle Kit dependency issue #5481](https://github.com/drizzle-team/drizzle-orm/issues/5481), [esbuild advisory GHSA-67mh-4wv8-2f99](https://github.com/advisories/GHSA-67mh-4wv8-2f99), and [esbuild advisory GHSA-g7r4-m6w7-qqqr](https://github.com/advisories/GHSA-g7r4-m6w7-qqqr).
