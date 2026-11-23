@@ -81,7 +81,7 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 
 ## P1.5 — Multi-user web product foundation (new priority after product expansion)
 
-**Status: core account, creator, and contribution workflows implemented and covered by a passing multi-account browser acceptance test. PR #20 was merged to `main` as `dc392a2`; GitHub Actions run [41173158990](https://github.com/rudimentall1/FANOVA/actions/runs/41173158990) passed all 18 steps against an ephemeral PostgreSQL database. The full P1.5 exit gate remains open because wallet linking/provenance integration, public profile editing, production deployment, and other acceptance criteria are not complete.**
+**Status: core account, creator, contribution, wallet-link/unlink, and authenticated provenance workflows are implemented and pass isolated multi-account browser CI. PRs #39, #40, and #42 are merged; PR #42's account-wide unlink challenge cap passed [CI run 485](https://github.com/rudimentall1/FANOVA/actions/runs/45113542253). P1.5 remains OPEN: public creator profile editing, richer discovery filters, production hosting/persistence verification, real production anchor verification, and independent security review are outstanding. Synthetic CI fixtures are not production evidence.**
 
 - [x] Confirm that FANOVA's final product is a multi-user creator/contributor platform, not a single-page local demo.
 - [x] Define public pages, account flows, creator workspace, contributor dashboard, roles, core entities, security boundaries, and acceptance criteria in [WEB_PRODUCT_SPEC.md](WEB_PRODUCT_SPEC.md).
@@ -96,11 +96,11 @@ Minato may be used for optional pre-deployment testing if it materially reduces 
 - [x] Add creator-access request and admin review process; creator role is server-assigned and cannot be self-selected.
 - [x] Implement private revisions for published works, explicit publish action, version history, and automatic stale marking for pending contributions when a new source version is published.
 - [ ] Implement public creator profiles and richer work discovery filters.
-- [ ] Integrate existing wallet and provenance flow with authenticated accounts; tracked in [issue #21](https://github.com/rudimentall1/FANOVA/issues/21). No contract changes, redeployment, or Mainnet writes without separate approval.
+- [x] Integrate wallet linking/unlinking and authenticated provenance intent/public-proof flows with server-backed accounts; covered by isolated synthetic PostgreSQL + browser E2E in [issue #21](https://github.com/rudimentall1/FANOVA/issues/21). Production persisted-anchor verification remains open. No contract changes or Mainnet writes were made.
 - [x] Add cross-account/cross-role browser acceptance coverage for reader publish denial, creator/admin boundary, private contribution ownership, creator review, opt-in public visibility, stale submissions, and password recovery in [PR #20](https://github.com/rudimentall1/FANOVA/pull/20). The test confirms persisted records after fresh navigation; process-restart durability and broader API fuzzing remain unverified.
 - [ ] Deploy and verify the complete user journey from a clean browser and a second independent account.
 
-**Exit gate: NOT MET.** The account/creator/contributor slice now passes CI, but the complete WEB_PRODUCT_SPEC.md acceptance criteria still require wallet linking and authenticated provenance, public profile editing, production persistence/deployment verification, and final outsider review. Do not record the final Sony demo yet.
+**Exit gate: NOT MET.** The account/creator/contributor + wallet/provenance integration slice now passes isolated CI. The complete WEB_PRODUCT_SPEC.md acceptance criteria still require public profile editing, richer discovery, production persistence/deployment verification, read-only inspection of real persisted Mainnet anchors, and independent outsider/security review. Do not record the final Sony demo yet.
 
 **Demo policy:** no final video while the product is still a localStorage prototype or uses simulated user identities. Interim screen recordings may be used privately for debugging, but must not be presented as the final Sony product demo.
 
