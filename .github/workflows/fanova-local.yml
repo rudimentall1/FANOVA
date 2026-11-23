@@ -33,7 +33,25 @@ jobs:
           node-version: 22
       - name: Install browser and ABI test dependencies
         working-directory: apps/web
-        run: npm ci
+        run: npm install
+      - name: Report browser-test dependency advisories
+        working-directory: apps/web
+        run: |
+          npm audit --json > /tmp/fanova-web-audit.json || true
+          node <<'NODE'
+          const report = require("/tmp/fanova-web-audit.json");
+          console.log("Browser-test dependency totals:", JSON.stringify(report.metadata?.vulnerabilities ?? {}));
+          for (const [name, advisory] of Object.entries(report.vulnerabilities ?? {})) {
+            console.log(JSON.stringify({
+              name,
+              severity: advisory.severity,
+              direct: advisory.isDirect,
+              affected: advisory.range,
+              fixAvailable: advisory.fixAvailable,
+              via: advisory.via.map((entry) => typeof entry === "string" ? entry : entry.title)
+            }));
+          }
+          NODE
       - name: Run domain, ABI, and transaction tests
         working-directory: apps/web
         run: |
@@ -202,6 +220,6 @@ jobs:
             exit 0
           fi
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "build: lock platform and web dependency graphs"
           git push origin "HEAD:${PR_BRANCH}"
