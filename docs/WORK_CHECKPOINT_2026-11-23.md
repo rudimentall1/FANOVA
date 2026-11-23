@@ -1,6 +1,6 @@
 # FANOVA working checkpoint — 2026-11-23
 
-This is the current handoff snapshot after PR #50. It supersedes older status summaries in [the 2026-11-13 checkpoint](WORK_CHECKPOINT_2026-11-13.md), which remains in the repository as historical implementation notes.
+This is the current handoff snapshot after PR #52. It supersedes older status summaries in [the 2026-11-13 checkpoint](WORK_CHECKPOINT_2026-11-13.md), which remains in the repository as historical implementation notes.
 
 ## Repository state
 
@@ -26,6 +26,19 @@ Evidence labels below follow `AGENTS.md`: `LOCAL`, `MAINNET`, and `INDEPENDENTLY
 - **LOCAL** — Optional Resend authentication email adapter for verification/password reset passes mocked provider/configuration tests and application CI: [PR #48](https://github.com/rudimentall1/FANOVA/pull/48), CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095). No production provider account, credentials, sender domain or live delivery is configured.
 - **MAINNET** — A separate user-approved Story → Contribution → Creator Decision smoke-test sequence was submitted on Soneium Mainnet on 2026-10-30. FANOVA's own verifier returned `VERIFIED` for the exact exported bundle after checking its hashes, storage, receipts and events; see [README](../README.md) and [Demo and Evidence](DEMO_AND_EVIDENCE.md). This is a project-run verification of that bundle only, not proof of all production records or a third-party review.
 - **INDEPENDENTLY VERIFIED** — No product capability, production deployment or security posture has been independently certified or audited.
+
+## PR #52 — application-process restart persistence check
+
+Merged as `fc16e0eb7af972ffa6a7f053d2c7faad09bb41b9`.
+
+- CI now starts the Next.js server by invoking the direct Next binary so the recorded PID identifies the application process.
+- After the multi-account browser journey completes, CI sends SIGTERM to the first server process, confirms it exits and stops serving, starts a fresh Next.js process against the same disposable PostgreSQL 16 service, and waits for health readiness.
+- A new Node E2E test queries the public works API for `E2E Story Revised`, then loads its public page and asserts that the revised work and approved public `E2E Fan Art Submission` are still rendered.
+- Exact acceptance workflow [CI #549](https://github.com/rudimentall1/FANOVA/actions/runs/45131070337) passed, including both the original multi-account journey and the post-restart read-back.
+- Evidence label: **LOCAL**. This verifies data survives a Next.js application-process restart while PostgreSQL stays running in an isolated CI environment.
+- It does **not** verify PostgreSQL restart/failover, backups/restore, host replacement, production DB persistence, or Mainnet anchors. P1.5 production acceptance and P1.6 remain OPEN.
+- An initial test attempt failed because its assertion read a Fetch response body twice. The test was corrected to read the body once and the latest full CI passed. No product data or production behavior was changed.
+- The automated Codex review on the final test head still showed `running` without a submitted review at merge time. Manual diff review and full CI passed, but this does not count as independent security review.
 
 ## PR #50 — reproducible PostgreSQL migrations and dependency graph
 
