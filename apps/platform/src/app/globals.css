@@ -122,6 +122,10 @@ a { color: inherit; text-decoration: none; }
 .catalogue-search > div { display: flex; gap: 10px; }
 .catalogue-search input { flex: 1; min-width: 0; min-height: 44px; padding: 0 13px; border: 1px solid #3a3e41; background: #101112; color: var(--text); font: inherit; }
 .catalogue-search input:focus { outline: none; border-color: var(--accent); }
+.discover-permission-filters { display: flex; flex-wrap: wrap; gap: 12px 20px; margin: 14px 0 10px; padding: 12px 0; border: 0; }
+.discover-permission-filters legend { margin-bottom: 9px; color: #c6cbc7; font-size: 12px; font-weight: 700; }
+.catalogue-search .discover-permission-filters label { display: inline-flex; align-items: center; gap: 7px; margin: 0; color: #aeb3b5; font-size: 12px; font-weight: 500; }
+.catalogue-search .discover-permission-filters input { flex: 0 0 16px; width: 16px; min-height: 16px; height: 16px; margin: 0; padding: 0; accent-color: var(--accent); }
 
 .request-history { margin: 0 0 12px; padding: 18px 20px; border: 1px solid #34383b; background: #151719; }
 .request-history p { color: #aeb3b5; line-height: 1.55; }

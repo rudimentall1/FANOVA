@@ -1,13 +1,19 @@
 import Link from "next/link";
-import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { userProfile, work, workVersion } from "@/db/schema";
+import { parseDiscoverFilters } from "@/lib/discover-filters";
 
 export const dynamic = "force-dynamic";
 
-export default async function DiscoverPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function DiscoverPage({ searchParams }: { searchParams: Promise<{ q?: string; fanArt?: string; translations?: string; adaptations?: string; commercialUse?: string }> }) {
   const params = await searchParams;
-  const query = params.q?.trim().slice(0, 100) ?? "";
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string") search.set(key, value);
+  }
+  const filtersFromUrl = parseDiscoverFilters(search);
+  const query = filtersFromUrl.q;
   const filters = [eq(work.status, "published")];
   if (query) {
     filters.push(or(
@@ -17,6 +23,12 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
       ilike(userProfile.displayName, `%${query}%`)
     ) as typeof filters[number]);
   }
+  if (filtersFromUrl.fanArt) filters.push(sql`(${workVersion.permissions}->>'fanArt') = 'true'`);
+  if (filtersFromUrl.translations) filters.push(sql`(${workVersion.permissions}->>'translations') = 'true'`);
+  if (filtersFromUrl.adaptations) filters.push(sql`(${workVersion.permissions}->>'adaptations') = 'true'`);
+  if (filtersFromUrl.commercialUse) filters.push(sql`(${workVersion.permissions}->>'commercialUse') = 'true'`);
+
+  const hasActiveFilters = Boolean(query || filtersFromUrl.fanArt || filtersFromUrl.translations || filtersFromUrl.adaptations || filtersFromUrl.commercialUse);
 
   const rows = await db
     .select({
@@ -46,15 +58,23 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
         <p className="intro">Explore original works and the contribution rules their creators have chosen.</p>
       </section>
       <form className="catalogue-search" action="/discover" method="get">
-        <label htmlFor="catalogue-query">Search published works</label>
-        <div><input id="catalogue-query" name="q" maxLength={100} defaultValue={query} placeholder="Title or synopsis" /><button className="secondary-button" type="submit">Search</button></div>
+        <label htmlFor="catalogue-query">Search published works or creators</label>
+        <div><input id="catalogue-query" name="q" maxLength={100} defaultValue={query} placeholder="Title, synopsis, or creator" /><button className="secondary-button" type="submit">Search</button></div>
+        <fieldset className="discover-permission-filters">
+          <legend>Show works that allow</legend>
+          <label><input type="checkbox" name="fanArt" value="allowed" defaultChecked={filtersFromUrl.fanArt} /> Fan art</label>
+          <label><input type="checkbox" name="translations" value="allowed" defaultChecked={filtersFromUrl.translations} /> Translations</label>
+          <label><input type="checkbox" name="adaptations" value="allowed" defaultChecked={filtersFromUrl.adaptations} /> Adaptations</label>
+          <label><input type="checkbox" name="commercialUse" value="allowed" defaultChecked={filtersFromUrl.commercialUse} /> Commercial use</label>
+        </fieldset>
+        <Link className="text-link" href="/discover">Clear filters</Link>
       </form>
       {rows.length === 0 ? (
         <section className="empty-state">
-          <p className="eyebrow">{query ? "NO MATCHES" : "NO PUBLISHED WORKS YET"}</p>
-          <h2>{query ? "No published work matches that search." : "The catalogue is waiting for its first creator."}</h2>
-          <p>{query ? "Try another title or a shorter search phrase." : "Published works will appear here. FANOVA does not fill the catalogue with demo profiles or invented stories."}</p>
-          {!query ? <Link className="text-link" href="/sign-up">Create an account</Link> : null}
+          <p className="eyebrow">{hasActiveFilters ? "NO MATCHES" : "NO PUBLISHED WORKS YET"}</p>
+          <h2>{hasActiveFilters ? "No published work matches these filters." : "The catalogue is waiting for its first creator."}</h2>
+          <p>{hasActiveFilters ? "Change or clear your search and permission filters." : "Published works will appear here. FANOVA does not fill the catalogue with demo profiles or invented stories."}</p>
+          {!hasActiveFilters ? <Link className="text-link" href="/sign-up">Create an account</Link> : null}
         </section>
       ) : (
         <section className="catalogue-grid">
