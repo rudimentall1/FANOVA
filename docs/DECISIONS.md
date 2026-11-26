@@ -190,3 +190,10 @@ This file is the append-only record of material project decisions. New decisions
 - **Delivered:** PR #54 restarts the existing disposable PostgreSQL 16 service container after the app-process restart acceptance check, verifies Docker health and `pg_isready`, proves the container's `StartedAt` changed, starts a new Next.js process and confirms the Story revision/public contribution remain readable.
 - **Validation:** full workflow [CI #553](https://github.com/rudimentall1/FANOVA/actions/runs/45132721837) passed on the exact PR head. Codex review completed with no findings.
 - **Boundary:** same ephemeral container is restarted; no backup/restore, volume-loss, replica failover, production database or Mainnet behavior is established. P1.5/P1.6 remain open.
+
+
+## Implementation update — PostgreSQL logical backup and restore acceptance (2026-11-23)
+
+- **Delivered:** PR #56 adds a CI-only PostgreSQL custom-format logical backup, archive inspection for the work-version/contribution tables and data, restore into a newly created empty database, and public API/page read-back using a fresh Next.js process connected to the restored database.
+- **Validation:** PR acceptance [CI #557](https://github.com/rudimentall1/FANOVA/actions/runs/45134548257) passed on exact PR head `ac3198491ccc4ff5c8cde40f58ee803b6785f8e0`; post-merge Main CI [#558](https://github.com/rudimentall1/FANOVA/actions/runs/45135025070) passed on `12f84df96fbde8b569d7815575253ca88d16b0f0`.
+- **Boundary:** LOCAL ephemeral-CI evidence only. No production backup/restore, encryption, retention, point-in-time recovery, data-volume/host-loss recovery, failover, RPO/RTO or Mainnet data has been verified. P1.5/P1.6 remain open.

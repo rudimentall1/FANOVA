@@ -86,4 +86,12 @@ This is an implementation stack decision, not evidence that authentication, pers
 - PR #54 adds a CI step after the PR #52 application-process restart test. It locates exactly one `postgres:16-alpine` service container, records `StartedAt`, restarts that same container with Docker, checks its health and `pg_isready`, and requires the new `StartedAt` to differ.
 - CI then launches a new Next.js process against that PostgreSQL container and repeats the public works API/page read-back for the published Story revision and approved public contribution.
 - Full workflow [CI #553](https://github.com/rudimentall1/FANOVA/actions/runs/45132721837) passed; logs show the same container restarted, health/readiness recovered, and the post-restart read-back passed.
-- Scope is LOCAL CI evidence on a disposable PostgreSQL service. It does not prove backups/restore, data-volume loss recovery, replica failover, host replacement, production persistence or Mainnet records.
+- Scope is LOCAL CI evidence on a disposable PostgreSQL service. PR #56 separately verifies a logical backup restored into a new empty CI database and reads the public Story/contribution through a fresh app process. Neither check proves production backup scheduling/retention, encryption, point-in-time recovery, data-volume loss recovery, replica failover, host replacement, production persistence or Mainnet records.
+
+
+## PostgreSQL logical backup and restore evidence — 2026-11-23
+
+- PR #56 creates a custom-format logical backup from the disposable PostgreSQL 16 CI database, checks that the archive contains the work-version and contribution tables/data, and restores it into a newly created empty database.
+- A fresh Next.js process configured against the restored database serves the published Story and approved public contribution through the public works API/page.
+- PR acceptance [CI #557](https://github.com/rudimentall1/FANOVA/actions/runs/45134548257) and post-merge Main CI [#558](https://github.com/rudimentall1/FANOVA/actions/runs/45135025070) passed.
+- This is LOCAL CI evidence. It does not validate production backup policy, encryption/key custody, retention, point-in-time recovery, volume/host loss, failover, RPO/RTO, production persistence or Mainnet data.
