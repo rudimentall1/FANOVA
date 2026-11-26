@@ -1,22 +1,26 @@
-# FANOVA working checkpoint — 2026-11-23
+# FANOVA working checkpoint — 2026-11-26
 
-This is the current handoff snapshot after PR #54. It supersedes older status summaries in [the 2026-11-13 checkpoint](WORK_CHECKPOINT_2026-11-13.md), which remains in the repository as historical implementation notes.
+This is the current handoff snapshot after PR #56. It supersedes earlier status summaries below; retain them as historical evidence. It supersedes older status summaries in [the 2026-11-13 checkpoint](WORK_CHECKPOINT_2026-11-13.md), which remains in the repository as historical implementation notes.
 
 ## Repository state
 
+- Latest verified main at this checkpoint: `12f84df96fbde8b569d7815575253ca88d16b0f0` (2026-11-23 merge; re-check branch head before future work).
+
 - Repository: [rudimentall1/FANOVA](https://github.com/rudimentall1/FANOVA)
-- Main merges since PR #50: PR [#52 — application-process restart persistence](https://github.com/rudimentall1/FANOVA/pull/52), PR [#53 — updated working checkpoint](https://github.com/rudimentall1/FANOVA/pull/53), and PR [#54 — PostgreSQL container restart persistence](https://github.com/rudimentall1/FANOVA/pull/54).
+- Main merges since PR #50 include PR [#52 — application-process restart persistence](https://github.com/rudimentall1/FANOVA/pull/52), PR [#53 — updated working checkpoint](https://github.com/rudimentall1/FANOVA/pull/53), PR [#54 — PostgreSQL container restart persistence](https://github.com/rudimentall1/FANOVA/pull/54), PR [#55 — checkpoint update](https://github.com/rudimentall1/FANOVA/pull/55), and PR [#56 — PostgreSQL backup/restore persistence](https://github.com/rudimentall1/FANOVA/pull/56).
 - PR #53 documentation merge commit: `755d067b6ece08b77201d4ef0c4966f4f7a83c7f`; its docs CI [#551](https://github.com/rudimentall1/FANOVA/actions/runs/45131902040) passed and automated review completed without findings.
 - PR #50 squash merge commit: `6c81bcf52711122b4f10938eceff10a944f85c81`.
 - PR #52 squash merge commit: `fc16e0eb7af972ffa6a7f053d2c7faad09bb41b9`.
 - PR #54 squash merge commit: `7be8a194d9e162a500d5bde895c86644cba390c2`.
-- Main repository HEAD at checkpoint preparation: `7be8a194d9e162a500d5bde895c86644cba390c2`. The application code/runtime remains unchanged from PR #52; PR #54 adds CI-only database restart coverage.
+- PR #56 squash merge and current main HEAD at checkpoint preparation: `12f84df96fbde8b569d7815575253ca88d16b0f0`. PR #56 changes CI-only backup/restore coverage; application runtime and contract code are unchanged.
 - PR #50 full workflow: [CI #543](https://github.com/rudimentall1/FANOVA/actions/runs/45129624903), SUCCESS on exact PR head `4380b5707e67c2db6767c0ec9ea50b7945adbdd0`.
 - PR #52 full workflow: [CI #549](https://github.com/rudimentall1/FANOVA/actions/runs/45131070337), SUCCESS on exact PR head `2770daa814a491f2501231e52223022eb4210f38`.
 - PR #54 full workflow: [CI #553](https://github.com/rudimentall1/FANOVA/actions/runs/45132721837), SUCCESS on exact PR head `6a5d20c99d74e1e1a46b44703e1384edbab39683`.
 - PR #48 auth-email adapter remains merged as `a983bfb180a2ca7300df85528b86521a544fbeae`; its CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095) passed.
 - Latest Soneium read-only deployment check [#60](https://github.com/rudimentall1/FANOVA/actions/runs/45132230983) passed on pre-PR54 commit `755d067b6ece08b77201d4ef0c4966f4f7a83c7f`. PR #54 changes CI-only test workflow, not application or contract code; no new Mainnet write was performed.
-- Post-merge main CI [#552](https://github.com/rudimentall1/FANOVA/actions/runs/45132230976) passed against docs commit `755d067b6ece08b77201d4ef0c4966f4f7a83c7f`. Main CI [#554](https://github.com/rudimentall1/FANOVA/actions/runs/45133239425) was queued against PR #54 merge when checkpoint text was prepared; do not mark it successful until its conclusion is checked.
+- Post-merge main CI [#554](https://github.com/rudimentall1/FANOVA/actions/runs/45133239425) passed against PR #54 merge `7be8a194d9e162a500d5bde895c86644cba390c2`.
+- PR #55 docs CI [#555](https://github.com/rudimentall1/FANOVA/actions/runs/45133500000) passed (verify exact run link if revising this record); post-merge Main CI [#556](https://github.com/rudimentall1/FANOVA/actions/runs/45133868600) passed against `c56208d25ea5c19fb86f30276d2d88447910caab`.
+- PR #56 full workflow [CI #558](https://github.com/rudimentall1/FANOVA/actions/runs/45135025070) passed on exact PR head `ac3198491ccc4ff5c8cde40f58ee803b6785f8e0`; post-merge Soneium read-only check [#61](https://github.com/rudimentall1/FANOVA/actions/runs/45133868355) passed against `c56208d25ea5c19fb86f30276d2d88447910caab`. The latest Main CI #558 is also green on current main `12f84df96fbde8b569d7815575253ca88d16b0f0`.
 
 ## Shipped platform capabilities
 
@@ -31,6 +35,19 @@ Evidence labels below follow `AGENTS.md`: `LOCAL`, `MAINNET`, and `INDEPENDENTLY
 - **LOCAL** — Optional Resend authentication email adapter for verification/password reset passes mocked provider/configuration tests and application CI: [PR #48](https://github.com/rudimentall1/FANOVA/pull/48), CI [#517](https://github.com/rudimentall1/FANOVA/actions/runs/45119073095). No production provider account, credentials, sender domain or live delivery is configured.
 - **MAINNET** — A separate user-approved Story → Contribution → Creator Decision smoke-test sequence was submitted on Soneium Mainnet on 2026-10-30. FANOVA's own verifier returned `VERIFIED` for the exact exported bundle after checking its hashes, storage, receipts and events; see [README](../README.md) and [Demo and Evidence](DEMO_AND_EVIDENCE.md). This is a project-run verification of that bundle only, not proof of all production records or a third-party review.
 - **INDEPENDENTLY VERIFIED** — No product capability, production deployment or security posture has been independently certified or audited.
+
+
+## PR #56 — PostgreSQL logical backup and restore acceptance check
+
+Merged as `12f84df96fbde8b569d7815575253ca88d16b0f0`.
+
+- CI stops the fresh Next.js process after the PostgreSQL container-restart read-back, creates a PostgreSQL custom-format logical backup with `pg_dump -Fc`, and verifies the archive is non-empty and includes the `work_version` and `contribution` table definitions/data.
+- CI restores the archive with `pg_restore --exit-on-error` into a separately created empty `fanova_restore` database, then starts a new Next.js process configured to use that restored database.
+- The restore E2E test queries the public works API and public work page, asserting the revised published Story and approved public contribution are readable from the restored database.
+- Full workflow [CI #558](https://github.com/rudimentall1/FANOVA/actions/runs/45135025070) passed on the exact PR head. It included 14 Vitest files / 109 unit tests, migration/schema checks, production build, PostgreSQL restart, backup inspection, restore and post-restore browser-facing API/page read-back. Automated code review reported no findings.
+- Evidence label: **LOCAL**. This verifies a logical backup and restore into a new database in an ephemeral GitHub Actions PostgreSQL 16 service.
+- It does **not** verify scheduled/retained production backups, encryption/key management, point-in-time recovery, restore after host/volume loss, RPO/RTO, production credentials, production database restore, or Mainnet records. P1.5/P1.6 remain OPEN.
+- The workflow log contains a duplicate-key rejection for the deliberately reused E2E wallet address during the multi-account journey; the wallet uniqueness constraint rejects the duplicate and the complete test job succeeds. This is not a backup/restore error.
 
 ## PR #54 — PostgreSQL service-container restart persistence check
 
