@@ -9,6 +9,18 @@ This file is mandatory project policy for every AI assistant, contributor, and i
 4. Inspect the current repository state and relevant files before proposing or changing implementation.
 5. State which roadmap milestone the requested work serves. If it serves none, do not implement it by default.
 
+## Mandatory documentation lifecycle
+
+These rules apply to every task, including audits, bug fixes, CI changes, infrastructure work, and documentation-only work:
+
+1. **Before starting:** read the applicable project documentation and inspect the repository structure, current branch/commit state, relevant implementation, tests, dependencies, and CI workflows. Follow the reading order above; expand the inspection to adjacent modules when a change crosses boundaries.
+2. **Keep documentation synchronized:** after every significant change, update the relevant source-of-truth documents (for example, `docs/ROADMAP.md`, `docs/DECISIONS.md`, the working checkpoint, architecture/specification documents, and README) in the same change set. Record what changed, why, evidence, and limitations.
+3. **Separate facts from assumptions:** never present an unverified assumption, inference, plan, mock, synthetic fixture, or CI-only result as an established fact. Label uncertainty explicitly and link claims to reproducible evidence where possible.
+4. **Verify documentation before completion:** reread every documentation file changed or relied upon; check links, paths, commit/PR references, status labels, commands, dates, and acceptance-gate claims against the actual repository and CI results. Correct stale or contradictory statements before reporting completion.
+5. **Commit documentation with its implementation:** documentation changes that describe or justify a code, test, CI, configuration, or infrastructure change must be included in the same PR and merge/commit as that corresponding change. Do not leave required documentation in a later follow-up PR. For a documentation-only change, keep the related documentation updates together in one PR.
+
+If the task does not change implementation but discovers that existing documentation is stale or inaccurate, update it in the same task and clearly identify the evidence used. Do not create duplicate root-level project documents when the canonical documents already live under `docs/`.
+
 ## Scope lock
 The only MVP is the end-to-end creator/fan story workflow defined in `docs/PROJECT_SKELETON.md`. No feature expansion without a written decision in `docs/DECISIONS.md` and a corresponding skeleton/roadmap update.
 
